@@ -1,0 +1,2602 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>GymDex 💪</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,'PingFang SC','Helvetica Neue',sans-serif}
+:root{
+  --pink:#FF6B9D;--purple:#B44DFF;--gold:#FFD700;
+  --bg:#0D0D1A;--card:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.12);
+  --text:#F0F0FF;--muted:rgba(240,240,255,0.5);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+body{background:var(--bg);color:var(--text)}
+#app{height:100vh;display:flex;flex-direction:column;max-width:480px;margin:0 auto}
+#content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(70px + var(--safe-bottom))}
+
+/* NAV */
+#nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+  height:calc(60px + var(--safe-bottom));padding-bottom:var(--safe-bottom);
+  background:rgba(13,13,26,.97);backdrop-filter:blur(20px);border-top:1px solid var(--border);
+  display:flex;align-items:stretch;z-index:100}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:8px 0;transition:color .2s}
+.nav-btn.active{color:var(--pink)}
+.nav-icon{font-size:22px;line-height:1}
+
+/* SCREENS */
+.screen{display:none;padding:16px;min-height:100%}
+.screen.active{display:block}
+.screen-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-top:8px}
+.screen-title{font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--pink),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* CARDS & BUTTONS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 20px;
+  border-radius:12px;border:none;font-size:15px;font-weight:600;cursor:pointer;transition:transform .1s,opacity .2s;-webkit-user-select:none}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--pink),var(--purple));color:white;width:100%}
+.btn-secondary{background:var(--card);border:1px solid var(--border);color:var(--text)}
+.btn-small{padding:8px 14px;font-size:13px;border-radius:8px}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--muted)}
+.btn-green{background:linear-gradient(135deg,#4DCC78,#00B894);color:white;width:100%}
+.btn-outline{background:none;border:2px solid var(--pink);color:var(--pink);width:100%}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-starter{background:rgba(150,150,150,.2);color:#aaa}
+.badge-common{background:rgba(150,150,150,.2);color:#bbb}
+.badge-rare{background:rgba(100,150,255,.2);color:#7AB0FF}
+.badge-epic{background:rgba(180,77,255,.2);color:#C87AFF}
+.badge-legendary{background:rgba(255,200,0,.2);color:var(--gold)}
+
+/* STATS */
+.stats-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 10px;text-align:center}
+.stat-number{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--pink),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-label{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* STREAK */
+.streak-banner{background:linear-gradient(135deg,rgba(255,200,0,.1),rgba(255,150,0,.1));
+  border:1px solid rgba(255,200,0,.3);border-radius:12px;padding:12px 16px;margin-bottom:16px;
+  display:flex;align-items:center;gap:10px}
+.streak-fire{font-size:28px}
+.streak-text strong{color:var(--gold);font-size:16px}
+.streak-text{font-size:13px}
+
+/* EXERCISE CARDS */
+.exercise-card{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  margin-bottom:10px;overflow:hidden;transition:border-color .2s}
+.exercise-card.done{border-color:rgba(77,204,120,.4)}
+.exercise-header{display:flex;align-items:center;padding:14px 16px;cursor:pointer;gap:10px;user-select:none}
+.exercise-status{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .2s}
+.exercise-status.done{background:#4DCC78;border-color:#4DCC78;color:white}
+.exercise-name{font-size:15px;font-weight:600;flex:1}
+.exercise-prev{font-size:12px;color:var(--muted);margin-top:2px}
+.exercise-body{display:none;padding:0 16px 16px;border-top:1px solid var(--border)}
+.exercise-body.open{display:block}
+
+/* SET LOGGING */
+.set-grid-header{display:grid;grid-template-columns:28px 1fr 1fr 42px;gap:6px;
+  font-size:11px;color:var(--muted);padding:8px 0 4px;text-align:center}
+.set-row{display:grid;grid-template-columns:28px 1fr 1fr 42px;gap:6px;align-items:center;padding:4px 0}
+.set-num{color:var(--muted);font-size:13px;text-align:center}
+.set-input{background:rgba(255,255,255,.08);border:1px solid var(--border);border-radius:8px;
+  padding:9px 6px;color:var(--text);font-size:14px;text-align:center;width:100%;-webkit-appearance:none}
+.set-input:focus{outline:none;border-color:var(--pink)}
+.set-input:disabled{opacity:.5}
+.set-input::placeholder{color:var(--muted)}
+.set-done-btn{width:38px;height:38px;border-radius:50%;border:2px solid var(--border);
+  background:none;color:var(--muted);font-size:16px;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.set-done-btn.done{background:#4DCC78;border-color:#4DCC78;color:white}
+.add-set-btn{width:100%;padding:9px;background:none;border:1px dashed var(--border);
+  border-radius:8px;color:var(--muted);font-size:13px;cursor:pointer;margin-top:8px}
+
+/* PET TABS */
+.pet-tabs{display:flex;gap:0;margin-bottom:16px;background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:4px;overflow:hidden}
+.pet-tab{flex:1;padding:8px 4px;background:none;border:none;color:var(--muted);font-size:13px;
+  font-weight:600;cursor:pointer;border-radius:8px;transition:all .15s;position:relative}
+.pet-tab.active{background:var(--pink);color:white}
+.pet-tab-badge{position:absolute;top:2px;right:4px;background:#FF4444;color:white;font-size:9px;
+  font-weight:700;border-radius:6px;padding:1px 4px;min-width:14px;text-align:center}
+.nurture-slot{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:14px;margin-bottom:10px}
+.nurture-slot.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:80px;border-style:dashed;opacity:.5}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700}
+.badge-common{background:rgba(170,170,170,.2);color:#aaa}
+.badge-rare{background:rgba(122,176,255,.2);color:#7AB0FF}
+.badge-epic{background:rgba(200,122,255,.2);color:#C87AFF}
+.badge-legendary{background:rgba(255,215,0,.2);color:#FFD700}
+
+/* EXERCISE SELECTION */
+.ex-category-label{font-size:11px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:6px}
+.ex-select-row{display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  margin-bottom:6px;cursor:pointer;transition:border-color .15s}
+.ex-select-row:has(input:checked){border-color:var(--pink)}
+.ex-select-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--pink);
+  flex-shrink:0;cursor:pointer}
+
+/* ACTIVE EXERCISE CARD */
+.active-ex-card{background:var(--card);border:2px solid var(--pink);border-radius:16px;
+  padding:18px 16px;margin-bottom:16px}
+.exercise-status.active{background:var(--pink);border-color:var(--pink);color:white}
+
+/* EXERCISE OVERVIEW ROW */
+.ex-overview-row{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  margin-bottom:6px;transition:all .15s}
+.ex-overview-row.ex-ov-active{border-color:var(--pink);background:rgba(255,107,157,.08)}
+.ex-overview-row.ex-ov-done{opacity:.55}
+.ex-overview-row:not(.ex-ov-active):not(.ex-ov-done){cursor:pointer}
+.ex-overview-row:not(.ex-ov-active):not(.ex-ov-done):active{opacity:.7}
+
+/* REST TIMER */
+#rest-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(13,13,26,.93);
+  backdrop-filter:blur(20px);z-index:200;display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:20px}
+#rest-overlay.on{display:flex}
+.timer-label{color:var(--muted);font-size:16px;font-weight:600}
+#timer-wrap{position:relative;width:200px;height:200px}
+#timer-svg{width:200px;height:200px;transform:rotate(-90deg)}
+#timer-count{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:60px;font-weight:800;color:white;line-height:1}
+.timer-hint{color:var(--muted);font-size:14px;text-align:center;padding:0 20px}
+.timer-btns{display:flex;gap:12px}
+
+/* PET */
+.pet-big{font-size:90px;display:block;animation:bob 2.2s ease-in-out infinite;
+  filter:drop-shadow(0 0 20px rgba(255,107,157,.4))}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.pet-name{font-size:22px;font-weight:700;margin:12px 0 4px}
+.exp-bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px}
+.exp-bar{height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+.exp-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--pink),var(--purple));transition:width .5s ease}
+
+/* CREATURES GRID */
+.cre-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.cre-cell{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 8px;
+  text-align:center;cursor:pointer;transition:border-color .2s,transform .1s}
+.cre-cell:active{transform:scale(.95)}
+.cre-cell.unlocked{border-color:rgba(255,107,157,.25)}
+.cre-cell.locked{opacity:.4;filter:grayscale(1);cursor:default}
+.cre-cell.active-pet{border-color:var(--pink)!important;background:rgba(255,107,157,.1)}
+.cre-emoji{font-size:36px;display:block;margin-bottom:6px}
+.cre-name{font-size:11px;color:var(--muted)}
+.cre-cell.unlocked .cre-name{color:var(--text)}
+
+/* BAG */
+.items-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.item-cell{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px 6px;text-align:center;cursor:pointer;transition:transform .1s;position:relative}
+.item-cell:active{transform:scale(.95)}
+.item-emoji{font-size:30px;display:block;margin-bottom:4px}
+.item-name{font-size:11px;color:var(--muted)}
+.item-cnt{position:absolute;top:5px;right:5px;background:var(--pink);color:white;
+  font-size:10px;font-weight:700;border-radius:8px;padding:1px 5px;min-width:18px;text-align:center}
+
+/* HISTORY */
+.hist-entry{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px 14px;margin-bottom:8px}
+.hist-ex{font-size:13px;color:var(--muted);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.hist-ex:last-child{border-bottom:none}
+
+/* REWARD MODAL */
+#reward-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(13,13,26,.92);
+  z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
+#reward-modal.on{display:flex}
+.reward-box{background:linear-gradient(135deg,rgba(255,107,157,.12),rgba(180,77,255,.12));
+  border:1px solid rgba(255,107,157,.3);border-radius:24px;padding:28px 22px;text-align:center;
+  width:100%;max-width:340px;animation:pop .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.reward-title{font-size:24px;font-weight:800;margin-bottom:6px}
+.reward-items{display:flex;justify-content:center;gap:14px;margin:16px 0;flex-wrap:wrap}
+.reward-item{text-align:center}
+.reward-item-emoji{font-size:42px;display:block;margin-bottom:4px}
+.reward-item-cnt{font-size:13px;color:var(--pink);font-weight:700}
+.reward-item-name{font-size:11px;color:var(--muted)}
+.unlock-emoji{font-size:72px;display:block;margin:8px 0;
+  animation:bob 1.5s ease-in-out infinite;filter:drop-shadow(0 0 20px rgba(255,200,0,.6))}
+
+/* TOAST */
+#toast{position:fixed;bottom:calc(80px + var(--safe-bottom));left:50%;
+  transform:translateX(-50%) translateY(80px);background:rgba(25,25,45,.97);
+  border:1px solid var(--border);border-radius:12px;padding:11px 20px;font-size:14px;
+  font-weight:600;z-index:400;transition:transform .3s;white-space:nowrap;max-width:90vw}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* SPARKLES */
+.sparkle-wrap{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:350;overflow:hidden}
+.sp{position:absolute;width:8px;height:8px;border-radius:50%;animation:fall 1.5s ease-out forwards}
+@keyframes fall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(360deg);opacity:0}}
+
+/* ═══════════════════════════════════
+   ONBOARDING
+   ═══════════════════════════════════ */
+#onboarding{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);
+  z-index:500;display:flex;flex-direction:column;max-width:480px;margin:0 auto;
+  overflow-y:auto;-webkit-overflow-scrolling:touch}
+#onboarding.hidden{display:none}
+
+.ob-step{display:none;flex-direction:column;min-height:100vh;padding:0 0 40px}
+.ob-step.active{display:flex}
+
+/* Progress dots */
+.ob-progress{display:flex;gap:6px;justify-content:center;padding:20px 0 0}
+.ob-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .3s}
+.ob-dot.done{background:var(--pink)}
+.ob-dot.current{background:var(--pink);width:22px;border-radius:4px}
+
+/* Welcome step */
+.ob-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 24px;text-align:center;gap:20px}
+.ob-logo{font-size:80px;animation:bob 2s ease-in-out infinite;
+  filter:drop-shadow(0 0 24px rgba(255,107,157,.5))}
+.ob-title{font-size:32px;font-weight:900;line-height:1.2;
+  background:linear-gradient(135deg,var(--pink),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ob-sub{font-size:15px;color:var(--muted);line-height:1.6;max-width:280px}
+
+/* Form step */
+.ob-form{flex:1;padding:16px 24px;display:flex;flex-direction:column;gap:0}
+.ob-form-title{font-size:22px;font-weight:800;margin-bottom:6px}
+.ob-form-sub{font-size:14px;color:var(--muted);margin-bottom:24px}
+.ob-label{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:8px;display:block;text-transform:uppercase;letter-spacing:.04em}
+.ob-input{width:100%;background:rgba(255,255,255,.08);border:1.5px solid var(--border);border-radius:12px;
+  padding:14px 16px;color:var(--text);font-size:16px;margin-bottom:20px}
+.ob-input:focus{outline:none;border-color:var(--pink)}
+.ob-input::placeholder{color:var(--muted)}
+
+/* Day picker */
+.days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:20px}
+.day-btn{padding:10px 4px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;
+  color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s}
+.day-btn.on{background:rgba(255,107,157,.15);border-color:var(--pink);color:var(--pink)}
+
+/* Chip multi-select */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{padding:8px 14px;background:var(--card);border:1.5px solid var(--border);border-radius:20px;
+  color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;user-select:none}
+.chip.on{background:rgba(255,107,157,.15);border-color:var(--pink);color:var(--pink)}
+.chip-add-row{display:flex;gap:8px;margin-top:4px}
+.chip-add-input{flex:1;background:rgba(255,255,255,.08);border:1.5px solid var(--border);
+  border-radius:10px;padding:9px 12px;color:var(--text);font-size:13px}
+.chip-add-input:focus{outline:none;border-color:var(--pink)}
+.chip-add-btn{padding:9px 14px;background:rgba(255,107,157,.15);border:1.5px solid var(--pink);
+  border-radius:10px;color:var(--pink);font-size:13px;font-weight:700;cursor:pointer}
+
+/* Parts order list */
+.parts-order{margin-bottom:16px}
+.part-tag{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;
+  background:rgba(180,77,255,.15);border:1.5px solid rgba(180,77,255,.4);border-radius:20px;
+  color:#C87AFF;font-size:13px;font-weight:600;margin:0 6px 6px 0;cursor:default}
+.part-tag .rm{cursor:pointer;font-size:16px;color:rgba(255,255,255,.4);line-height:1;
+  transition:color .2s;padding:0 0 0 2px}
+.part-tag .rm:hover{color:var(--pink)}
+
+/* Import step */
+.import-opt{background:var(--card);border:1.5px solid var(--border);border-radius:14px;
+  padding:16px;margin-bottom:10px;cursor:pointer;transition:border-color .2s,background .2s;
+  display:flex;align-items:center;gap:14px}
+.import-opt:hover{border-color:var(--pink);background:rgba(255,107,157,.06)}
+.import-opt.selected{border-color:var(--pink);background:rgba(255,107,157,.1)}
+.import-opt-icon{font-size:32px;flex-shrink:0}
+.import-opt-title{font-size:15px;font-weight:700;margin-bottom:2px}
+.import-opt-sub{font-size:12px;color:var(--muted)}
+
+/* Step footer */
+.ob-footer{padding:16px 24px;display:flex;flex-direction:column;gap:10px}
+
+/* Done screen */
+.ob-done{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 24px;text-align:center;gap:16px}
+.summary-row{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--card);border-radius:10px;width:100%;font-size:14px}
+.summary-icon{font-size:22px}
+
+/* ── misc ── */
+hr{border:none;border-top:1px solid var(--border);margin:14px 0}
+.section-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 10px}
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+input[type="number"]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none}
+#csv-input,#game-import-input{display:none}
+.progress-bar-wrap{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.progress-bar-outer{flex:1;height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+.progress-bar-inner{height:100%;border-radius:3px;transition:width .3s}
+/* ═══════════════════════════════════
+   LOADING SCREEN
+   ═══════════════════════════════════ */
+#loading{
+  display:none; /* no async loading needed — localStorage is instant */
+}
+#loading.fade-out{opacity:0;visibility:hidden}
+
+#ld-inner{
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  text-align:center;
+}
+
+/* Egg wrap */
+#ld-egg-wrap{position:relative;width:120px;height:120px;display:flex;align-items:center;justify-content:center}
+
+#ld-egg{
+  font-size:80px;line-height:1;position:relative;z-index:2;
+  animation: eggPhase1 1.2s ease-in-out 0.3s both,
+             eggPhase2 0.6s ease-in-out 1.5s both,
+             eggBurst  0.3s ease-in     2.1s both forwards;
+  display:block;
+}
+
+/* Phase 1: gentle wobble */
+@keyframes eggPhase1{
+  0%   {transform:rotate(0deg) scale(0.8);opacity:0}
+  10%  {transform:rotate(0deg) scale(1);opacity:1}
+  25%  {transform:rotate(-12deg) scale(1.05)}
+  50%  {transform:rotate(12deg) scale(1.05)}
+  75%  {transform:rotate(-8deg) scale(1)}
+  100% {transform:rotate(0deg) scale(1)}
+}
+
+/* Phase 2: intense shake — something's coming out! */
+@keyframes eggPhase2{
+  0%   {transform:rotate(0deg) translateX(0)}
+  10%  {transform:rotate(-15deg) translateX(-6px)}
+  20%  {transform:rotate(15deg) translateX(6px)}
+  30%  {transform:rotate(-12deg) translateX(-5px)}
+  40%  {transform:rotate(12deg) translateX(5px)}
+  50%  {transform:rotate(-10deg) translateX(-4px)}
+  60%  {transform:rotate(10deg) translateX(4px)}
+  70%  {transform:rotate(-8deg) translateX(-3px)}
+  80%  {transform:rotate(8deg) translateX(3px)}
+  90%  {transform:rotate(-5deg) translateX(-2px)}
+  100% {transform:rotate(0deg) translateX(0) scale(1.1)}
+}
+
+/* Phase 3: burst — egg explodes */
+@keyframes eggBurst{
+  0%   {transform:scale(1.1);opacity:1}
+  40%  {transform:scale(1.6);opacity:.5;filter:brightness(3)}
+  100% {transform:scale(0);opacity:0}
+}
+
+/* Crack lines that appear during phase 2 */
+#ld-cracks{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  pointer-events:none;z-index:3;
+  opacity:0;
+  animation:cracksAppear .1s ease 1.5s forwards;
+}
+@keyframes cracksAppear{to{opacity:1}}
+
+.crack{
+  position:absolute;background:rgba(255,200,100,.9);
+  border-radius:2px;transform-origin:bottom center;
+}
+.crack1{width:2px;height:22px;top:18px;left:56px;transform:rotate(10deg);
+  animation:crackGrow .5s ease 1.55s both}
+.crack2{width:2px;height:16px;top:22px;left:66px;transform:rotate(-25deg);
+  animation:crackGrow .4s ease 1.7s both}
+.crack3{width:2px;height:12px;top:30px;left:50px;transform:rotate(20deg);
+  animation:crackGrow .3s ease 1.85s both}
+
+@keyframes crackGrow{
+  from{transform:rotate(var(--r,0deg)) scaleY(0)}
+  to{transform:rotate(var(--r,0deg)) scaleY(1)}
+}
+
+/* Burst flash */
+#ld-burst{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(0);
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,220,100,.9) 0%,rgba(255,107,157,.6) 40%,transparent 70%);
+  opacity:0;z-index:1;
+  animation:burstFlash .4s ease 2.1s forwards;
+}
+@keyframes burstFlash{
+  0%  {transform:translate(-50%,-50%) scale(0);opacity:0}
+  40% {transform:translate(-50%,-50%) scale(1);opacity:1}
+  100%{transform:translate(-50%,-50%) scale(2.5);opacity:0}
+}
+
+/* Hatch — 🐣 pops out */
+#ld-hatch{
+  font-size:72px;line-height:1;
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(0) rotate(-20deg);
+  opacity:0;z-index:4;
+  animation:hatchPop .5s cubic-bezier(.34,1.56,.64,1) 2.2s forwards;
+  filter:drop-shadow(0 0 20px rgba(255,200,0,.8));
+}
+@keyframes hatchPop{
+  0%  {transform:translate(-50%,-50%) scale(0) rotate(-20deg);opacity:0}
+  60% {transform:translate(-50%,-50%) scale(1.2) rotate(8deg);opacity:1}
+  100%{transform:translate(-50%,-50%) scale(1) rotate(0deg);opacity:1}
+}
+
+/* Title */
+#ld-title{
+  font-size:28px;font-weight:900;
+  background:linear-gradient(135deg,var(--pink),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  opacity:0;animation:ldFadeUp .5s ease 2.4s forwards;
+}
+#ld-sub{
+  font-size:14px;color:var(--muted);margin-top:-8px;
+  opacity:0;animation:ldFadeUp .5s ease 2.6s forwards;
+}
+@keyframes ldFadeUp{
+  from{transform:translateY(10px);opacity:0}
+  to{transform:translateY(0);opacity:1}
+}
+
+/* Loading dots */
+#ld-dots-wrap{display:flex;gap:6px;margin-top:4px;opacity:0;animation:ldFadeUp .3s ease 2.7s forwards}
+.ld-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--pink);
+  animation:ldDotBounce 1s ease-in-out infinite;
+}
+.ld-dot:nth-child(2){animation-delay:.15s;background:var(--purple)}
+.ld-dot:nth-child(3){animation-delay:.3s;background:var(--gold)}
+@keyframes ldDotBounce{
+  0%,100%{transform:translateY(0);opacity:.4}
+  50%{transform:translateY(-6px);opacity:1}
+}
+
+select.ob-input{appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(240,240,255,0.5)' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ONBOARDING WIZARD
+     ═══════════════════════════════════════════════════════════ -->
+<div id="onboarding">
+
+  <!-- LOADING SCREEN -->
+  <div id="loading">
+    <div id="ld-inner">
+      <div id="ld-egg-wrap">
+        <div id="ld-egg">🥚</div>
+        <div id="ld-cracks">
+          <div class="crack crack1"></div>
+          <div class="crack crack2"></div>
+          <div class="crack crack3"></div>
+        </div>
+        <div id="ld-hatch">🐣</div>
+        <div id="ld-burst"></div>
+      </div>
+      <div id="ld-title">GymDex</div>
+      <div id="ld-sub">健身打卡 × 养神兽</div>
+      <div id="ld-dots-wrap"><span class="ld-dot"></span><span class="ld-dot"></span><span class="ld-dot"></span></div>
+    </div>
+  </div>
+
+  <!-- Step 0: Welcome -->
+  <div class="ob-step active" id="ob0">
+    <div class="ob-progress" id="ob-dots"></div>
+    <div class="ob-hero">
+      <span class="ob-logo">🏋️</span>
+      <div class="ob-title">GymDex</div>
+      <div class="ob-sub">健身打卡 × 养神兽<br>边练边玩，解锁传说生物</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">已有账号？数据保存在本设备</div>
+    </div>
+    <div class="ob-footer">
+      <button class="btn btn-primary" onclick="obNext()">开始设置 →</button>
+      <button class="btn btn-ghost" onclick="obSkipIfExisting()">我已经设置过了，直接进入</button>
+    </div>
+  </div>
+
+  <!-- Step 1: Name -->
+  <div class="ob-step" id="ob1">
+    <div class="ob-progress" id="ob-dots1"></div>
+    <div class="ob-form" style="padding-top:32px">
+      <div class="ob-form-title">👋 你叫什么名字？</div>
+      <div class="ob-form-sub">我会一直叫你这个名字 💪</div>
+      <label class="ob-label">昵称</label>
+      <input class="ob-input" id="ob-name" type="text" placeholder="例如：Anna" maxlength="20"
+        onkeydown="if(event.key==='Enter')obNext()">
+
+      <label class="ob-label">你的健身目标（可多选）</label>
+      <div class="chips" id="goal-chips">
+        <div class="chip" onclick="toggleChip(this,'练出蜜桃臀')">🍑 练出蜜桃臀</div>
+        <div class="chip" onclick="toggleChip(this,'增肌')">💪 增肌</div>
+        <div class="chip" onclick="toggleChip(this,'减脂')">🔥 减脂</div>
+        <div class="chip" onclick="toggleChip(this,'塑形')">✨ 塑形</div>
+        <div class="chip" onclick="toggleChip(this,'提高力量')">⚡ 提高力量</div>
+        <div class="chip" onclick="toggleChip(this,'增强耐力')">🏃 增强耐力</div>
+        <div class="chip" onclick="toggleChip(this,'综合健身')">🌟 综合健身</div>
+      </div>
+    </div>
+    <div class="ob-footer">
+      <button class="btn btn-primary" onclick="obNext()">继续 →</button>
+      <button class="btn btn-ghost btn-small" onclick="obBack()">← 返回</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Training days + parts -->
+  <div class="ob-step" id="ob2">
+    <div class="ob-form" style="padding-top:32px;flex:1">
+      <div class="ob-form-title">🗓 训练安排</div>
+      <div class="ob-form-sub">你一般哪几天去健身房？</div>
+
+      <label class="ob-label">训练日</label>
+      <div class="days-grid">
+        <div class="day-btn" onclick="toggleDay(this,'1')">周一</div>
+        <div class="day-btn" onclick="toggleDay(this,'2')">周二</div>
+        <div class="day-btn" onclick="toggleDay(this,'3')">周三</div>
+        <div class="day-btn" onclick="toggleDay(this,'4')">周四</div>
+        <div class="day-btn" onclick="toggleDay(this,'5')">周五</div>
+        <div class="day-btn" onclick="toggleDay(this,'6')">周六</div>
+        <div class="day-btn" onclick="toggleDay(this,'0')">周日</div>
+      </div>
+
+      <label class="ob-label">训练部位 / 日程（按训练顺序点选）</label>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">点击顺序 = 循环顺序。选完后下方会显示你的安排。</div>
+      <div class="chips" id="part-chips">
+        <div class="chip" onclick="togglePart(this,'臀A')">🍑 臀A</div>
+        <div class="chip" onclick="togglePart(this,'臀B')">🔥 臀B</div>
+        <div class="chip" onclick="togglePart(this,'背')">🐲 背</div>
+        <div class="chip" onclick="togglePart(this,'肩')">⚡ 肩</div>
+        <div class="chip" onclick="togglePart(this,'胸')">🦁 胸</div>
+        <div class="chip" onclick="togglePart(this,'腿')">🦵 腿</div>
+        <div class="chip" onclick="togglePart(this,'腹')">🔲 腹</div>
+        <div class="chip" onclick="togglePart(this,'手臂')">💪 手臂</div>
+        <div class="chip" onclick="togglePart(this,'全身')">⭐ 全身</div>
+      </div>
+      <div class="chip-add-row" style="margin-bottom:16px">
+        <input class="chip-add-input" id="part-custom" placeholder="自定义部位…"
+          onkeydown="if(event.key==='Enter')addCustomPart()">
+        <button class="chip-add-btn" onclick="addCustomPart()">+ 加</button>
+      </div>
+
+      <label class="ob-label">你的训练循环顺序</label>
+      <div class="parts-order" id="parts-order-display">
+        <span style="font-size:13px;color:var(--muted)">（从上方选择部位后在这里显示）</span>
+      </div>
+    </div>
+    <div class="ob-footer">
+      <button class="btn btn-primary" onclick="obNext()">继续 →</button>
+      <button class="btn btn-ghost btn-small" onclick="obBack()">← 返回</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Import workout data -->
+  <div class="ob-step" id="ob3">
+    <div class="ob-form" style="padding-top:32px;flex:1">
+      <div class="ob-form-title">📊 导入训练数据</div>
+      <div class="ob-form-sub">有之前的训练记录吗？可以现在导入，也可以从零开始。</div>
+
+      <div class="import-opt selected" id="iopt-skip" onclick="selectImportOpt('skip')">
+        <span class="import-opt-icon">🆕</span>
+        <div>
+          <div class="import-opt-title">全新开始</div>
+          <div class="import-opt-sub">没有历史数据，从今天开始记录</div>
+        </div>
+      </div>
+
+      <div class="import-opt" id="iopt-csv" onclick="selectImportOpt('csv')">
+        <span class="import-opt-icon">📂</span>
+        <div>
+          <div class="import-opt-title">导入 CSV 训练记录</div>
+          <div class="import-opt-sub">支持标准格式：日期, 类型, 动作, 重量, 组数</div>
+        </div>
+      </div>
+
+      <div id="csv-upload-area" style="display:none;padding:12px 0">
+        <button class="btn btn-secondary" onclick="document.getElementById('csv-input').click()" style="width:auto">
+          📂 选择 CSV 文件
+        </button>
+        <div id="csv-status" style="font-size:13px;color:var(--muted);margin-top:8px"></div>
+      </div>
+
+      <div class="import-opt" id="iopt-manual" onclick="selectImportOpt('manual')">
+        <span class="import-opt-icon">✍️</span>
+        <div>
+          <div class="import-opt-title">之后手动录入</div>
+          <div class="import-opt-sub">进入App后从训练记录页面添加</div>
+        </div>
+      </div>
+    </div>
+    <div class="ob-footer">
+      <button class="btn btn-primary" onclick="obNext()">继续 →</button>
+      <button class="btn btn-ghost btn-small" onclick="obBack()">← 返回</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Import game data -->
+  <div class="ob-step" id="ob4">
+    <div class="ob-form" style="padding-top:32px;flex:1">
+      <div class="ob-form-title">🎮 游戏存档</div>
+      <div class="ob-form-sub">有之前的宠物和道具数据吗？可以单独导入，和训练记录互不影响。</div>
+
+      <div class="import-opt selected" id="gopt-new" onclick="selectGameOpt('new')">
+        <span class="import-opt-icon">🥚</span>
+        <div>
+          <div class="import-opt-title">全新开始</div>
+          <div class="import-opt-sub">从零收集神兽，解锁新旅程</div>
+        </div>
+      </div>
+
+      <div class="import-opt" id="gopt-import" onclick="selectGameOpt('import')">
+        <span class="import-opt-icon">💾</span>
+        <div>
+          <div class="import-opt-title">导入游戏存档 (JSON)</div>
+          <div class="import-opt-sub">恢复你的宠物、道具和进度</div>
+        </div>
+      </div>
+
+      <div id="game-upload-area" style="display:none;padding:12px 0">
+        <button class="btn btn-secondary" onclick="document.getElementById('game-import-input').click()" style="width:auto">
+          💾 选择存档文件
+        </button>
+        <div id="game-status" style="font-size:13px;color:var(--muted);margin-top:8px"></div>
+      </div>
+
+      <div style="margin-top:24px;padding:14px;background:rgba(255,200,0,.06);
+        border:1px solid rgba(255,200,0,.2);border-radius:12px;font-size:13px;color:var(--muted)">
+        💡 训练记录 CSV 和游戏存档 JSON 是两个独立文件，可以分别导出/导入。
+      </div>
+    </div>
+    <div class="ob-footer">
+      <button class="btn btn-primary" onclick="obNext()">继续 →</button>
+      <button class="btn btn-ghost btn-small" onclick="obBack()">← 返回</button>
+    </div>
+  </div>
+
+  <!-- Step 5: Done -->
+  <div class="ob-step" id="ob5">
+    <div class="ob-done">
+      <div style="font-size:72px;animation:bob 2s ease-in-out infinite;
+        filter:drop-shadow(0 0 20px rgba(255,107,157,.5))">🥚</div>
+      <div class="ob-title" style="font-size:26px" id="ob-done-title">设置完成！</div>
+      <div style="font-size:14px;color:var(--muted)">你的第一只神兽在等你！💪</div>
+
+      <div style="width:100%;display:flex;flex-direction:column;gap:8px;margin-top:8px" id="ob-summary"></div>
+
+      <div style="font-size:13px;color:var(--muted);text-align:center;padding:0 20px">
+        开始打卡就能解锁更多神兽，连续签到还有超稀有掉落哦！
+      </div>
+    </div>
+    <div class="ob-footer">
+      <button class="btn btn-primary" onclick="finishOnboarding()" style="font-size:17px;padding:16px">
+        开始健身！🚀
+      </button>
+    </div>
+  </div>
+
+</div><!-- /onboarding -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN APP
+     ═══════════════════════════════════════════════════════════ -->
+<div id="app" style="display:none">
+  <div id="content">
+    <div class="screen active" id="screen-workout">
+      <div class="screen-header">
+        <div class="screen-title" id="workout-title">今天训练 💪</div>
+        <div id="today-label" style="font-size:13px;color:var(--muted)"></div>
+      </div>
+      <div id="workout-content"></div>
+    </div>
+
+    <div class="screen" id="screen-pet">
+      <div class="screen-header">
+        <div class="screen-title">神兽图鉴 ✨</div>
+      </div>
+      <div id="pet-content"></div>
+    </div>
+
+    <div class="screen" id="screen-bag">
+      <div class="screen-header">
+        <div class="screen-title">背包 🎒</div>
+      </div>
+      <div id="bag-content"></div>
+    </div>
+
+    <div class="screen" id="screen-history">
+      <div class="screen-header">
+        <div class="screen-title">训练记录 📊</div>
+        <button class="btn btn-ghost btn-small" onclick="showSettings()" style="font-size:12px">⚙️ 设置</button>
+      </div>
+      <div id="history-content"></div>
+    </div>
+  </div>
+
+  <nav id="nav">
+    <button class="nav-btn active" onclick="switchScreen('workout')">
+      <span class="nav-icon">🏋️</span><span>训练</span>
+    </button>
+    <button class="nav-btn" onclick="switchScreen('pet')">
+      <span class="nav-icon">🐉</span><span>神兽</span>
+    </button>
+    <button class="nav-btn" onclick="switchScreen('bag')">
+      <span class="nav-icon">🎒</span><span>背包</span>
+    </button>
+    <button class="nav-btn" onclick="switchScreen('history')">
+      <span class="nav-icon">📊</span><span>记录</span>
+    </button>
+  </nav>
+</div>
+
+<!-- REST TIMER -->
+<div id="rest-overlay">
+  <div class="timer-label">💤 组间休息</div>
+  <div id="timer-wrap">
+    <svg id="timer-svg" viewBox="0 0 200 200">
+      <defs>
+        <linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#FF6B9D"/>
+          <stop offset="100%" style="stop-color:#B44DFF"/>
+        </linearGradient>
+      </defs>
+      <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="8"/>
+      <circle id="timer-arc" cx="100" cy="100" r="90" fill="none" stroke="url(#tg)" stroke-width="8" stroke-linecap="round"/>
+    </svg>
+    <div id="timer-count">60</div>
+  </div>
+  <div class="timer-hint" id="timer-hint">下一组加油！</div>
+  <div class="timer-btns">
+    <button class="btn btn-ghost btn-small" onclick="addTime(30)">+30秒</button>
+    <button class="btn btn-secondary btn-small" onclick="skipTimer()">跳过休息</button>
+  </div>
+</div>
+
+<!-- REWARD MODAL -->
+<div id="reward-modal">
+  <div class="reward-box">
+    <div id="reward-content"></div>
+    <button class="btn btn-primary" onclick="closeReward()" style="margin-top:18px">收下啦 🎉</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div class="sparkle-wrap" id="sparkles"></div>
+
+<input type="file" id="csv-input" accept=".csv" onchange="handleCsvImport(event)">
+<input type="file" id="game-import-input" accept=".json" onchange="handleGameImport(event)">
+
+<script>
+// ══════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════
+
+const DEFAULT_ROTATION = ['臀A','肩','臀B','背'];
+
+const PRESET_EXERCISES = {
+  '臀A':[
+    {name:'臀推',       sets:4,reps:'8-12', unit:'lbs'},
+    {name:'哑铃RDL',    sets:3,reps:'10-12',unit:'lbs/手'},
+    {name:'保加利亚深蹲',sets:3,reps:'10-12',unit:'lbs'},
+    {name:'髋外展',     sets:3,reps:'15',   unit:'lbs'},
+  ],
+  '臀B':[
+    {name:'绳索后踢',   sets:3,reps:'12-15',unit:'lbs'},
+    {name:'绳索侧踢',   sets:3,reps:'12-15',unit:'lbs'},
+    {name:'山羊挺身',   sets:3,reps:'10-12',unit:'lbs'},
+    {name:'坐姿早安',   sets:3,reps:'12',   unit:'lbs'},
+  ],
+  '背':[
+    {name:'辅助引体向上',sets:3,reps:'8-10',unit:'lbs'},
+    {name:'高位宽距下拉',sets:3,reps:'8-12',unit:'lbs'},
+    {name:'中距下拉',   sets:3,reps:'10-12',unit:'lbs'},
+    {name:'坐姿划船',   sets:3,reps:'10-12',unit:'lbs'},
+    {name:'直臂下压',   sets:3,reps:'12-15',unit:'lbs'},
+    {name:'面拉',       sets:3,reps:'15',   unit:'lbs'},
+  ],
+  '肩':[
+    {name:'肩推',       sets:4,reps:'8-12', unit:'lbs'},
+    {name:'侧平举',     sets:3,reps:'12-15',unit:'lbs'},
+    {name:'绳索侧平举', sets:3,reps:'12-15',unit:'lbs'},
+    {name:'面拉',       sets:3,reps:'15',   unit:'lbs'},
+    {name:'蝴蝶机',     sets:3,reps:'12',   unit:'lbs'},
+  ],
+  '胸':[
+    {name:'卧推',       sets:4,reps:'8-10', unit:'lbs'},
+    {name:'上斜哑铃推', sets:3,reps:'10-12',unit:'lbs/手'},
+    {name:'夹胸飞鸟',   sets:3,reps:'12-15',unit:'lbs'},
+  ],
+  '腿':[
+    {name:'深蹲',       sets:4,reps:'8-10', unit:'lbs'},
+    {name:'腿举',       sets:3,reps:'12-15',unit:'lbs'},
+    {name:'腿弯举',     sets:3,reps:'12',   unit:'lbs'},
+    {name:'小腿提踵',   sets:3,reps:'15-20',unit:'lbs'},
+  ],
+  '腹':[
+    {name:'卷腹',       sets:3,reps:'15-20',unit:'BW'},
+    {name:'平板支撑',   sets:3,reps:'30-60s',unit:'BW'},
+    {name:'腿举',       sets:3,reps:'15',   unit:'BW'},
+  ],
+  '手臂':[
+    {name:'二头弯举',   sets:3,reps:'10-12',unit:'lbs'},
+    {name:'锤式弯举',   sets:3,reps:'10-12',unit:'lbs'},
+    {name:'三头下压',   sets:3,reps:'12-15',unit:'lbs'},
+  ],
+  '全身':[
+    {name:'深蹲',       sets:3,reps:'10',   unit:'lbs'},
+    {name:'硬拉',       sets:3,reps:'8',    unit:'lbs'},
+    {name:'哑铃推举',   sets:3,reps:'10-12',unit:'lbs'},
+    {name:'划船',       sets:3,reps:'10',   unit:'lbs'},
+  ],
+};
+
+const COLORS = {
+  '臀A':'#FF6B9D','肩':'#B44DFF','臀B':'#FF8C42','背':'#4DA6FF',
+  '胸':'#FF6B6B','腿':'#4DCC78','腹':'#FFD700','手臂':'#FF8C42','全身':'#7AB0FF',
+};
+const EMOJI_MAP = {
+  '臀A':'🍑','肩':'⚡','臀B':'🔥','背':'🐲','胸':'🦁','腿':'🦵','腹':'🔲','手臂':'💪','全身':'⭐',
+};
+function partColor(p){return COLORS[p]||'#FF6B9D'}
+function partEmoji(p){return EMOJI_MAP[p]||'💪'}
+
+// ── Items ──────────────────────────────────
+// exp: experience given when fed  attr: element tag  attrVal: element points given
+// special:true → evolution item, NOT feedable
+const ITEMS = {
+  peach:         {emoji:'🍑',name:'蜜桃',      rarity:'common',    exp:10,  attr:null,   attrVal:0,  special:false},
+  protein:       {emoji:'🥩',name:'蛋白棒',    rarity:'common',    exp:25,  attr:null,   attrVal:0,  special:false},
+  stardust:      {emoji:'⭐',name:'星尘',       rarity:'rare',      exp:50,  attr:null,   attrVal:0,  special:false},
+  rainbow_gem:   {emoji:'💎',name:'彩晶',       rarity:'epic',      exp:100, attr:null,   attrVal:0,  special:false},
+  fire_seed:     {emoji:'🔥',name:'火焰种',     rarity:'rare',      exp:0,   attr:'fire',  attrVal:30, special:false},
+  dewdrop:       {emoji:'💧',name:'清泉露',     rarity:'rare',      exp:0,   attr:'water', attrVal:20, special:false},
+  earth_crystal: {emoji:'🪨',name:'大地晶',     rarity:'rare',      exp:0,   attr:'earth', attrVal:25, special:false},
+  wind_feather:  {emoji:'🌪️',name:'风之羽',    rarity:'rare',      exp:0,   attr:'wind',  attrVal:25, special:false},
+  lava_fruit:    {emoji:'🍎',name:'熔岩果',     rarity:'epic',      exp:15,  attr:'fire',  attrVal:15, special:false},
+  ocean_pearl:   {emoji:'🦪',name:'深海珠',     rarity:'epic',      exp:15,  attr:'water', attrVal:15, special:false},
+  // Special evolution items — earned via achievements, not random drops
+  ginseng:       {emoji:'🌿',name:'千年人参',   rarity:'epic',      exp:0,   attr:null,   attrVal:0,  special:true, how:'完成10次臀A训练'},
+  power_pill:    {emoji:'💊',name:'大力丸',     rarity:'epic',      exp:0,   attr:null,   attrVal:0,  special:true, how:'肩部训练重量连续两次增加'},
+  phoenix_feather:{emoji:'🪶',name:'凤凰尾羽', rarity:'legendary', exp:0,   attr:null,   attrVal:0,  special:true, how:'连续打卡7天'},
+  ancient_scale: {emoji:'🐉',name:'远古龙鳞',  rarity:'legendary', exp:0,   attr:null,   attrVal:0,  special:true, how:'累计完成50次训练'},
+};
+
+const REWARD_POOL = {
+  '臀A':[['peach',.9],['protein',.6],['stardust',.12],['fire_seed',.2],['earth_crystal',.18],['lava_fruit',.06]],
+  '臀B':[['peach',.8],['protein',.6],['stardust',.12],['earth_crystal',.28],['wind_feather',.1]],
+  '背': [['protein',.9],['stardust',.18],['earth_crystal',.2],['rainbow_gem',.08],['ocean_pearl',.1]],
+  '肩': [['protein',.8],['stardust',.18],['wind_feather',.28],['fire_seed',.1]],
+  _default:[['peach',.8],['protein',.5],['stardust',.15],['fire_seed',.08],['dewdrop',.08]],
+};
+
+const RARITY_COLOR={common:'#aaa',rare:'#7AB0FF',epic:'#C87AFF',legendary:'#FFD700'};
+const RARITY_NAME ={common:'普通',rare:'稀有',epic:'史诗',legendary:'传说'};
+const ATTR_COLOR  ={fire:'#FF6B35',water:'#4DA6FF',earth:'#8BC34A',wind:'#B39DDB'};
+const ATTR_EMOJI  ={fire:'🔥',water:'💧',earth:'🪨',wind:'🌪️'};
+
+// ── Eggs ───────────────────────────────────
+const EGG_DATA={
+  common: {emoji:'🥚',  name:'普通蛋',rarity:'common',    needed:3},
+  silver: {emoji:'🪺',  name:'银蛋',  rarity:'rare',      needed:5},
+  gold:   {emoji:'✨🥚',name:'金蛋',  rarity:'epic',      needed:8},
+  rainbow:{emoji:'🌈🥚',name:'彩虹蛋',rarity:'legendary', needed:12},
+};
+const EGG_POOLS={
+  common: ['egg_spirit','leaf_bunny','flame_cat'],
+  silver: ['water_fox','wind_wolf','earth_turtle'],
+  gold:   ['earth_dragon','thunder_bear'],
+  rainbow:['phoenix'],
+};
+
+// ── Creatures (3 stages each) ──────────────
+// stages[0]=幼年(just hatched)  stages[1]=青年  stages[2]=成年
+// evolve on stages[0] and stages[1] = conditions to reach next stage
+// attrs: element affinities for 1.5x exp bonus when fed matching items
+const CREATURES=[
+  {id:'egg_spirit', name:'蛋宝宝',  rarity:'common',    attr:null,
+   desc:'最初的相遇，神秘的存在',
+   stages:[
+    {stage:1,name:'幼年蛋宝',  emoji:'🥚', evolve:{exp:150}},
+    {stage:2,name:'青年蛋宝',  emoji:'🐣', evolve:{exp:300}},
+    {stage:3,name:'成年蛋宝',  emoji:'🐥'},
+  ]},
+  {id:'leaf_bunny', name:'绿叶兔',  rarity:'common',    attr:'earth',
+   desc:'喜欢在草地蹦跳的小兔',
+   stages:[
+    {stage:1,name:'幼年绿叶兔',emoji:'🐰', evolve:{exp:150}},
+    {stage:2,name:'青年绿叶兔',emoji:'🐇', evolve:{exp:300}},
+    {stage:3,name:'成年绿叶兔',emoji:'🐇🌿'},
+  ]},
+  {id:'flame_cat',  name:'火焰猫',  rarity:'common',    attr:'fire',
+   desc:'尾巴藏着小火苗',
+   stages:[
+    {stage:1,name:'幼年火猫',  emoji:'🐱', evolve:{exp:150}},
+    {stage:2,name:'青年火猫',  emoji:'😸', evolve:{exp:300}},
+    {stage:3,name:'成年火猫',  emoji:'🐯🔥'},
+  ]},
+  {id:'water_fox',  name:'水灵狐',  rarity:'rare',      attr:'water',
+   desc:'雨天总是心情特别好',
+   stages:[
+    {stage:1,name:'幼年水狐',  emoji:'🦊',   evolve:{exp:250}},
+    {stage:2,name:'青年水狐',  emoji:'🦊💧',  evolve:{exp:500, attrs:{water:80}}},
+    {stage:3,name:'成年水狐',  emoji:'🦊🌊'},
+  ]},
+  {id:'wind_wolf',  name:'疾风狼',  rarity:'rare',      attr:'wind',
+   desc:'奔跑速度超过闪电',
+   stages:[
+    {stage:1,name:'幼年风狼',  emoji:'🐺',   evolve:{exp:250}},
+    {stage:2,name:'青年风狼',  emoji:'🐺💨',  evolve:{exp:500, attrs:{wind:80}}},
+    {stage:3,name:'成年风狼',  emoji:'🐺⚡'},
+  ]},
+  {id:'earth_turtle',name:'土岩龟', rarity:'rare',      attr:'earth',
+   desc:'背上长着苔藓的古老神兽',
+   stages:[
+    {stage:1,name:'幼年土龟',  emoji:'🐢',   evolve:{exp:250}},
+    {stage:2,name:'青年土龟',  emoji:'🐢🪨',  evolve:{exp:500, attrs:{earth:80}}},
+    {stage:3,name:'成年土龟',  emoji:'🐢✨'},
+  ]},
+  {id:'earth_dragon',name:'土古龙', rarity:'epic',      attr:'earth',
+   desc:'大地的守护神兽',
+   stages:[
+    {stage:1,name:'幼年土龙',  emoji:'🐉',   evolve:{exp:500}},
+    {stage:2,name:'青年土龙',  emoji:'🐲',   evolve:{exp:800, attrs:{earth:66,fire:66,water:66}}},
+    {stage:3,name:'成年土龙',  emoji:'🐲🌋'},
+  ]},
+  {id:'thunder_bear',name:'雷震熊', rarity:'epic',      attr:'wind',
+   desc:'打雷的时候才是真正的自己',
+   stages:[
+    {stage:1,name:'幼年雷熊',  emoji:'🐻',   evolve:{exp:500}},
+    {stage:2,name:'青年雷熊',  emoji:'🐻⚡',  evolve:{exp:800, attrs:{wind:150}, items:{power_pill:1}}},
+    {stage:3,name:'成年雷熊',  emoji:'🐻‍❄️⚡'},
+  ]},
+  {id:'phoenix',    name:'火凰',    rarity:'legendary', attr:'fire',
+   desc:'涅槃重生的传说神兽',
+   stages:[
+    {stage:1,name:'幼年火凰',  emoji:'🐦🔥', evolve:{exp:600}},
+    {stage:2,name:'青年火凰',  emoji:'🦅',   evolve:{exp:1000, attrs:{fire:200}, items:{ginseng:1,phoenix_feather:1}}},
+    {stage:3,name:'成年火凰',  emoji:'🦅🔥'},
+  ]},
+];
+
+// ── Achievements (earn special items) ──────
+const ACHIEVEMENTS=[
+  {id:'glute_10',  name:'臀力达人', emoji:'🍑',
+   desc:'完成10次臀A训练',    reward:'ginseng',
+   check:()=>S.workouts.filter(w=>w.type==='臀A').length>=10},
+  {id:'streak_7',  name:'七日不息', emoji:'🔥',
+   desc:'连续打卡7天',        reward:'phoenix_feather',
+   check:()=>S.streak>=7},
+  {id:'total_50',  name:'健身达人', emoji:'💪',
+   desc:'累计完成50次训练',   reward:'ancient_scale',
+   check:()=>S.total>=50},
+  {id:'shoulder_up',name:'力量突破',emoji:'💊',
+   desc:'肩推重量连续两次增加',reward:'power_pill',
+   check:()=>checkShoulderProgress()},
+];
+
+const CIRC = 2 * Math.PI * 90;
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+
+const DEFAULT_PROFILE = {
+  name: '',
+  days: [],          // [0-6] sun=0
+  parts: [],         // ordered workout parts / rotation
+  goals: [],
+};
+
+let S = {
+  onboarded: false,
+  profile: {...DEFAULT_PROFILE},
+  workouts: [],
+  total: 0,
+  streak: 0,
+  // Pet system v2
+  incubator: null,    // {eggRarity, trainCount, needed, firstEgg?} | null
+  hatchQueue: [],     // ['common','silver',...] eggs waiting
+  nurturing: [],      // [{petId,stage,exp,attrs:{fire,water,earth,wind}}] max 3
+  garden: [],         // [{petId,stage,exp,attrs,active,lastCollect}]
+  achievements: [],   // completed achievement ids
+  itemLog: [],        // item ids ever obtained (for compendium)
+  hatchPending: null, // petId hatched but nurturing full
+  inv: {},
+  session: null,
+};
+
+let petTab='nurturing';
+
+// Temp onboarding state
+let OB = {
+  step: 0,
+  totalSteps: 5,
+  importOption: 'skip',   // 'skip' | 'csv' | 'manual'
+  gameOption: 'new',      // 'new' | 'import'
+  csvImported: false,
+  gameImported: false,
+  selectedParts: [],      // ordered
+  selectedDays: [],
+  selectedGoals: [],
+};
+
+function load(){
+  try{
+    const d3=localStorage.getItem('gd3');
+    if(d3){
+      S=Object.assign({},S,JSON.parse(d3));
+    } else {
+      // Migrate from older key gd2
+      const d2=localStorage.getItem('gd2');
+      if(d2){
+        S=Object.assign({},S,JSON.parse(d2));
+        // Auto-mark as onboarded with Anna defaults if has existing data
+        if(!S.onboarded){
+          S.onboarded=true;
+          S.profile={name:'Anna',days:['1','2','3','4','5'],
+            parts:['臀A','肩','臀B','背'],goals:['练出蜜桃臀','塑形']};
+        }
+        save(); // write to gd3
+      }
+    }
+  }catch(e){}
+  // Migrate old pet system (v1 had activePet/petData/unlocked)
+  if(S.petData&&!S.nurturing){
+    S.nurturing=[];S.garden=[];S.achievements=[];S.itemLog=[];
+    S.incubator=null;S.hatchQueue=[];S.hatchPending=null;
+    for(const oldId of(S.unlocked||[])){
+      const newId=oldId==='egg'?'egg_spirit':oldId;
+      const cr=CREATURES.find(c=>c.id===newId);if(!cr)continue;
+      const pd=S.petData[oldId]||{exp:0,level:1};
+      const stage=Math.min(pd.level,3);
+      const entry={petId:newId,stage,exp:pd.exp,attrs:{fire:0,water:0,earth:0,wind:0}};
+      if(stage===3)S.garden.push({...entry,active:true,lastCollect:null});
+      else if(S.nurturing.length<3)S.nurturing.push(entry);
+    }
+    delete S.activePet;delete S.petData;delete S.unlocked;
+  }
+  // Ensure all v2 fields exist
+  if(!S.nurturing)S.nurturing=[];
+  if(!S.garden)S.garden=[];
+  if(!S.achievements)S.achievements=[];
+  if(!S.itemLog)S.itemLog=[];
+  if(!S.hatchQueue)S.hatchQueue=[];
+  if(S.hatchPending===undefined)S.hatchPending=null;
+  // Give first egg to brand-new players
+  if(!S.incubator&&!S.nurturing.length&&!S.garden.length&&!S.hatchPending)
+    S.incubator={eggRarity:'common',trainCount:0,needed:3,firstEgg:true};
+  if(!S.profile)S.profile={...DEFAULT_PROFILE};
+}
+function save(){localStorage.setItem('gd3',JSON.stringify(S))}
+
+// ══════════════════════════════════════════
+// ONBOARDING
+// ══════════════════════════════════════════
+
+const TOTAL_OB_STEPS = 6; // 0..5
+
+function renderObDots(step){
+  // Update all dot containers (only one visible at a time but keep it simple)
+  document.querySelectorAll('[id^="ob-dots"]').forEach(c=>{
+    let h='';
+    for(let i=0;i<TOTAL_OB_STEPS;i++){
+      if(i===0)continue; // step 0 is welcome, no dots
+      const idx=i-1; // dots for steps 1-5
+      const cur=step-1;
+      h+=`<div class="ob-dot ${idx<cur?'done':idx===cur?'current':''}"></div>`;
+    }
+    c.innerHTML=h;
+  });
+}
+
+function obShowStep(n){
+  document.querySelectorAll('.ob-step').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('ob'+n);
+  if(el)el.classList.add('active');
+  OB.step=n;
+  renderObDots(n);
+  // scroll to top
+  document.getElementById('onboarding').scrollTop=0;
+}
+
+function obNext(){
+  // Validate current step
+  if(OB.step===1){
+    const name=document.getElementById('ob-name').value.trim();
+    if(!name){toast('输入你的名字先！');return}
+    OB.selectedGoals=[];
+    document.querySelectorAll('#goal-chips .chip.on').forEach(c=>{
+      OB.selectedGoals.push(c.dataset.val||c.textContent.trim().replace(/^[^一-龥a-zA-Z]*/,''));
+    });
+  }
+  if(OB.step===2&&OB.selectedParts.length===0){
+    toast('至少选一个训练部位！');return;
+  }
+  if(OB.step===TOTAL_OB_STEPS-1){
+    buildDoneScreen();
+  }
+  if(OB.step<TOTAL_OB_STEPS-1)obShowStep(OB.step+1);
+}
+
+function obBack(){
+  if(OB.step>0)obShowStep(OB.step-1);
+}
+
+function obSkipIfExisting(){
+  // If there's existing onboarded data, go straight to app
+  if(S.onboarded){
+    launchApp();
+  }else{
+    toast('还没有设置过，请先完成设置 😊');
+  }
+}
+
+function toggleChip(el,val){
+  el.classList.toggle('on');
+  if(!el.dataset.val)el.dataset.val=val;
+}
+
+function toggleDay(el,val){
+  el.classList.toggle('on');
+  const i=OB.selectedDays.indexOf(val);
+  if(i>=0)OB.selectedDays.splice(i,1);
+  else OB.selectedDays.push(val);
+}
+
+function togglePart(el,name){
+  if(el.classList.contains('on')){
+    el.classList.remove('on');
+    OB.selectedParts=OB.selectedParts.filter(p=>p!==name);
+  }else{
+    el.classList.add('on');
+    OB.selectedParts.push(name);
+  }
+  updatePartsOrder();
+}
+
+function addCustomPart(){
+  const inp=document.getElementById('part-custom');
+  const val=inp.value.trim();
+  if(!val)return;
+  if(OB.selectedParts.includes(val)){toast('已经加过了！');return}
+  OB.selectedParts.push(val);
+  // Add as chip
+  const chip=document.createElement('div');
+  chip.className='chip on';chip.dataset.custom='1';
+  chip.textContent='✏️ '+val;
+  chip.onclick=function(){togglePartCustom(this,val)};
+  document.getElementById('part-chips').appendChild(chip);
+  inp.value='';
+  updatePartsOrder();
+}
+
+function togglePartCustom(el,name){
+  el.classList.toggle('on');
+  const i=OB.selectedParts.indexOf(name);
+  if(i>=0)OB.selectedParts.splice(i,1);
+  else OB.selectedParts.push(name);
+  updatePartsOrder();
+}
+
+function updatePartsOrder(){
+  const el=document.getElementById('parts-order-display');
+  if(!OB.selectedParts.length){
+    el.innerHTML='<span style="font-size:13px;color:var(--muted)">（从上方选择部位后在这里显示）</span>';
+    return;
+  }
+  el.innerHTML=OB.selectedParts.map((p,i)=>
+    `<div class="part-tag">${i+1}. ${partEmoji(p)} ${p}
+      <span class="rm" onclick="removePart('${p}')">×</span>
+    </div>`
+  ).join('');
+}
+
+function removePart(name){
+  OB.selectedParts=OB.selectedParts.filter(p=>p!==name);
+  // Deselect chip if preset
+  document.querySelectorAll('#part-chips .chip').forEach(c=>{
+    if((c.dataset.val||c.textContent.replace(/^[^一-龥a-zA-Z]*/,'').trim())===name)
+      c.classList.remove('on');
+  });
+  updatePartsOrder();
+}
+
+function selectImportOpt(opt){
+  OB.importOption=opt;
+  ['skip','csv','manual'].forEach(o=>{
+    document.getElementById('iopt-'+o)?.classList.toggle('selected',o===opt);
+  });
+  document.getElementById('csv-upload-area').style.display=opt==='csv'?'block':'none';
+}
+
+function selectGameOpt(opt){
+  OB.gameOption=opt;
+  ['new','import'].forEach(o=>{
+    document.getElementById('gopt-'+o)?.classList.toggle('selected',o===opt);
+  });
+  document.getElementById('game-upload-area').style.display=opt==='import'?'block':'none';
+}
+
+function handleCsvImport(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const rows=parseCSV(ev.target.result.replace(/^﻿/,''));
+    S.workouts=rows;
+    S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
+    S.total=S.workouts.length;
+    OB.csvImported=true;
+    document.getElementById('csv-status').innerHTML=
+      `✅ 成功导入 <strong>${rows.length}</strong> 条记录`;
+    toast(`📥 已导入 ${rows.length} 条训练记录`);
+  };
+  reader.readAsText(file,'UTF-8');
+  e.target.value='';
+}
+
+function handleGameImport(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(d.nurturing)S.nurturing=d.nurturing;
+      if(d.garden)S.garden=d.garden;
+      if(d.incubator)S.incubator=d.incubator;
+      if(d.hatchQueue)S.hatchQueue=d.hatchQueue;
+      if(d.achievements)S.achievements=d.achievements;
+      if(d.itemLog)S.itemLog=d.itemLog;
+      if(d.inv)S.inv=d.inv;
+      if(d.total)S.total=d.total;
+      OB.gameImported=true;
+      const total=(S.nurturing?.length||0)+(S.garden?.length||0);
+      document.getElementById('game-status').innerHTML=
+        `✅ 存档恢复成功！${total} 只神兽，背包 ${Object.values(S.inv).reduce((a,b)=>a+b,0)} 件道具`;
+      toast('💾 游戏存档恢复成功！');
+    }catch(err){
+      document.getElementById('game-status').textContent='❌ 文件格式错误，请选择正确的 JSON 存档';
+    }
+  };
+  reader.readAsText(file,'UTF-8');
+  e.target.value='';
+}
+
+function buildDoneScreen(){
+  const name=document.getElementById('ob-name').value.trim()||'训练者';
+  OB.selectedGoals=[];
+  document.querySelectorAll('#goal-chips .chip.on').forEach(c=>{
+    OB.selectedGoals.push(c.dataset.val||c.textContent.trim().replace(/^./,'').trim());
+  });
+
+  document.getElementById('ob-done-title').textContent=`${name}，准备好了！`;
+
+  const dayNames=['周日','周一','周二','周三','周四','周五','周六'];
+  const daysStr=OB.selectedDays.length
+    ? OB.selectedDays.map(d=>dayNames[parseInt(d)]).join('、')
+    : '每天都可以';
+  const parts=OB.selectedParts.length?OB.selectedParts:DEFAULT_ROTATION;
+  const goals=OB.selectedGoals.length?OB.selectedGoals.join(' · '):'综合健身';
+
+  document.getElementById('ob-summary').innerHTML=`
+    <div class="summary-row"><span class="summary-icon">👤</span><span>昵称：<strong>${name}</strong></span></div>
+    <div class="summary-row"><span class="summary-icon">🗓</span><span>训练日：${daysStr}</span></div>
+    <div class="summary-row"><span class="summary-icon">🔄</span><span>循环：${parts.map(p=>partEmoji(p)+p).join(' → ')}</span></div>
+    <div class="summary-row"><span class="summary-icon">🎯</span><span>目标：${goals}</span></div>
+    <div class="summary-row"><span class="summary-icon">📊</span>
+      <span>训练记录：${OB.csvImported?`已导入 ${S.total} 条`:'从零开始'}</span></div>
+    <div class="summary-row"><span class="summary-icon">🎮</span>
+      <span>游戏存档：${OB.gameImported?'已恢复':'全新开始'}</span></div>
+  `;
+}
+
+function finishOnboarding(){
+  const name=document.getElementById('ob-name').value.trim()||'训练者';
+  OB.selectedGoals=[];
+  document.querySelectorAll('#goal-chips .chip.on').forEach(c=>{
+    OB.selectedGoals.push(c.dataset.val||c.textContent.trim().replace(/^./,'').trim());
+  });
+
+  S.profile={
+    name,
+    days:OB.selectedDays,
+    parts:OB.selectedParts.length?OB.selectedParts:DEFAULT_ROTATION,
+    goals:OB.selectedGoals,
+  };
+  S.onboarded=true;
+  save();
+  launchApp();
+  sparkles();
+  setTimeout(()=>toast(`欢迎，${name}！你的第一只神兽在等你 🥚`),500);
+}
+
+function launchApp(){
+  document.getElementById('onboarding').classList.add('hidden');
+  document.getElementById('app').style.display='flex';
+  renderWorkout();renderPet();renderBag();renderHistory();
+}
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+
+function todayISO(){return new Date().toISOString().split('T')[0]}
+
+function rotation(){return S.profile?.parts?.length?S.profile.parts:DEFAULT_ROTATION}
+
+function nextType(){
+  const rot=rotation();
+  if(!rot.length)return rot[0]||'臀A';
+  if(!S.workouts.length)return rot[0];
+  const last=S.workouts[S.workouts.length-1].type;
+  const idx=rot.indexOf(last);
+  if(idx===-1)return rot[0];
+  return rot[(idx+1)%rot.length];
+}
+
+function lastOfType(type){
+  for(let i=S.workouts.length-1;i>=0;i--)if(S.workouts[i].type===type)return S.workouts[i];
+  return null;
+}
+
+function lastWeight(name){
+  for(let i=S.workouts.length-1;i>=0;i--){
+    for(const ex of S.workouts[i].exercises||[]){
+      if(ex.name===name){
+        const s=(ex.sets||[]).find(s=>s.weight&&parseFloat(s.weight)>0);
+        if(s)return s.weight;
+      }
+    }
+  }
+  return null;
+}
+
+function getExercises(type){
+  return PRESET_EXERCISES[type]||[];
+}
+
+function calcStreak(){
+  if(!S.workouts.length)return 0;
+  const dates=[...new Set(S.workouts.map(w=>w.date))].sort().reverse();
+  let streak=0,cur=new Date();cur.setHours(0,0,0,0);
+  for(const d of dates){
+    const wd=new Date(d);wd.setHours(0,0,0,0);
+    const diff=Math.round((cur-wd)/86400000);
+    if(diff===0||diff===1){streak++;cur=wd}else break;
+  }
+  return streak;
+}
+
+function toast(msg,ms=2200){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),ms);
+}
+
+function sparkles(){
+  const w=document.getElementById('sparkles');w.innerHTML='';
+  const c=['#FF6B9D','#FFD700','#B44DFF','#4DFF91','#4DA6FF','#FF8C42'];
+  for(let i=0;i<35;i++){
+    const el=document.createElement('div');el.className='sp';
+    el.style.cssText=`left:${Math.random()*100}%;top:-10px;background:${c[i%c.length]};
+      animation-delay:${Math.random()*.6}s;animation-duration:${1+Math.random()*1.2}s`;
+    w.appendChild(el);
+  }
+  setTimeout(()=>w.innerHTML='',3000);
+}
+
+function fmtDate(d){const dt=new Date(d);return`${dt.getMonth()+1}/${dt.getDate()}`}
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+
+function switchScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  const order=['workout','pet','bag','history'];
+  document.querySelectorAll('.nav-btn')[order.indexOf(id)].classList.add('active');
+  const renders={workout:renderWorkout,pet:renderPet,bag:renderBag,history:renderHistory};
+  renders[id]&&renders[id]();
+}
+
+function showSettings(){
+  // Simple settings: re-run onboarding or just show profile info
+  if(confirm(`当前用户：${S.profile?.name||'未知'}\n\n要重新设置个人资料吗？`)){
+    S.onboarded=false;
+    save();
+    location.reload();
+  }
+}
+
+// ══════════════════════════════════════════
+// SESSION
+// ══════════════════════════════════════════
+
+function isTodayRestDay(){
+  const days=S.profile?.days||[];
+  if(!days.length)return false;
+  return !days.includes(new Date().getDay().toString());
+}
+
+function lastReps(name){
+  for(let i=S.workouts.length-1;i>=0;i--){
+    for(const ex of S.workouts[i].exercises||[]){
+      if(ex.name===name){
+        const s=(ex.sets||[]).find(s=>s.reps);
+        if(s)return s.reps;
+      }
+    }
+  }
+  return null;
+}
+
+function lastNote(name){
+  for(let i=S.workouts.length-1;i>=0;i--){
+    for(const ex of S.workouts[i].exercises||[]){
+      if(ex.name===name&&ex.note)return ex.note;
+    }
+  }
+  return null;
+}
+
+function categorizeExercises(type){
+  const sessions=S.workouts.filter(w=>w.type===type);
+  const total=sessions.length;
+  const freq={};
+  for(const ses of sessions){
+    const seen=new Set();
+    for(const ex of ses.exercises||[]){
+      if(!seen.has(ex.name)){freq[ex.name]=(freq[ex.name]||0)+1;seen.add(ex.name);}
+    }
+  }
+  const presets=getExercises(type);
+  const required=[],optional=[],fresh=[];
+  for(const ex of presets){
+    const f=total>0?(freq[ex.name]||0)/total:0;
+    if(total===0||f>0.6)required.push(ex);
+    else if(f>0)optional.push(ex);
+    else fresh.push(ex);
+  }
+  // exercises in history but not in presets
+  const presetNames=new Set(presets.map(e=>e.name));
+  for(const name of Object.keys(freq)){
+    if(!presetNames.has(name)){
+      const ex={name,sets:3,reps:'10',unit:'lbs'};
+      freq[name]/total>0.6?required.push(ex):optional.push(ex);
+    }
+  }
+  return {required,optional,fresh};
+}
+
+function startSession(type,selectedNames){
+  if(!type)type=nextType();
+  const {required,optional,fresh}=categorizeExercises(type);
+  const all=[...required,...optional,...fresh];
+  let exDefs;
+  if(selectedNames&&selectedNames.length){
+    exDefs=all.filter(e=>selectedNames.includes(e.name));
+    for(const n of selectedNames)
+      if(!exDefs.find(e=>e.name===n))exDefs.push({name:n,sets:3,reps:'10',unit:'lbs'});
+  }else{
+    exDefs=all.length?all:[{name:'自由训练',sets:3,reps:'10',unit:'lbs'}];
+  }
+  S.session={
+    type,date:todayISO(),activeExIdx:0,
+    exercises:exDefs.map(ex=>({
+      name:ex.name,unit:ex.unit||'lbs',
+      lastW:lastWeight(ex.name),lastR:lastReps(ex.name),lastN:lastNote(ex.name),
+      sets:[],status:'pending',
+    }))
+  };
+  if(S.session.exercises.length)S.session.exercises[0].status='active';
+  save();renderWorkout();
+}
+
+function cancelSession(){
+  if(confirm('放弃这次训练？'))S.session=null,save(),renderWorkout();
+}
+
+function completeCurrentSet(){
+  if(!S.session)return;
+  const ex=S.session.exercises[S.session.activeExIdx];
+  if(!ex)return;
+  const w=(document.getElementById('cur-weight')?.value||'').trim();
+  const r=(document.getElementById('cur-reps')?.value||'').trim();
+  ex.sets.push({weight:w,reps:r,done:true});
+  if(w)ex.lastW=w;
+  if(r)ex.lastR=r;
+  save();
+  startTimer(60,`${ex.name} 第${ex.sets.length}组完成！休息一下 💪`);
+  renderWorkout();
+}
+
+function endCurrentExercise(){
+  if(!S.session)return;
+  const ses=S.session;
+  const ex=ses.exercises[ses.activeExIdx];
+  if(!ex)return;
+  ex.status='done';
+  let next=-1;
+  for(let i=ses.activeExIdx+1;i<ses.exercises.length;i++){
+    if(ses.exercises[i].status==='pending'){next=i;break;}
+  }
+  if(next>=0){ses.activeExIdx=next;ses.exercises[next].status='active';}
+  else ses.activeExIdx=-1;
+  save();renderWorkout();
+}
+
+function skipToExercise(idx){
+  if(!S.session)return;
+  const ses=S.session;
+  if(ses.activeExIdx>=0&&ses.exercises[ses.activeExIdx]?.status==='active')
+    ses.exercises[ses.activeExIdx].status='pending';
+  ses.activeExIdx=idx;
+  ses.exercises[idx].status='active';
+  save();renderWorkout();
+}
+
+function restDayCheckIn(){
+  S.inv['peach']=(S.inv['peach']||0)+1;
+  save();
+  toast('🛌 休息打卡成功！恢复也是训练的一部分！');
+  renderWorkout();
+}
+
+function finish(){
+  if(!S.session)return;
+  const ses=S.session;
+  S.workouts.push({
+    date:ses.date,type:ses.type,
+    exercises:ses.exercises
+      .map(e=>({name:e.name,sets:e.sets.filter(s=>s.weight||s.reps)}))
+      .filter(e=>e.sets.length)
+  });
+  S.total=(S.total||0)+1;
+  S.streak=calcStreak();
+  S.session=null;
+  const rewards=genRewards(ses.type);
+  for(const[id,n]of Object.entries(rewards)){
+    S.inv[id]=(S.inv[id]||0)+n;
+    if(!S.itemLog.includes(id))S.itemLog.push(id);
+  }
+  // Egg drop (30%)
+  const eggDrop=dropEgg();
+  if(eggDrop){
+    if(!S.incubator)S.incubator={eggRarity:eggDrop,trainCount:0,needed:EGG_DATA[eggDrop].needed};
+    else S.hatchQueue.push(eggDrop);
+    rewards._egg=eggDrop;
+  }
+  // Tick incubator
+  const hatched=tickIncubator();
+  if(hatched)rewards._hatched=hatched;
+  // Check achievements
+  const newAchievements=checkAchievements();
+  save();renderWorkout();
+  showReward(ses.type,rewards,newAchievements);
+  sparkles();
+}
+
+function genRewards(type){
+  const out={};
+  const pool=REWARD_POOL[type]||REWARD_POOL._default;
+  for(const[id,p]of pool)if(Math.random()<p)out[id]=(out[id]||0)+1;
+  if(!Object.keys(out).length)out['peach']=1;
+  return out;
+}
+
+function checkAchievements(){
+  const earned=[];
+  for(const a of ACHIEVEMENTS){
+    if(S.achievements.includes(a.id))continue;
+    if(a.check()){
+      S.achievements.push(a.id);
+      S.inv[a.reward]=(S.inv[a.reward]||0)+1;
+      if(!S.itemLog.includes(a.reward))S.itemLog.push(a.reward);
+      earned.push(a);
+    }
+  }
+  return earned;
+}
+
+function checkShoulderProgress(){
+  const sessions=S.workouts.filter(w=>w.type==='肩').slice(-3);
+  if(sessions.length<3)return false;
+  const maxW=ses=>{
+    for(const ex of ses.exercises||[])
+      if(ex.name.includes('肩推')){
+        const w=Math.max(...(ex.sets||[]).map(s=>parseFloat(s.weight)||0));
+        if(w>0)return w;
+      }
+    return 0;
+  };
+  const weights=sessions.map(maxW);
+  return weights[2]>weights[1]&&weights[1]>weights[0]&&weights[2]>0;
+}
+
+// ── Egg & hatch ────────────────────────────
+
+function dropEgg(){
+  if(Math.random()>0.3)return null;
+  const r=Math.random();
+  return r<0.60?'common':r<0.85?'silver':r<0.95?'gold':'rainbow';
+}
+
+function tickIncubator(){
+  if(!S.incubator)return null;
+  S.incubator.trainCount++;
+  if(S.incubator.trainCount>=S.incubator.needed)return hatchEgg();
+  return null;
+}
+
+function hatchEgg(){
+  const rarity=S.incubator.eggRarity;
+  const isFirst=S.incubator.firstEgg;
+  let petId=isFirst?'egg_spirit':EGG_POOLS[rarity][Math.floor(Math.random()*EGG_POOLS[rarity].length)];
+  S.incubator=null;
+  if(S.hatchQueue.length){
+    const next=S.hatchQueue.shift();
+    S.incubator={eggRarity:next,trainCount:0,needed:EGG_DATA[next].needed};
+  }
+  const entry={petId,stage:1,exp:0,attrs:{fire:0,water:0,earth:0,wind:0}};
+  if(S.nurturing.length<3){S.nurturing.push(entry);return petId;}
+  S.hatchPending=petId;
+  return petId;
+}
+
+function claimHatched(){
+  if(!S.hatchPending||S.nurturing.length>=3)return;
+  S.nurturing.push({petId:S.hatchPending,stage:1,exp:0,attrs:{fire:0,water:0,earth:0,wind:0}});
+  S.hatchPending=null;
+  save();renderPet();
+}
+
+// ── Nurturing ──────────────────────────────
+
+function feedNurturing(idx,itemId){
+  const slot=S.nurturing[idx];
+  const it=ITEMS[itemId];
+  if(!slot||!it||it.special)return;
+  if(!(S.inv[itemId]>0))return;
+  S.inv[itemId]--;
+  const cr=CREATURES.find(c=>c.id===slot.petId);
+  // 1.5x exp if matching element
+  const bonus=(it.attr&&cr?.attr===it.attr)?1.5:1;
+  slot.exp+=Math.round((it.exp||0)*bonus);
+  if(it.attr&&it.attrVal)slot.attrs[it.attr]=(slot.attrs[it.attr]||0)+it.attrVal;
+  save();renderPet();
+  const msg=it.attr
+    ?`${it.emoji} +${it.attrVal} ${ATTR_EMOJI[it.attr]}${it.exp?` +${Math.round(it.exp*bonus)} EXP`:''}`
+    :`${it.emoji} +${Math.round(it.exp*bonus)} EXP${bonus>1?' (属性加成!)':''}`;
+  toast(msg);
+}
+
+function canEvolve(idx){
+  const slot=S.nurturing[idx];if(!slot)return false;
+  const cr=CREATURES.find(c=>c.id===slot.petId);if(!cr)return false;
+  if(slot.stage>=3)return false;
+  const cond=cr.stages[slot.stage-1]?.evolve;if(!cond)return false;
+  if(slot.exp<cond.exp)return false;
+  if(cond.attrs)for(const[a,v]of Object.entries(cond.attrs))if((slot.attrs[a]||0)<v)return false;
+  if(cond.items)for(const[id,n]of Object.entries(cond.items))if((S.inv[id]||0)<n)return false;
+  return true;
+}
+
+function evolveNurturing(idx){
+  if(!canEvolve(idx))return;
+  const slot=S.nurturing[idx];
+  const cr=CREATURES.find(c=>c.id===slot.petId);
+  const cond=cr.stages[slot.stage-1].evolve;
+  // Consume items
+  if(cond.items)for(const[id,n]of Object.entries(cond.items))S.inv[id]-=n;
+  slot.stage++;slot.exp=0;
+  const stageDef=cr.stages[slot.stage-1];
+  save();sparkles();renderPet();
+  toast(`🎉 ${stageDef.name} 进化成功！`);
+  if(slot.stage===3){
+    // Move to garden automatically
+    setTimeout(()=>graduateToGarden(idx),1200);
+  }
+}
+
+function graduateToGarden(idx){
+  const slot=S.nurturing.splice(idx,1)[0];
+  S.garden.push({...slot,active:true,lastCollect:null});
+  save();renderPet();
+  const cr=CREATURES.find(c=>c.id===slot.petId);
+  toast(`🏡 ${cr?.stages[2].name} 搬进庭院了！`);
+  if(S.hatchPending&&S.nurturing.length<3)claimHatched();
+}
+
+function freezeToGarden(idx){
+  const slot=S.nurturing.splice(idx,1)[0];
+  S.garden.push({...slot,active:false,lastCollect:null});
+  save();renderPet();
+  const cr=CREATURES.find(c=>c.id===slot.petId);
+  toast(`❄️ ${cr?.stages[slot.stage-1].name} 已冻结移至庭院`);
+  if(S.hatchPending&&S.nurturing.length<3)claimHatched();
+}
+
+function thawFromGarden(gIdx){
+  if(S.nurturing.length>=3){toast('培育槽已满！');return;}
+  const entry=S.garden.splice(gIdx,1)[0];
+  S.nurturing.push(entry);
+  save();renderPet();
+  const cr=CREATURES.find(c=>c.id===entry.petId);
+  toast(`🌱 ${cr?.stages[entry.stage-1].name} 回到培育槽`);
+}
+
+function collectGarden(gIdx){
+  const g=S.garden[gIdx];
+  if(!g?.active)return;
+  const today=todayISO();
+  if(g.lastCollect===today){toast('今天已经收集过啦！明天再来～');return;}
+  g.lastCollect=today;
+  // Drop 1-2 random common items
+  const pool=['peach','protein','fire_seed','dewdrop','earth_crystal','wind_feather'];
+  const count=1+Math.floor(Math.random()*2);
+  const drops={};
+  for(let i=0;i<count;i++){
+    const id=pool[Math.floor(Math.random()*pool.length)];
+    drops[id]=(drops[id]||0)+1;
+    S.inv[id]=(S.inv[id]||0)+1;
+    if(!S.itemLog.includes(id))S.itemLog.push(id);
+  }
+  save();renderPet();
+  toast('🏡 收获：'+Object.entries(drops).map(([id,n])=>`${ITEMS[id].emoji}×${n}`).join(' '));
+}
+
+// ══════════════════════════════════════════
+// REST TIMER
+// ══════════════════════════════════════════
+
+let timerInterval=null,timerLeft=0,timerTotal=60;
+
+function startTimer(sec,hint){
+  timerLeft=timerTotal=sec;
+  document.getElementById('rest-overlay').classList.add('on');
+  document.getElementById('timer-hint').textContent=hint||'下一组加油！';
+  updateTimer();
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    timerLeft--;
+    if(timerLeft<=0){
+      clearInterval(timerInterval);timerLeft=0;
+      updateTimer();
+      setTimeout(()=>document.getElementById('rest-overlay').classList.remove('on'),400);
+      toast('⏰ 休息结束，开始！');
+    }else updateTimer();
+  },1000);
+}
+
+function updateTimer(){
+  document.getElementById('timer-count').textContent=timerLeft;
+  const arc=document.getElementById('timer-arc');
+  arc.style.strokeDasharray=CIRC;
+  arc.style.strokeDashoffset=CIRC*(1-timerLeft/timerTotal);
+}
+
+function addTime(n){timerLeft+=n;toast(`+${n}秒 😴`)}
+function skipTimer(){clearInterval(timerInterval);document.getElementById('rest-overlay').classList.remove('on')}
+
+// ══════════════════════════════════════════
+// REWARD MODAL
+// ══════════════════════════════════════════
+
+function showReward(type,rewards,newAchievements){
+  let h=`
+    <div style="font-size:52px;margin-bottom:6px">${partEmoji(type)}</div>
+    <div class="reward-title">训练完成！</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:4px">今天的${type}练完啦，${S.profile?.name||'你'}超棒！🎉</div>
+    <hr>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">获得道具</div>
+    <div class="reward-items">`;
+  for(const[id,n]of Object.entries(rewards)){
+    if(id.startsWith('_'))continue;
+    const it=ITEMS[id];if(!it)continue;
+    h+=`<div class="reward-item">
+      <span class="reward-item-emoji">${it.emoji}</span>
+      <div class="reward-item-cnt">×${n}</div>
+      <div class="reward-item-name">${it.name}</div>
+    </div>`;
+  }
+  h+=`</div>`;
+  if(rewards._egg){
+    const ed=EGG_DATA[rewards._egg];
+    h+=`<div style="margin:10px 0;padding:10px;background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.3);
+      border-radius:12px;text-align:center">
+      <div style="font-size:28px">${ed.emoji}</div>
+      <div style="font-weight:700;color:var(--gold)">获得了一颗${ed.name}！</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">${S.incubator?.eggRarity===rewards._egg?'已放入孵蛋器':'已加入孵蛋队列'}</div>
+    </div>`;
+  }
+  if(rewards._hatched){
+    const cr=CREATURES.find(c=>c.id===rewards._hatched);
+    h+=`<div style="margin:10px 0;padding:12px;background:rgba(180,77,255,.1);border:1px solid rgba(180,77,255,.4);
+      border-radius:12px;text-align:center">
+      <div style="font-size:36px">${cr?.stages[0].emoji||'🐣'}</div>
+      <div style="font-weight:700;color:#B44DFF">🥚 蛋孵化了！</div>
+      <div style="font-size:14px;font-weight:600;margin-top:4px">${cr?.stages[0].name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">${S.hatchPending?'培育槽已满，请先清理槽位':'已加入培育槽'}</div>
+    </div>`;
+  }
+  if(newAchievements.length){
+    for(const a of newAchievements){
+      h+=`<div style="margin:8px 0;padding:10px;background:rgba(77,204,120,.1);border:1px solid rgba(77,204,120,.3);
+        border-radius:12px;text-align:center">
+        <div style="font-size:13px;color:#4DCC78;font-weight:700">🏆 成就达成：${a.name}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${ITEMS[a.reward].emoji} ${ITEMS[a.reward].name} 已加入背包</div>
+      </div>`;
+    }
+  }
+  const inGarden=S.garden.filter(g=>g.active).length;
+  h+=`<hr>
+    <div style="display:flex;justify-content:space-around">
+      <div style="text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--pink)">${S.total}</div>
+        <div style="font-size:11px;color:var(--muted)">总打卡</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--gold)">${S.streak}</div>
+        <div style="font-size:11px;color:var(--muted)">连续天数</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:22px;font-weight:800;color:#B44DFF">${inGarden+S.nurturing.length}</div>
+        <div style="font-size:11px;color:var(--muted)">神兽数量</div>
+      </div>
+    </div>`;
+  document.getElementById('reward-content').innerHTML=h;
+  document.getElementById('reward-modal').classList.add('on');
+}
+
+function closeReward(){
+  document.getElementById('reward-modal').classList.remove('on');
+  switchScreen('pet');
+}
+
+// ══════════════════════════════════════════
+// PET (stubs kept for bag compatibility)
+// ══════════════════════════════════════════
+
+// ══════════════════════════════════════════
+// RENDER: WORKOUT
+// ══════════════════════════════════════════
+
+function renderWorkout(){
+  const now=new Date();
+  document.getElementById('today-label').textContent=
+    now.toLocaleDateString('zh-CN',{month:'numeric',day:'numeric',weekday:'short'});
+  const name=S.profile?.name||'你';
+  document.getElementById('workout-title').textContent=`${name}的训练 💪`;
+  S.streak=calcStreak();
+  const el=document.getElementById('workout-content');
+
+  if(S.session){renderActiveSession(el);return;}
+
+  const type=nextType(),color=partColor(type),last=lastOfType(type);
+  let h='';
+
+  if(S.streak>0)h+=`<div class="streak-banner">
+    <span class="streak-fire">🔥</span>
+    <div class="streak-text">连续打卡 <strong>${S.streak}</strong> 天，${name}太猛了！</div>
+  </div>`;
+
+  h+=`<div class="stats-strip">
+    <div class="stat-card"><div class="stat-number">${S.total||0}</div><div class="stat-label">总打卡</div></div>
+    <div class="stat-card"><div class="stat-number">${S.streak}</div><div class="stat-label">连续天数</div></div>
+    <div class="stat-card"><div class="stat-number">${(S.nurturing?.length||0)+(S.garden?.length||0)}</div><div class="stat-label">神兽数量</div></div>
+  </div>`;
+
+  if(isTodayRestDay()){
+    h+=`<div class="card" style="text-align:center;padding:28px 16px;margin-bottom:14px">
+      <div style="font-size:44px;margin-bottom:8px">🛌</div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:6px">今天是休息日</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:18px">好好恢复，明天更强！</div>
+      <button class="btn btn-secondary" style="margin-bottom:10px" onclick="restDayCheckIn()">🎁 休息打卡领奖励</button>
+      <button class="btn btn-ghost" onclick="showExerciseSelection('${type}')">今天也要练！💪</button>
+    </div>`;
+    el.innerHTML=h;return;
+  }
+
+  h+=buildExerciseSelection(type,color,last);
+  el.innerHTML=h;
+}
+
+function buildExerciseSelection(type,color,last){
+  const {required,optional}=categorizeExercises(type);
+  let h=`<div class="card" style="border-color:${color}44;margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">今天建议练</div>
+        <div style="font-size:26px;font-weight:800;color:${color}">${partEmoji(type)} ${type}</div>
+      </div>
+      <div style="font-size:52px;opacity:.18">${partEmoji(type)}</div>
+    </div>
+    ${last?`<div style="font-size:12px;color:var(--muted);margin-top:8px">上次 ${fmtDate(last.date)} · ${last.exercises?.length||0} 个动作</div>`:''}
+  </div>`;
+
+  // Part switcher
+  const allParts=rotation();
+  if(allParts.length>1){
+    h+=`<div style="margin-bottom:16px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">换个部位练？</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">`;
+    for(const p of allParts){
+      const isToday=p===type,c=partColor(p);
+      h+=`<button onclick="showExerciseSelection('${p}')"
+        style="padding:6px 12px;border-radius:20px;border:1.5px solid ${isToday?c+'99':'var(--border)'};
+        background:${isToday?c+'22':'transparent'};color:${isToday?c:'var(--muted)'};
+        font-size:13px;font-weight:600;cursor:pointer">
+        ${partEmoji(p)} ${p}${isToday?' ✓':''}
+      </button>`;
+    }
+    h+=`</div></div>`;
+  }
+
+  // Exercise selection
+  h+=`<div style="font-size:14px;font-weight:700;margin-bottom:10px">选择今天的动作</div>`;
+
+  if(required.length){
+    h+=`<div class="ex-category-label">✅ 必做动作</div>`;
+    for(const ex of required){
+      const lw=lastWeight(ex.name),lr=lastReps(ex.name);
+      h+=`<label class="ex-select-row">
+        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" checked>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600">${ex.name}</div>
+          ${lw?`<div style="font-size:12px;color:var(--muted)">上次 ${lw}${ex.unit?' '+ex.unit:'lbs'}${lr?' × '+lr+'次':''}</div>`:''}
+        </div>
+      </label>`;
+    }
+  }
+
+  if(optional.length){
+    h+=`<div class="ex-category-label" style="margin-top:12px">🔄 可选动作</div>`;
+    for(const ex of optional){
+      const lw=lastWeight(ex.name),lr=lastReps(ex.name);
+      h+=`<label class="ex-select-row">
+        <input type="checkbox" class="ex-select-box" data-name="${ex.name}">
+        <div style="flex:1">
+          <div style="font-size:14px">${ex.name}</div>
+          ${lw?`<div style="font-size:12px;color:var(--muted)">上次 ${lw}${ex.unit?' '+ex.unit:'lbs'}${lr?' × '+lr+'次':''}</div>`:''}
+        </div>
+      </label>`;
+    }
+  }
+
+  if(!required.length&&!optional.length){
+    // First time — show all presets pre-checked
+    for(const ex of getExercises(type)){
+      h+=`<label class="ex-select-row">
+        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" checked>
+        <div style="flex:1"><div style="font-size:14px">${ex.name}</div></div>
+      </label>`;
+    }
+  }
+
+  h+=`<button class="btn btn-primary" style="margin-top:18px" onclick="confirmStartSession('${type}')">
+    开始训练 ${partEmoji(type)}
+  </button>`;
+  return h;
+}
+
+function showExerciseSelection(type){
+  const color=partColor(type),last=lastOfType(type);
+  document.getElementById('workout-content').innerHTML=buildExerciseSelection(type,color,last);
+}
+
+function confirmStartSession(type){
+  const boxes=document.querySelectorAll('.ex-select-box:checked');
+  const selected=[...boxes].map(b=>b.dataset.name);
+  if(!selected.length){toast('至少选一个动作！');return;}
+  startSession(type,selected);
+}
+
+function renderActiveSession(el){
+  const ses=S.session,color=partColor(ses.type);
+  const done=ses.exercises.filter(e=>e.status==='done').length;
+  const tot=ses.exercises.length;
+  const activeEx=ses.activeExIdx>=0?ses.exercises[ses.activeExIdx]:null;
+
+  let h=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div>
+      <div style="font-size:12px;color:var(--muted)">进行中</div>
+      <div style="font-size:22px;font-weight:800;color:${color}">${partEmoji(ses.type)} ${ses.type}</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-green btn-small" onclick="finish()">完成训练</button>
+      <button class="btn btn-ghost btn-small" onclick="cancelSession()">放弃</button>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+    <div style="font-size:13px;color:var(--muted);white-space:nowrap">${done}/${tot} 动作</div>
+    <div class="progress-bar-outer" style="flex:1">
+      <div class="progress-bar-inner" style="width:${tot?done/tot*100:0}%;background:linear-gradient(90deg,${color},#B44DFF)"></div>
+    </div>
+  </div>`;
+
+  if(activeEx){
+    const setNum=activeEx.sets.length+1;
+    h+=`<div class="active-ex-card" style="border-color:${color}">
+      <div style="font-size:11px;color:${color};font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">当前动作</div>
+      <div style="font-size:22px;font-weight:800;margin-bottom:4px">${activeEx.name}</div>
+      ${activeEx.lastW?`<div style="font-size:12px;color:var(--muted);margin-bottom:14px">上次: ${activeEx.lastW} ${activeEx.unit||'lbs'}${activeEx.lastR?' × '+activeEx.lastR+'次':''}</div>`:'<div style="margin-bottom:14px"></div>'}`;
+
+    if(activeEx.sets.length){
+      h+=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">`;
+      for(let i=0;i<activeEx.sets.length;i++){
+        const s=activeEx.sets[i];
+        h+=`<div style="background:${color}22;border:1px solid ${color}44;border-radius:8px;
+          padding:5px 10px;font-size:12px">第${i+1}组 ${s.weight||'BW'}×${s.reps||'?'}</div>`;
+      }
+      h+=`</div>`;
+    }
+
+    h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--muted)">第 ${setNum} 组</div>
+      <div style="display:flex;gap:12px;margin-bottom:16px">
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:5px">重量 (${activeEx.unit||'lbs'})</div>
+          <input id="cur-weight" class="set-input" type="number" inputmode="decimal"
+            placeholder="${activeEx.lastW||'重量'}" value="${activeEx.lastW||''}"
+            style="width:100%;font-size:20px;padding:10px;text-align:center;border-radius:10px">
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:5px">次数</div>
+          <input id="cur-reps" class="set-input" type="number" inputmode="numeric"
+            placeholder="次数" value="${activeEx.lastR||''}"
+            style="width:100%;font-size:20px;padding:10px;text-align:center;border-radius:10px">
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-bottom:10px" onclick="completeCurrentSet()">
+        ✅ 完成第 ${setNum} 组 → 休息60秒
+      </button>
+      <button class="btn btn-ghost" onclick="endCurrentExercise()">
+        ⏭ 结束「${activeEx.name}」进入下一个
+      </button>
+      <div style="margin-top:14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:5px">备注（可选）</div>
+        ${activeEx.lastN?`<div style="font-size:11px;color:#FFB347;margin-bottom:5px">📝 上次备注：${activeEx.lastN}</div>`:''}
+        <input id="ex-note" class="set-input" type="text" inputmode="text"
+          placeholder="例：膝盖有点抖、带了绑带..."
+          value="${activeEx.note||''}"
+          oninput="S.session.exercises[S.session.activeExIdx].note=this.value;save()"
+          style="width:100%;font-size:13px;padding:9px;text-align:left;border-radius:10px">
+      </div>
+    </div>`;
+  } else if(done===tot&&tot>0){
+    h+=`<div class="card" style="text-align:center;padding:28px">
+      <div style="font-size:44px;margin-bottom:10px">🎉</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:14px">所有动作完成！</div>
+      <button class="btn btn-green" onclick="finish()">🏆 完成训练，领取奖励！</button>
+    </div>`;
+  }
+
+  // Exercise list overview
+  h+=`<div style="margin-top:20px;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px">训练列表</div>`;
+  for(let i=0;i<ses.exercises.length;i++){
+    const ex=ses.exercises[i];
+    const isActive=ex.status==='active',isDone=ex.status==='done';
+    h+=`<div class="ex-overview-row${isActive?' ex-ov-active':isDone?' ex-ov-done':''}"
+      onclick="${!isDone&&!isActive?`skipToExercise(${i})`:''}">
+      <div class="exercise-status${isDone?' done':isActive?' active':''}">
+        ${isDone?'✓':isActive?'▶':(i+1)}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:${isActive?700:400};color:${isDone?'var(--muted)':'var(--text)'}">${ex.name}</div>
+        ${ex.sets.length?`<div style="font-size:12px;color:var(--muted)">${ex.sets.length}组已完成</div>`:''}
+      </div>
+      ${!isDone&&!isActive?`<span style="font-size:12px;color:var(--muted)">点击跳转</span>`:''}
+    </div>`;
+  }
+
+  el.innerHTML=h;
+}
+
+// ══════════════════════════════════════════
+// RENDER: PET
+// ══════════════════════════════════════════
+
+function renderPet(){
+  const el=document.getElementById('pet-content');
+  let h=`<div class="pet-tabs">
+    ${['nurturing','incubator','garden','compendium'].map((t,i)=>{
+      const labels=['培育','孵蛋器','庭院','图鉴'];
+      const badges=[S.nurturing.length||'',
+        S.incubator?'🥚':S.hatchQueue.length?S.hatchQueue.length:'',
+        S.garden.filter(g=>g.active&&g.lastCollect!==todayISO()).length||'',''];
+      return `<button class="pet-tab${petTab===t?' active':''}" onclick="petTab='${t}';renderPet()">
+        ${labels[i]}${badges[i]?`<span class="pet-tab-badge">${badges[i]}</span>`:''}
+      </button>`;
+    }).join('')}
+  </div>`;
+  if(petTab==='nurturing') h+=renderNurturingTab();
+  else if(petTab==='incubator') h+=renderIncubatorTab();
+  else if(petTab==='garden') h+=renderGardenTab();
+  else h+=renderCompendiumTab();
+  el.innerHTML=h;
+}
+
+function renderNurturingTab(){
+  let h='';
+  if(S.hatchPending){
+    const cr=CREATURES.find(c=>c.id===S.hatchPending);
+    h+=`<div class="card" style="border-color:#B44DFF66;margin-bottom:14px;text-align:center;padding:16px">
+      <div style="font-size:32px">${cr?.stages[0].emoji}</div>
+      <div style="font-size:14px;font-weight:700;color:#B44DFF;margin:4px 0">新神兽等待入槽！</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">${cr?.stages[0].name} — 需要空出培育槽</div>
+      <button class="btn btn-secondary btn-small" onclick="claimHatched()" ${S.nurturing.length<3?'':'disabled'}>
+        ${S.nurturing.length<3?'领取神兽':'槽位已满，请先移至庭院'}
+      </button>
+    </div>`;
+  }
+  for(let i=0;i<3;i++){
+    const slot=S.nurturing[i];
+    if(!slot){
+      h+=`<div class="nurture-slot empty"><span style="font-size:28px;opacity:.3">＋</span>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">空槽位</div></div>`;
+      continue;
+    }
+    const cr=CREATURES.find(c=>c.id===slot.petId);
+    const stageDef=cr?.stages[slot.stage-1];
+    const nextDef=cr?.stages[slot.stage]; // next stage def (has evolve on current)
+    const evolCond=cr?.stages[slot.stage-1]?.evolve;
+    const ready=canEvolve(i);
+    const expPct=evolCond?Math.min(100,slot.exp/evolCond.exp*100):100;
+    h+=`<div class="nurture-slot">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div style="font-size:36px">${stageDef?.emoji}</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700">${stageDef?.name}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+            <span class="badge badge-${cr?.rarity}">${RARITY_NAME[cr?.rarity]}</span>
+            ${cr?.attr?`<span style="font-size:11px;color:${ATTR_COLOR[cr.attr]}">${ATTR_EMOJI[cr.attr]} ${cr.attr}</span>`:''}
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-small" onclick="freezeToGarden(${i})" title="移至庭院冻结">❄️</button>
+      </div>`;
+    if(evolCond){
+      h+=`<div style="font-size:11px;color:var(--muted);margin-bottom:4px">EXP ${slot.exp} / ${evolCond.exp}</div>
+        <div class="exp-bar" style="margin-bottom:8px"><div class="exp-fill" style="width:${expPct}%"></div></div>`;
+      // Attribute requirements
+      if(evolCond.attrs){
+        h+=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">`;
+        for(const[a,v]of Object.entries(evolCond.attrs)){
+          const cur=slot.attrs[a]||0,pct=Math.min(100,cur/v*100);
+          h+=`<div style="flex:1;min-width:70px">
+            <div style="font-size:10px;color:${ATTR_COLOR[a]};margin-bottom:2px">${ATTR_EMOJI[a]} ${cur}/${v}</div>
+            <div style="height:4px;background:rgba(255,255,255,.1);border-radius:2px">
+              <div style="height:100%;width:${pct}%;background:${ATTR_COLOR[a]};border-radius:2px"></div>
+            </div></div>`;
+        }
+        h+=`</div>`;
+      }
+      // Special item requirements
+      if(evolCond.items){
+        h+=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">`;
+        for(const[id,n]of Object.entries(evolCond.items)){
+          const have=S.inv[id]||0,ok=have>=n;
+          h+=`<div style="font-size:12px;padding:3px 8px;border-radius:8px;
+            background:${ok?'rgba(77,204,120,.15)':'rgba(255,255,255,.06)'};
+            color:${ok?'#4DCC78':'var(--muted)'}">
+            ${ITEMS[id].emoji} ${ITEMS[id].name} ${have}/${n}
+          </div>`;
+        }
+        h+=`</div>`;
+      }
+      if(slot.stage<3){
+        h+=`<button class="btn ${ready?'btn-green':'btn-secondary'} btn-small" onclick="evolveNurturing(${i})" ${ready?'':'disabled'}>
+          ${ready?`✨ 进化！→ ${cr?.stages[slot.stage]?.name}`:'条件未满足'}
+        </button>`;
+      }
+    }
+    // Feed section
+    const feedable=Object.entries(S.inv||{}).filter(([k,v])=>v>0&&ITEMS[k]&&!ITEMS[k].special&&(ITEMS[k].exp>0||ITEMS[k].attrVal>0));
+    if(feedable.length){
+      h+=`<div style="margin-top:10px;font-size:11px;color:var(--muted);margin-bottom:6px">喂食</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">`;
+      for(const[id,n]of feedable){
+        const it=ITEMS[id];
+        const isMatch=it.attr&&cr?.attr===it.attr;
+        h+=`<button onclick="feedNurturing(${i},'${id}')"
+          style="padding:5px 10px;border-radius:8px;border:1px solid ${isMatch?ATTR_COLOR[it.attr]+'88':'var(--border)'};
+          background:${isMatch?ATTR_COLOR[it.attr]+'18':'var(--card)'};font-size:12px;cursor:pointer;color:var(--text)">
+          ${it.emoji}${n>1?`<span style="font-size:10px;color:var(--muted)">×${n}</span>`:''}
+          ${isMatch?'⚡':''}
+        </button>`;
+      }
+      h+=`</div>`;
+    }
+    h+=`</div>`;
+  }
+  return h;
+}
+
+function renderIncubatorTab(){
+  let h='';
+  if(S.incubator){
+    const ed=EGG_DATA[S.incubator.eggRarity];
+    const pct=Math.min(100,S.incubator.trainCount/S.incubator.needed*100);
+    h+=`<div class="card" style="text-align:center;padding:24px 16px;margin-bottom:14px">
+      <div style="font-size:56px;margin-bottom:8px">${ed.emoji}</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:4px">${ed.name}</div>
+      <span class="badge badge-${ed.rarity}" style="margin-bottom:14px">${RARITY_NAME[ed.rarity]}</span>
+      <div style="font-size:13px;color:var(--muted);margin:10px 0 6px">孵化进度</div>
+      <div style="font-size:22px;font-weight:800;color:var(--pink);margin-bottom:6px">
+        ${S.incubator.trainCount} / ${S.incubator.needed} 次训练</div>
+      <div class="exp-bar"><div class="exp-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">完成训练打卡即可孵化</div>
+    </div>`;
+  } else {
+    h+=`<div class="empty-state"><div class="empty-icon">🥚</div>
+      <div>孵蛋器空着</div>
+      <div style="font-size:13px;margin-top:6px">完成训练有30%概率获得蛋</div></div>`;
+  }
+  if(S.hatchQueue.length){
+    h+=`<div style="font-size:13px;font-weight:700;margin:12px 0 8px">等待孵化 (${S.hatchQueue.length})</div>`;
+    for(const r of S.hatchQueue){
+      const ed=EGG_DATA[r];
+      h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
+        background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px">
+        <span style="font-size:24px">${ed.emoji}</span>
+        <div style="flex:1"><div style="font-size:14px">${ed.name}</div>
+          <div style="font-size:12px;color:var(--muted)">需要 ${ed.needed} 次训练</div>
+        </div>
+        <span class="badge badge-${ed.rarity}">${RARITY_NAME[ed.rarity]}</span>
+      </div>`;
+    }
+  }
+  return h;
+}
+
+function renderGardenTab(){
+  const active=S.garden.filter(g=>g.active);
+  const frozen=S.garden.filter(g=>!g.active);
+  const today=todayISO();
+  let h='';
+  if(!S.garden.length){
+    h+=`<div class="empty-state"><div class="empty-icon">🏡</div>
+      <div>庭院还是空的</div>
+      <div style="font-size:13px;margin-top:6px">神兽成年或冻结后会搬进来</div></div>`;
+    return h;
+  }
+  if(active.length){
+    h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px">🌟 活跃神兽 (${active.length})</div>`;
+    for(let i=0;i<S.garden.length;i++){
+      const g=S.garden[i];if(!g.active)continue;
+      const cr=CREATURES.find(c=>c.id===g.petId);
+      const stageDef=cr?.stages[g.stage-1];
+      const collected=g.lastCollect===today;
+      h+=`<div class="nurture-slot" style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:40px">${stageDef?.emoji}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700">${stageDef?.name}</div>
+          <span class="badge badge-${cr?.rarity}">${RARITY_NAME[cr?.rarity]}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          <button class="btn ${collected?'btn-secondary':'btn-green'} btn-small"
+            onclick="collectGarden(${i})" ${collected?'disabled':''}>
+            ${collected?'✓ 已收集':'🎁 收获'}
+          </button>
+          ${g.stage<3?`<button class="btn btn-ghost btn-small" onclick="thawFromGarden(${i})" title="取回培育">🌱</button>`:''}
+        </div>
+      </div>`;
+    }
+  }
+  if(frozen.length){
+    h+=`<div style="font-size:13px;font-weight:700;margin:14px 0 10px;color:var(--muted)">❄️ 冻结中 (${frozen.length})</div>`;
+    for(let i=0;i<S.garden.length;i++){
+      const g=S.garden[i];if(g.active)continue;
+      const cr=CREATURES.find(c=>c.id===g.petId);
+      const stageDef=cr?.stages[g.stage-1];
+      h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
+        background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;opacity:.7">
+        <div style="font-size:32px">${stageDef?.emoji}</div>
+        <div style="flex:1">
+          <div style="font-size:14px">${stageDef?.name}</div>
+          <div style="font-size:12px;color:var(--muted)">第${g.stage}阶段·已冻结</div>
+        </div>
+        <button class="btn btn-ghost btn-small" onclick="thawFromGarden(${i})" ${S.nurturing.length<3?'':'disabled'}>
+          解冻
+        </button>
+      </div>`;
+    }
+  }
+  return h;
+}
+
+function renderCompendiumTab(){
+  const ownedIds=new Set([...S.nurturing.map(n=>n.petId),...S.garden.map(g=>g.petId),
+    ...(S.hatchPending?[S.hatchPending]:[])]);
+  let h=`<div style="font-size:13px;color:var(--muted);margin-bottom:12px">
+    已解锁 ${ownedIds.size} / ${CREATURES.length} 种神兽</div>
+  <div class="cre-grid">`;
+  for(const cr of CREATURES){
+    const owned=ownedIds.has(cr.id);
+    const dispStage=owned?([...S.nurturing,...S.garden].find(s=>s.petId===cr.id)?.stage||1):0;
+    const emoji=owned?(cr.stages[dispStage-1]?.emoji||cr.stages[0].emoji):null;
+    h+=`<div class="cre-cell ${owned?'unlocked':'locked'}" title="${cr.desc}">
+      <span class="cre-emoji">${owned?emoji:'❓'}</span>
+      <div class="cre-name">${owned?cr.name:'???'}</div>
+      <div style="font-size:10px;color:${RARITY_COLOR[cr.rarity]};margin-top:2px">${RARITY_NAME[cr.rarity]}</div>
+      ${owned?`<div style="font-size:10px;color:var(--muted)">第${dispStage}阶段</div>`:''}
+    </div>`;
+  }
+  h+=`</div>
+  <div style="font-size:13px;font-weight:700;margin:16px 0 10px">道具图鉴 (${S.itemLog.length}/${Object.keys(ITEMS).length})</div>
+  <div class="items-grid">`;
+  for(const[id,it]of Object.entries(ITEMS)){
+    const seen=S.itemLog.includes(id);
+    h+=`<div class="item-cell ${seen?'':'locked'}" title="${seen?(it.special?'🔑 '+it.how:''):'???'}">
+      <span class="item-emoji">${seen?it.emoji:'❓'}</span>
+      <div class="item-name">${seen?it.name:'???'}</div>
+      <div style="font-size:10px;color:${RARITY_COLOR[it.rarity]||'#aaa'};margin-top:2px">${seen?RARITY_NAME[it.rarity]:''}</div>
+      ${seen&&it.special?`<div style="font-size:9px;color:var(--muted);margin-top:2px">🔑成就道具</div>`:''}
+    </div>`;
+  }
+  h+=`</div>`;
+  return h;
+}
+
+// ══════════════════════════════════════════
+// RENDER: BAG
+// ══════════════════════════════════════════
+
+function renderBag(){
+  const items=Object.entries(S.inv||{}).filter(([,n])=>n>0);
+  let h='';
+  if(!items.length){
+    h=`<div class="empty-state"><div class="empty-icon">🎒</div>
+      <div>背包是空的</div>
+      <div style="margin-top:8px;font-size:13px">完成训练打卡获得道具！</div></div>`;
+    document.getElementById('bag-content').innerHTML=h;return;
+  }
+  h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">道具 (${items.length}种) · 去「神兽」标签喂食</div>
+  <div class="items-grid">`;
+  for(const[id,n]of items){
+    const it=ITEMS[id];if(!it)continue;
+    const attrLabel=it.attr?`${ATTR_EMOJI[it.attr]} +${it.attrVal}`:'';
+    h+=`<div class="item-cell">
+      <span class="item-cnt">${n}</span>
+      <span class="item-emoji">${it.emoji}</span>
+      <div class="item-name">${it.name}</div>
+      <div style="font-size:10px;color:${RARITY_COLOR[it.rarity]||'#aaa'};margin-top:2px">${RARITY_NAME[it.rarity]}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:1px">
+        ${it.exp?`+${it.exp}EXP `:''}${attrLabel}${it.special?'🔑进化材料':''}
+      </div>
+    </div>`;
+  }
+  h+=`</div>`;
+  document.getElementById('bag-content').innerHTML=h;
+}
+
+// ══════════════════════════════════════════
+// RENDER: HISTORY
+// ══════════════════════════════════════════
+
+function renderHistory(){
+  let h=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+    <button class="btn btn-secondary btn-small" onclick="exportCSV()">📤 导出训练 CSV</button>
+    <button class="btn btn-secondary btn-small" onclick="document.getElementById('csv-input').click()">📥 导入训练 CSV</button>
+    <button class="btn btn-secondary btn-small" onclick="exportGame()">💾 导出游戏存档</button>
+    <button class="btn btn-secondary btn-small" onclick="document.getElementById('game-import-input').click()">🔄 恢复游戏存档</button>
+  </div>`;
+
+  if(!S.workouts.length){
+    h+=`<div class="empty-state"><div class="empty-icon">📊</div>
+      <div>还没有记录</div>
+      <div style="margin-top:8px;font-size:13px">完成第一次训练！</div></div>`;
+    document.getElementById('history-content').innerHTML=h;return;
+  }
+
+  const sorted=[...S.workouts].reverse();
+  for(const w of sorted){
+    const col=partColor(w.type);
+    h+=`<div class="hist-entry">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="padding:3px 10px;border-radius:10px;font-size:12px;font-weight:600;
+          background:${col}22;color:${col}">${partEmoji(w.type)} ${w.type}</span>
+        <span style="font-size:12px;color:var(--muted)">${w.date}</span>
+      </div>`;
+    for(const ex of w.exercises||[]){
+      const sets=(ex.sets||[]).filter(s=>s.weight||s.reps);
+      if(!sets.length)continue;
+      h+=`<div class="hist-ex"><span style="color:var(--text)">${ex.name}</span>: ${
+        sets.map(s=>`${s.weight||'BW'}×${s.reps||'?'}`).join(' · ')}${
+        ex.note?`<span style="color:#FFB347;margin-left:6px">📝 ${ex.note}</span>`:''}</div>`;
+    }
+    h+=`</div>`;
+  }
+  document.getElementById('history-content').innerHTML=h;
+}
+
+// ══════════════════════════════════════════
+// IMPORT / EXPORT
+// ══════════════════════════════════════════
+
+function parseCSVLine(line){
+  // handles quoted fields
+  const fields=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(inQ){if(c==='"'&&line[i+1]==='"'){cur+='"';i++;}else if(c==='"')inQ=false;else cur+=c;}
+    else if(c==='"')inQ=true;
+    else if(c===','){fields.push(cur.trim());cur='';}
+    else cur+=c;
+  }
+  fields.push(cur.trim());
+  return fields;
+}
+
+function parseCSV(text){
+  const lines=text.split('\n').filter(l=>l.trim());
+  const sessionMap={};
+  for(let i=1;i<lines.length;i++){
+    const p=parseCSVLine(lines[i]);
+    if(p.length<3)continue;
+    const date=p[0],type=p[1],name=p[2];
+    if(!date||!type||!name)continue;
+    let normDate=date;
+    if(/^\d{1,2}\/\d{1,2}$/.test(date)){
+      const y=new Date().getFullYear();
+      const[m,d]=date.split('/');
+      normDate=`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+    }
+    const weight=p[3]||'';
+    const setsStr=p[4]||'';
+    const note=p[5]||'';
+    const key=`${normDate}_${type}`;
+    if(!sessionMap[key])sessionMap[key]={date:normDate,type,exercises:[]};
+    const sets=[];
+    const m=setsStr.match(/(\d+)x\((.+)\)/);
+    if(m){
+      const cnt=parseInt(m[1]);
+      const reps=m[2].split(',');
+      for(let j=0;j<cnt;j++)sets.push({weight,reps:reps[j]?.trim()||reps[0]?.trim()||'?',done:true});
+    }else sets.push({weight,reps:'?',done:true});
+    sessionMap[key].exercises.push({name,sets,note});
+  }
+  return Object.values(sessionMap);
+}
+
+function csvEscape(v){
+  v=String(v||'');
+  // wrap in quotes if contains comma, quote, or newline
+  if(v.includes(',')||v.includes('"')||v.includes('\n'))
+    return '"'+v.replace(/"/g,'""')+'"';
+  return v;
+}
+
+function exportCSV(){
+  const header='日期,部位,动作,重量 (lbs),组数x次数,备注';
+  const rows=[header];
+  for(const w of S.workouts){
+    for(const ex of w.exercises||[]){
+      const sets=(ex.sets||[]).filter(s=>s.weight||s.reps);
+      if(!sets.length)continue;
+      // one row per exercise: weight from sets (may vary), summarize as NxM,M,M
+      const weights=[...new Set(sets.map(s=>s.weight||'BW'))].join('/');
+      const setsReps=sets.length+'x('+sets.map(s=>s.reps||'?').join(',')+')';
+      const note=ex.note||'';
+      rows.push([w.date,w.type,ex.name,weights,setsReps,note].map(csvEscape).join(','));
+    }
+  }
+  downloadBlob('﻿'+rows.join('\n'),'text/csv',`gymdex_workout_${todayISO()}.csv`);
+  toast('📤 训练记录导出成功！');
+}
+
+function exportGame(){
+  const data={
+    nurturing:S.nurturing,garden:S.garden,incubator:S.incubator,
+    hatchQueue:S.hatchQueue,achievements:S.achievements,itemLog:S.itemLog,
+    inv:S.inv,total:S.total,streak:S.streak,
+    exportedAt:new Date().toISOString(),
+    name:S.profile?.name||'',
+  };
+  downloadBlob(JSON.stringify(data,null,2),'application/json',`gymdex_save_${todayISO()}.json`);
+  toast('💾 游戏存档导出成功！');
+}
+
+function downloadBlob(content,type,filename){
+  const blob=new Blob([content],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=filename;a.click();
+  URL.revokeObjectURL(url);
+}
+
+// In-app CSV import (from history tab)
+// reuse csv-input, different from onboarding
+function inAppHandleCsv(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const rows=parseCSV(ev.target.result.replace(/^﻿/,''));
+    const existing=new Set(S.workouts.map(w=>`${w.date}_${w.type}`));
+    let added=0;
+    for(const r of rows)if(!existing.has(`${r.date}_${r.type}`)){S.workouts.push(r);added++}
+    S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
+    S.total=S.workouts.length;
+    save();renderHistory();renderWorkout();
+    toast(`📥 导入成功！新增 ${added} 条记录`);
+  };
+  reader.readAsText(file,'UTF-8');
+  e.target.value='';
+}
+
+// Game import from history tab
+function inAppHandleGame(e){
+  handleGameImport(e);
+  setTimeout(()=>{save();renderPet();renderBag();},500);
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+
+load();
+
+// Hide loading screen after egg hatch animation (~3.2s)
+setTimeout(()=>{
+  const ld=document.getElementById('loading');
+  if(ld){
+    ld.classList.add('fade-out');
+    setTimeout(()=>ld.remove(),500);
+  }
+},3200);
+
+// Wire up in-app file inputs (history tab) vs onboarding
+// The same csv-input is shared; check which context we're in
+document.getElementById('csv-input').addEventListener('change',function(e){
+  if(S.onboarded)inAppHandleCsv(e);
+  else handleCsvImport(e);
+});
+document.getElementById('game-import-input').addEventListener('change',function(e){
+  if(S.onboarded){inAppHandleGame(e);}
+  else handleGameImport(e);
+});
+
+if(S.onboarded){
+  launchApp();
+}else{
+  obShowStep(0);
+  prefillAnnaDefaults();
+}
+
+function prefillAnnaDefaults(){
+  // 预填名字
+  const nameEl=document.getElementById('ob-name');
+  if(nameEl&&!nameEl.value)nameEl.value='Anna';
+
+  // 预选目标
+  document.querySelectorAll('#goal-chips .chip').forEach(c=>{
+    if(c.textContent.includes('蜜桃臀')||c.textContent.includes('塑形')){
+      c.classList.add('on');
+    }
+  });
+
+  // 预选训练日：周一到周五
+  document.querySelectorAll('.day-btn').forEach(btn=>{
+    const day=btn.getAttribute('onclick').match(/'(\d)'/)?.[1];
+    if(['1','2','3','4','5'].includes(day)){
+      btn.classList.add('on');
+      if(!OB.selectedDays.includes(day))OB.selectedDays.push(day);
+    }
+  });
+
+  // 预选部位（按顺序：臀A→肩→臀B→背）
+  const defaultParts=['臀A','肩','臀B','背'];
+  document.querySelectorAll('#part-chips .chip').forEach(c=>{
+    const label=c.textContent.trim().replace(/^./,'').trim(); // 去掉emoji
+    if(defaultParts.some(p=>c.textContent.includes(p))){
+      c.classList.add('on');
+    }
+  });
+  OB.selectedParts=[...defaultParts];
+  updatePartsOrder();
+}
+</script>
+</body>
+</html>
