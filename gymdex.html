@@ -117,6 +117,62 @@ body{background:var(--bg);color:var(--text)}
 .badge-epic{background:rgba(200,122,255,.2);color:#C87AFF}
 .badge-legendary{background:rgba(255,215,0,.2);color:#FFD700}
 
+/* ── PIXEL SPRITES ── */
+.px-sprite{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+
+/* ── GARDEN SCENE ── */
+.garden-scene{border-radius:14px;overflow:hidden;border:1px solid var(--border);
+  margin-bottom:14px;height:200px;position:relative;cursor:default}
+.garden-sky{height:72px;background:linear-gradient(180deg,#0a0a22 0%,#1a1042 100%);
+  position:relative;overflow:hidden}
+.garden-star{position:absolute;border-radius:50%;background:#fff;opacity:.8;
+  animation:star-twinkle 2s ease-in-out infinite}
+@keyframes star-twinkle{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+.garden-moon{position:absolute;width:22px;height:22px;border-radius:50%;
+  background:#FFF5CC;box-shadow:0 0 12px #FFE87888;top:14px;right:20px}
+.garden-ground{height:128px;
+  background:linear-gradient(180deg,#1c3a10 0%,#142808 70%,#0d1e06 100%);
+  position:relative;overflow:hidden}
+.garden-ground-line{position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#2a5218,#3d7a24,#2a5218)}
+.garden-walkers{position:absolute;bottom:16px;left:0;right:0;height:60px}
+.garden-pet{position:absolute;bottom:0;display:flex;flex-direction:column;
+  align-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.garden-pet-label{font-size:8px;color:rgba(255,255,255,.55);margin-bottom:1px;
+  white-space:nowrap;pointer-events:none}
+.garden-pet-inner{position:relative}
+.garden-collect-dot{position:absolute;top:-2px;right:-2px;width:8px;height:8px;
+  border-radius:50%;background:#4DCC78;box-shadow:0 0 6px #4DCC78;
+  animation:dot-pulse 1.5s ease-in-out infinite}
+@keyframes dot-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
+@keyframes pet-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes pet-walk{
+  0%  {left:4%}
+  48% {left:72%}
+  50% {left:72%}
+  98% {left:4%}
+  100%{left:4%}
+}
+.garden-pet.walking{animation:pet-walk var(--walk-dur,9s) linear infinite}
+.garden-pet.walking .px-sprite{animation:pet-bounce .45s ease-in-out infinite}
+/* flip direction at turnaround using step 49→51 */
+.garden-pet.walking.flip-r{animation:pet-walk-r var(--walk-dur,9s) linear infinite}
+@keyframes pet-walk-r{
+  0%  {left:72%;transform:scaleX(-1)}
+  48% {left:4%; transform:scaleX(-1)}
+  50% {left:4%; transform:scaleX(1)}
+  98% {left:72%;transform:scaleX(1)}
+  100%{left:72%;transform:scaleX(-1)}
+}
+.garden-deco{position:absolute;bottom:0;pointer-events:none}
+.garden-popup{position:absolute;background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:12px 14px;width:160px;z-index:10;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.garden-popup::before{content:'▼';position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);
+  font-size:12px;color:var(--border)}
+.garden-storage{margin-bottom:8px}
+.garden-storage-header{font-size:12px;color:var(--muted);font-weight:700;
+  margin-bottom:8px;padding:0 2px}
+
 /* EXERCISE SELECTION */
 .ex-category-label{font-size:11px;color:var(--muted);text-transform:uppercase;
   letter-spacing:.06em;margin-bottom:6px}
@@ -843,6 +899,575 @@ const EMOJI_MAP = {
 };
 function partColor(p){return COLORS[p]||'#FF6B9D'}
 function partEmoji(p){return EMOJI_MAP[p]||'💪'}
+
+// ══════════════════════════════════════════
+// PIXEL SPRITE SYSTEM
+// ══════════════════════════════════════════
+// 16×16 canvas sprites.  Each sprite: {c: palette array, d: 16-elem row array}
+// Each row is 16 chars; each char is a hex index into c[], '.' = transparent
+// c[0] is always transparent (never used as index, placeholder)
+
+const PX = {};
+function spr(id,c,d){PX[id]={c,d};}
+
+// ── Stage 1 (绒球 round balls) ─────────────
+// All stage-1 use ball_XXXX variants
+
+spr('ball_warm', // hamster, dog, chicken, duck
+  [0,'#EEC060','#C47830','#FFDB90','#FF9EC0','#1A0800','#FFF0C0'],
+  ['......1111......',
+   '....11111111....',
+   '...1133333311...',
+   '..113333333311..',
+   '.1133333333331..',
+   '.1333333333333..',
+   '.133335.53333.1.',
+   '.133333333333.1.',
+   '.13333.4.33331..',
+   '.1133333333311..',
+   '..113333333311..',
+   '...1111111111...',
+   '....11111111....',
+   '................',
+   '................',
+   '................']);
+
+spr('ball_white', // bunny, swan
+  [0,'#F5F0F0','#D0C8C8','#FFB5C8','#1A0800'],
+  ['......1111......',
+   '....11111111....',
+   '...1122222211...',
+   '..112222222211..',
+   '.11222222222211.',
+   '.12222222222221.',
+   '.12222 3. 3221..',
+   '.122222222222 1.',
+   '.12222.3.22221..',
+   '.11222222222211.',
+   '..112222222211..',
+   '...1111111111...',
+   '....11111111....',
+   '................',
+   '................',
+   '................']);
+
+spr('ball_gray', // cat
+  [0,'#B0A8C0','#806888','#FF9EC0','#1A0800','#FFE0A0'],
+  ['......1111......',
+   '....11111111....',
+   '...1122222211...',
+   '..112222222211..',
+   '.11222222222211.',
+   '.12222222222221.',
+   '.12222 3. 3221..',
+   '.122222222222 1.',
+   '.12222.3.22221..',
+   '.11222222222211.',
+   '..112222222211..',
+   '...1111111111...',
+   '....11111111....',
+   '................',
+   '................',
+   '................']);
+
+spr('ball_brown', // bear, deer
+  [0,'#A06030','#703010','#FFCFA0','#FF9EC0','#1A0800'],
+  ['......1111......',
+   '....11111111....',
+   '...1122222211...',
+   '..112222222211..',
+   '.11222222222211.',
+   '.12222222222221.',
+   '.12222 3. 3221..',
+   '.122222222222 1.',
+   '.12222.3.22221..',
+   '.11222222222211.',
+   '..112222222211..',
+   '...1111111111...',
+   '....11111111....',
+   '................',
+   '................',
+   '................']);
+
+spr('ball_green', // turtle, butterfly
+  [0,'#5A9A3A','#3A6A20','#8ACC60','#1A2800'],
+  ['......1111......',
+   '....11111111....',
+   '...1122222211...',
+   '..112222222211..',
+   '.11222222222211.',
+   '.12222222222221.',
+   '.12222 1. 1221..',
+   '.122222222222 1.',
+   '.12222.1.22221..',
+   '.11222222222211.',
+   '..112222222211..',
+   '...1111111111...',
+   '....11111111....',
+   '................',
+   '................',
+   '................']);
+
+spr('ball_orange', // fox, tiger
+  [0,'#E87020','#B04800','#FFAA60','#1A0800','#FFF0C0'],
+  ['......1111......',
+   '....11111111....',
+   '...1122222211...',
+   '..112222222211..',
+   '.11222222222211.',
+   '.12222222222221.',
+   '.12222 3. 3221..',
+   '.122222222222 1.',
+   '.12222.3.22221..',
+   '.11222222222211.',
+   '..112222222211..',
+   '...1111111111...',
+   '....11111111....',
+   '................',
+   '................',
+   '................']);
+
+spr('ball_red', // phoenix
+  [0,'#D03010','#901800','#FF8050','#FFD020','#1A0800'],
+  ['......1111......',
+   '....11111111....',
+   '...1122222211...',
+   '..112222222211..',
+   '.11222222222211.',
+   '.12223333333221.',
+   '.12222 4. 4221..',
+   '.122222222222 1.',
+   '.12222.4.22221..',
+   '.11222222222211.',
+   '..112222222211..',
+   '...1111111111...',
+   '....11111111....',
+   '................',
+   '................',
+   '................']);
+
+spr('ball_blue', // dragon
+  [0,'#4080D0','#2050A0','#90C0F8','#C0D8FF','#1A0800'],
+  ['......1111......',
+   '....11111111....',
+   '...1133332211...',
+   '..113333222211..',
+   '.11333322222211.',
+   '.13333222222221.',
+   '.13332 4. 4221..',
+   '.133322222222 1.',
+   '.13332.4.22221..',
+   '.11332222222211.',
+   '..112222222211..',
+   '...1111111111...',
+   '....11111111....',
+   '................',
+   '................',
+   '................']);
+
+// ── Stage 3 (成年) unique designs ───────────
+
+spr('hamster_3', // 小仓神 — chubby hamster, full cheeks
+  [0,'#E8A840','#C07820','#FFDB90','#FF9EC0','#1A0800','#FFF0C0','#FFFFFF'],
+  ['................',
+   '...11...........',
+   '..1221..........', // ears
+   '..1221.....11...',
+   '..122111111221..',
+   '.122333333332 1.',
+   '.12333333333331.',
+   '.1233 4.4 33331.',
+   '.123333.33333 1.',
+   '.12333533333321.',
+   '.122333333333221',
+   '.1 1233333322 1.',
+   '..1 122233321...',
+   '....11111111....',
+   '................',
+   '................']);
+
+spr('bunny_3', // 月灵兔 — tall rabbit, long ears, glowing
+  [0,'#F5F0F5','#D0C8D8','#FFB5C8','#1A0800','#E0D8F8','#CCB8FF'],
+  ['....11..11......',
+   '....11..11......',
+   '....11..11......',
+   '....11..11......',
+   '....11111111....',
+   '...1122222211...',
+   '..112222222211..',
+   '.11222222222211.',
+   '.12225 3. 3221..',
+   '.12222.3.22221..',
+   '.11222222222211.',
+   '..112222222211..',
+   '...112555211....',
+   '.....12521......',
+   '.....11111......',
+   '................']);
+
+spr('dog_3', // 暖柴犬 — golden retriever, fluffy
+  [0,'#E8A830','#B07010','#FFC860','#FFDB90','#1A0800','#C08020'],
+  ['................',
+   '.....11.11......',
+   '....1331.1331...',  // floppy ears
+   '...13321123331..',
+   '...133322233331.',
+   '..1333222223331.',
+   '..133324423331..',
+   '..133322233331..',
+   '..133323323331..',
+   '.1133333333331..',
+   '.1333333333331..',
+   '.133333333333 1.',
+   '..11111.1.111...',
+   '................',
+   '................',
+   '................']);
+
+spr('chicken_3', // 金鸡 — rooster, red comb, gold feathers
+  [0,'#E8C030','#B08010','#FF4020','#FFDB90','#1A0800','#FFA020','#FFFFFF'],
+  ['.....333........',  // red comb
+   '....33331.......',
+   '...333311111....',
+   '...3 3 11151....',  // head with beak
+   '....111151......',
+   '...11111111.....',
+   '..1111111111....',
+   '..1215 4.451....',  // body with eyes
+   '..121111111 1...',
+   '..1111111111....',
+   '...111111111....',
+   '....1111111.....',
+   '....1..1..1.....',  // legs
+   '................',
+   '................',
+   '................']);
+
+spr('duck_3', // 澡泡鸭 — plump duck, orange bill
+  [0,'#E8C030','#B08010','#FF8020','#FFDB90','#1A0800','#4080D0','#FFFFFF'],
+  ['................',
+   '....111111......',
+   '...133333311....',
+   '..1333333331....',
+   '.13333333333 1..',
+   '.13334.4333331..',
+   '.133333333333 1.',
+   '.133333333333 1.',
+   '.13333 3333331..',
+   '.11333333333 11.',
+   '..1133333332 1..',
+   '...111333 111...',
+   '....11.111.11...',
+   '................',
+   '................',
+   '................']);
+
+spr('cat_3', // 霜雪猫 — sleek silver cat
+  [0,'#C0B8D8','#908098','#FFE0A0','#1A0800','#FF9EC0','#FFFFFF','#705880'],
+  ['..11..........11',  // pointy ears
+   '.1661.........16',
+   '.16611111111116.',
+   '.166222222222 1.',
+   '.16222234432221.',  // amber eyes
+   '.162222222222 1.',
+   '.162225.32222 1.',
+   '..16222222222...',
+   '...162222222....',
+   '....16222221....',
+   '....162222 1....',
+   '...1622222221...',
+   '..162222222221..',
+   '.16222222222221.',
+   '16222222222222.1',
+   '1.............11']);
+
+spr('bear_3', // 蜜罐熊 — big round bear, honey on nose
+  [0,'#805028','#503010','#FFCF90','#1A0800','#FFB020','#FFFFFF'],
+  ['.11.......11....',  // round ears
+   '11211.....11211.',
+   '.112111111211...',
+   '.1122222222211..',
+   '11222222222222..',
+   '.12222 3. 32221.',
+   '.12222222222221.',
+   '.12222.4.222221.',
+   '.12222222222221.',
+   '.12225555222221.',
+   '.12222222222221.',
+   '.1122222222211..',
+   '..1 12222211....',
+   '....11.11.1.....',
+   '................',
+   '................']);
+
+spr('turtle_3', // 玄墨龟 — dark shell, glowing blue
+  [0,'#203820','#102010','#5090A0','#80C0A0','#1A0800','#C0F0FF','#AAFFEE'],
+  ['................',
+   '......1111......',
+   '....11222211....',
+   '...1232323211...',
+   '..1233232323 1..',
+   '.12332323232321.',
+   '.12322323233221.',
+   '.12332362632 21.',  // glowing eyes
+   '.12323232323221.',
+   '..1232323232 1..',
+   '...1233332221...',
+   '....11222211....',
+   '......1111......',
+   '.......11.......',
+   '.......11.......',
+   '................']);
+
+spr('butterfly_3', // 花彩蝶 — spread wings, colorful
+  [0,'#3080C0','#60C080','#FFB0D0','#FF80A0','#C060FF','#1A0800','#FFFFFF'],
+  ['..11.11..11.11..',  // antennae
+   '..11.11..11.11..',
+   '...11111111111..',
+   '..12222166222 1.',
+   '.1222221662221..',
+   '.122222166222 1.',
+   '12222226662221..',
+   '12233336663221..',
+   '12222226662221..',
+   '.122222166222 1.',
+   '.1222221662221..',
+   '..12222166222 1.',
+   '...122211222 1..',
+   '....12211221....',
+   '.....1 2 1......',
+   '................']);
+
+spr('fox_3', // 九尾狐 — orange fox, fluffy tails
+  [0,'#E07020','#A04800','#FFA050','#FFFFFF','#1A0800','#FF6040','#F0C890'],
+  ['..11............',  // pointed ears
+   '..151...........',
+   '..15111111......',
+   '..11333333311...',
+   '.11333333333 1..',
+   '.13333 4. 43331.',
+   '.1333333333331..',
+   '.13333.4.33331..',
+   '.11333333333311.',
+   '..11333333331...',
+   '...1133333 1....',
+   '.1113333333111..',  // tails
+   '.13133333313 1..',
+   '.13333333331 1..',
+   '.11111111111....',
+   '................']);
+
+spr('swan_3', // 冰天鹅 — elegant white swan, long neck
+  [0,'#F0EFFF','#D0CCEE','#FF9090','#1A0800','#4090D0','#C8E8FF'],
+  ['....111.........',  // head
+   '...11111........',
+   '..1122221.......',
+   '..112 3.321.....',
+   '..11222221......',
+   '...111111.......',
+   '....1111........',
+   '....1111........',  // neck
+   '...111111.......',
+   '...1111111......',
+   '..11111111 1....',
+   '.11111111115 1..',
+   '.11111111111 1..',
+   '.1111111111111..',
+   '..111111111111..',
+   '...111111111....' ]);
+
+spr('deer_3', // 星尘鹿 — antlers, white spots
+  [0,'#C08040','#905020','#FFF0D0','#1A0800','#FFCCFF','#F0A0E0','#FFFFFF'],
+  ['..11.11.11.11...',  // antlers
+   '..11111111111...',
+   '...1111111111...',
+   '....11111111....',
+   '...1112222111...',
+   '..112222222211..',
+   '.11222 3. 32221.',
+   '.12222222222221.',
+   '.12222.3.222221.',
+   '.122226 62222 1.',  // flower spots
+   '.122222222222 1.',
+   '.1122222222211..',
+   '..11111.11111...',
+   '...1.....1......',
+   '................',
+   '................']);
+
+spr('tiger_3', // 烈鬃虎 — orange stripes, fierce
+  [0,'#D86010','#904000','#FFAA50','#1A0800','#FFF0B0','#201000'],
+  ['..11..........11',
+   '.15511........15',
+   '.155111111111 1.',
+   '.15522333332221.',
+   '.1552 3.3 3222..',
+   '.155253332222...',
+   '.155555533222...',
+   '..1555533322....',
+   '..15553333221...',
+   '..1111111111....',
+   '..1151111511....',
+   '..1551111551....',
+   '..15..11..51....',
+   '................',
+   '................',
+   '................']);
+
+spr('phoenix_3', // 不死鸟 — majestic phoenix, fire wings
+  [0,'#D83010','#FF6020','#FFD020','#FFF060','#1A0800','#FF9040','#FFFFFF'],
+  ['...11...11......',  // wing tips
+   '..1221..1221....',
+   '.12221211221....',
+   '.122212112221...',
+   '.12222222222 1..',
+   '1222232322222 1.',
+   '12222322322222 1',
+   '122232.3.22222.1',  // eyes
+   '12222322322222.1',
+   '1222222222222 1.',
+   '.122222222222 1.',
+   '..1122222222211.',
+   '...11122222111..',
+   '....111111111...',
+   '.....1111111....',
+   '......1.1.1.....' ]);
+
+spr('dragon_3', // 苍海龙 — eastern dragon, blue silver
+  [0,'#3060C0','#1830A0','#70A0E8','#C0D8FF','#1A0800','#80C8FF','#FFFFFF'],
+  ['.11.........11..',  // horns
+   '.1331.......1 1.',
+   '.13331111111331.',
+   '.133332222233 1.',
+   '11333323232331..',
+   '.1333233232333..',
+   '.133325.5233331.',  // eyes
+   '.1333232323331..',
+   '.11333333333311.',
+   '..1133333333311.',
+   '...133333333311.',
+   '....1333333311..',
+   '.....11333311...',
+   '......113311....',
+   '.......1331.....',
+   '........11......']);
+
+// ── Stage 2 intermediate designs ─────────────
+// (use simple variants — between ball and adult)
+spr('hamster_2',
+  [0,'#E8A840','#C07820','#FFDB90','#FF9EC0','#1A0800'],
+  ['......11........',
+   '....111111......',
+   '...12222221.....',
+   '..122222222 1...',
+   '.12222222222 1..',
+   '.12222 3. 3221..',
+   '.122222222222 1.',
+   '.12222.3.222221.',
+   '.122222222222 1.',
+   '..122222222221..',
+   '...11122222111..',
+   '......111111....',
+   '................',
+   '................',
+   '................',
+   '................']);
+
+spr('bunny_2',
+  [0,'#F5F0F5','#D0C8D8','#FFB5C8','#1A0800'],
+  ['....11..11......',
+   '....11..11......',
+   '....11221........',
+   '...1222221......',
+   '..122222221.....',
+   '.12222222221....',
+   '.12222 3. 3221..',
+   '.122222222222 1.',
+   '.12222.3.22221..',
+   '..122222222211..',
+   '...1122222211...',
+   '.....11111111...',
+   '......11111.....',
+   '................',
+   '................',
+   '................']);
+
+// Map: creature stage → sprite id
+// Stage 2 fallbacks to adult if not defined
+const SPR_MAP = {
+  hamster:{1:'ball_warm',  2:'hamster_2',  3:'hamster_3'},
+  bunny:  {1:'ball_white', 2:'bunny_2',    3:'bunny_3'},
+  dog:    {1:'ball_warm',  2:'ball_warm',  3:'dog_3'},
+  chicken:{1:'ball_warm',  2:'ball_warm',  3:'chicken_3'},
+  duck:   {1:'ball_warm',  2:'ball_warm',  3:'duck_3'},
+  cat:    {1:'ball_gray',  2:'ball_gray',  3:'cat_3'},
+  bear:   {1:'ball_brown', 2:'ball_brown', 3:'bear_3'},
+  turtle: {1:'ball_green', 2:'ball_green', 3:'turtle_3'},
+  butterfly:{1:'ball_green',2:'ball_green',3:'butterfly_3'},
+  fox:    {1:'ball_orange',2:'ball_orange',3:'fox_3'},
+  swan:   {1:'ball_white', 2:'ball_white', 3:'swan_3'},
+  deer:   {1:'ball_brown', 2:'ball_brown', 3:'deer_3'},
+  tiger:  {1:'ball_orange',2:'ball_orange',3:'tiger_3'},
+  phoenix:{1:'ball_red',   2:'ball_red',   3:'phoenix_3'},
+  dragon: {1:'ball_blue',  2:'ball_blue',  3:'dragon_3'},
+};
+
+function getSpriteId(petId, stage){
+  return SPR_MAP[petId]?.[stage] || SPR_MAP[petId]?.[1] || 'ball_warm';
+}
+
+function drawSprite(canvas, petId, stage){
+  if(!canvas) return;
+  const sprId = getSpriteId(petId, stage);
+  const spr = PX[sprId];
+  if(!spr){canvas.style.opacity='0';return;}
+  canvas.style.opacity='1';
+  const ctx = canvas.getContext('2d');
+  const sz = canvas.width / 16;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let y=0;y<16;y++){
+    const row = spr.d[y]||'';
+    for(let x=0;x<16;x++){
+      const ch=row[x];
+      if(!ch||ch==='.'||ch===' ')continue;
+      const ci=parseInt(ch,16);
+      if(!spr.c[ci])continue;
+      ctx.fillStyle=spr.c[ci];
+      ctx.fillRect(x*sz,y*sz,sz,sz);
+    }
+  }
+}
+
+// Draw sprite to a new <canvas> element (returns the element)
+function spriteCanvas(petId, stage, size=48){
+  const c=document.createElement('canvas');
+  c.width=c.height=16;
+  c.className='px-sprite';
+  c.style.width=c.style.height=size+'px';
+  // Draw after append (needs to be in DOM for some browsers)
+  requestAnimationFrame(()=>drawSprite(c,petId,stage));
+  return c.outerHTML.replace('</canvas>',
+    `data-pet="${petId}" data-stage="${stage}"></canvas>`);
+}
+
+// Redraw all sprite canvases in DOM (call after render)
+function refreshSprites(){
+  document.querySelectorAll('canvas.px-sprite[data-pet]').forEach(c=>{
+    drawSprite(c,c.dataset.pet,parseInt(c.dataset.stage));
+  });
+}
+
+// ── Items pixel art (emoji-based with rarity ring) ─
+// Items keep emoji but get a rarity-colored background chip
+function itemChip(id, cnt){
+  const it=ITEMS[id];if(!it)return'';
+  const rc=RARITY_COLOR[it.rarity]||'#aaa';
+  return `<div style="display:inline-flex;align-items:center;gap:3px;
+    padding:4px 8px;border-radius:8px;border:1px solid ${rc}44;
+    background:${rc}11;font-size:18px;position:relative">
+    ${it.emoji}${cnt>1?`<span style="font-size:10px;color:${rc};font-weight:700">×${cnt}</span>`:''}
+  </div>`;
+}
 
 // ── Items ──────────────────────────────────
 // exp: experience given when fed  attr: element tag  attrVal: element points given
@@ -2268,6 +2893,8 @@ function renderPet(){
   else if(petTab==='garden') h+=renderGardenTab();
   else h+=renderCompendiumTab();
   el.innerHTML=h;
+  // Draw all pixel sprites after DOM update
+  requestAnimationFrame(refreshSprites);
 }
 
 function renderNurturingTab(){
@@ -2275,7 +2902,10 @@ function renderNurturingTab(){
   if(S.hatchPending){
     const cr=CREATURES.find(c=>c.id===S.hatchPending);
     h+=`<div class="card" style="border-color:#B44DFF66;margin-bottom:14px;text-align:center;padding:16px">
-      <div style="font-size:32px">${cr?.stages[0].emoji}</div>
+      <div style="display:flex;justify-content:center;margin-bottom:6px">
+        <canvas class="px-sprite" width="16" height="16" style="width:48px;height:48px"
+          data-pet="${S.hatchPending}" data-stage="1"></canvas>
+      </div>
       <div style="font-size:14px;font-weight:700;color:#B44DFF;margin:4px 0">新神兽等待入槽！</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:10px">${cr?.stages[0].name} — 需要空出培育槽</div>
       <button class="btn btn-secondary btn-small" onclick="claimHatched()" ${S.nurturing.length<3?'':'disabled'}>
@@ -2296,14 +2926,16 @@ function renderNurturingTab(){
     const evolCond=cr?.stages[slot.stage-1]?.evolve;
     const ready=canEvolve(i);
     const expPct=evolCond?Math.min(100,slot.exp/evolCond.exp*100):100;
-    h+=`<div class="nurture-slot">
+    const rc=RARITY_COLOR[cr?.rarity]||'#aaa';
+    h+=`<div class="nurture-slot" style="border-color:${rc}44">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-        <div style="font-size:36px">${stageDef?.emoji}</div>
+        <canvas class="px-sprite" width="16" height="16" style="width:52px;height:52px;flex-shrink:0"
+          data-pet="${slot.petId}" data-stage="${slot.stage}"></canvas>
         <div style="flex:1">
           <div style="font-size:15px;font-weight:700">${stageDef?.name}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
             <span class="badge badge-${cr?.rarity}">${RARITY_NAME[cr?.rarity]}</span>
-            ${cr?.attr?`<span style="font-size:11px;color:${ATTR_COLOR[cr.attr]}">${ATTR_EMOJI[cr.attr]} ${cr.attr}</span>`:''}
+            ${cr?.attr?`<span style="font-size:11px;color:${ATTR_COLOR[cr.attr]}">${ATTR_EMOJI[cr.attr]}</span>`:''}
           </div>
         </div>
         <button class="btn btn-ghost btn-small" onclick="freezeToGarden(${i})" title="移至庭院冻结">❄️</button>
@@ -2407,55 +3039,145 @@ function renderGardenTab(){
   const frozen=S.garden.filter(g=>!g.active);
   const today=todayISO();
   let h='';
+
+  // ── Animated garden scene ──
+  // Stars
+  let stars='';
+  for(let i=0;i<18;i++){
+    const x=Math.random()*100,y=Math.random()*90,s=1+Math.random()*2;
+    stars+=`<div class="garden-star" style="left:${x}%;top:${y}%;width:${s}px;height:${s}px;
+      animation-delay:${(Math.random()*3).toFixed(1)}s;animation-duration:${(1.5+Math.random()*2).toFixed(1)}s"></div>`;
+  }
+  // Pixel decorations (CSS-drawn flowers & bushes)
+  const decos=[
+    {l:8, emoji:'🌷',sz:14},{l:18,emoji:'🌿',sz:12},{l:55,emoji:'🌸',sz:13},
+    {l:68,emoji:'🌾',sz:11},{l:82,emoji:'🌷',sz:13},{l:92,emoji:'🌿',sz:12},
+  ];
+  const decoHtml=decos.map(d=>`<div class="garden-deco" style="left:${d.l}%;font-size:${d.sz}px;bottom:0;line-height:1">${d.emoji}</div>`).join('');
+
+  // Active walking pets
+  let walkers='';
+  const walkDurs=[9,11,8,13,10];
+  const leftOffsets=[4,15,30,50,64];
+  let ai=0;
+  for(let i=0;i<S.garden.length;i++){
+    const g=S.garden[i];if(!g.active)continue;
+    const cr=CREATURES.find(c=>c.id===g.petId);
+    const stageDef=cr?.stages[g.stage-1];
+    const collected=g.lastCollect===today;
+    const dur=walkDurs[ai%walkDurs.length];
+    const startL=leftOffsets[ai%leftOffsets.length];
+    const spC=`<canvas class="px-sprite" width="16" height="16" style="width:40px;height:40px"
+      data-pet="${g.petId}" data-stage="${g.stage}"></canvas>`;
+    walkers+=`<div class="garden-pet walking" id="gp-${i}"
+      style="left:${startL}%;--walk-dur:${dur}s"
+      onclick="gardenPetClick(${i},event)">
+      <div class="garden-pet-inner" style="position:relative">
+        ${collected?'':'<div class="garden-collect-dot"></div>'}
+        ${spC}
+      </div>
+      <div class="garden-pet-label">${stageDef?.name||''}</div>
+    </div>`;
+    ai++;
+  }
+
   if(!S.garden.length){
     h+=`<div class="empty-state"><div class="empty-icon">🏡</div>
       <div>庭院还是空的</div>
       <div style="font-size:13px;margin-top:6px">神兽成年或冻结后会搬进来</div></div>`;
-    return h;
+  } else {
+    h+=`<div class="garden-scene" id="garden-scene">
+      <div class="garden-sky">${stars}<div class="garden-moon"></div></div>
+      <div class="garden-ground">
+        <div class="garden-ground-line"></div>
+        ${decoHtml}
+        <div class="garden-walkers">${walkers}</div>
+      </div>
+      <div id="garden-popup" style="display:none" class="garden-popup"></div>
+    </div>`;
   }
-  if(active.length){
-    h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px">🌟 活跃神兽 (${active.length})</div>`;
-    for(let i=0;i<S.garden.length;i++){
-      const g=S.garden[i];if(!g.active)continue;
-      const cr=CREATURES.find(c=>c.id===g.petId);
-      const stageDef=cr?.stages[g.stage-1];
-      const collected=g.lastCollect===today;
-      h+=`<div class="nurture-slot" style="display:flex;align-items:center;gap:12px">
-        <div style="font-size:40px">${stageDef?.emoji}</div>
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:700">${stageDef?.name}</div>
-          <span class="badge badge-${cr?.rarity}">${RARITY_NAME[cr?.rarity]}</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-          <button class="btn ${collected?'btn-secondary':'btn-green'} btn-small"
-            onclick="collectGarden(${i})" ${collected?'disabled':''}>
-            ${collected?'✓ 已收集':'🎁 收获'}
-          </button>
-          ${g.stage<3?`<button class="btn btn-ghost btn-small" onclick="thawFromGarden(${i})" title="取回培育">🌱</button>`:''}
-        </div>
-      </div>`;
-    }
-  }
+
+  // Frozen section
   if(frozen.length){
-    h+=`<div style="font-size:13px;font-weight:700;margin:14px 0 10px;color:var(--muted)">❄️ 冻结中 (${frozen.length})</div>`;
+    h+=`<div class="garden-storage">
+      <div class="garden-storage-header">❄️ 冻结中 (${frozen.length})</div>`;
     for(let i=0;i<S.garden.length;i++){
       const g=S.garden[i];if(g.active)continue;
       const cr=CREATURES.find(c=>c.id===g.petId);
       const stageDef=cr?.stages[g.stage-1];
       h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
-        background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;opacity:.7">
-        <div style="font-size:32px">${stageDef?.emoji}</div>
+        background:var(--card);border:1px solid var(--border);border-radius:10px;
+        margin-bottom:6px;opacity:.65">
+        <canvas class="px-sprite" width="16" height="16" style="width:32px;height:32px"
+          data-pet="${g.petId}" data-stage="${g.stage}"></canvas>
         <div style="flex:1">
-          <div style="font-size:14px">${stageDef?.name}</div>
-          <div style="font-size:12px;color:var(--muted)">第${g.stage}阶段·已冻结</div>
+          <div style="font-size:13px">${stageDef?.name}</div>
+          <div style="font-size:11px;color:var(--muted)">第${g.stage}阶段 · 已冻结</div>
         </div>
-        <button class="btn btn-ghost btn-small" onclick="thawFromGarden(${i})" ${S.nurturing.length<3?'':'disabled'}>
-          解冻
-        </button>
+        <button class="btn btn-ghost btn-small" onclick="thawFromGarden(${i})"
+          ${S.nurturing.length<3?'':'disabled'}>解冻</button>
       </div>`;
     }
+    h+=`</div>`;
   }
   return h;
+}
+
+let _gardenClickOutside=null;
+function gardenPetClick(gIdx, e){
+  e.stopPropagation();
+  const today=todayISO();
+  const g=S.garden[gIdx];if(!g||!g.active)return;
+  const cr=CREATURES.find(c=>c.id===g.petId);
+  const stageDef=cr?.stages[g.stage-1];
+  const collected=g.lastCollect===today;
+  const popup=document.getElementById('garden-popup');
+  if(!popup)return;
+
+  // Position popup above the pet
+  const scene=document.getElementById('garden-scene');
+  const pet=document.getElementById(`gp-${gIdx}`);
+  if(pet&&scene){
+    const sr=scene.getBoundingClientRect();
+    const pr=pet.getBoundingClientRect();
+    const relLeft=pr.left-sr.left;
+    const relTop=pr.top-sr.top;
+    let left=Math.max(4,Math.min(relLeft-60,sr.width-170));
+    popup.style.left=left+'px';
+    popup.style.top=Math.max(4,relTop-90)+'px';
+  }
+
+  popup.innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <canvas class="px-sprite" width="16" height="16" style="width:32px;height:32px"
+        data-pet="${g.petId}" data-stage="${g.stage}"></canvas>
+      <div>
+        <div style="font-size:13px;font-weight:700">${stageDef?.name}</div>
+        <span class="badge badge-${cr?.rarity}" style="font-size:10px">${RARITY_NAME[cr?.rarity]}</span>
+      </div>
+      <button onclick="closeGardenPopup()" style="margin-left:auto;background:none;border:none;
+        color:var(--muted);font-size:16px;cursor:pointer;padding:0">✕</button>
+    </div>
+    ${collected
+      ?`<div style="font-size:12px;color:var(--muted);text-align:center;padding:4px 0">✓ 今日已收获～</div>`
+      :`<button class="btn btn-green btn-small" style="width:100%" onclick="collectGarden(${gIdx});closeGardenPopup()">
+          🎁 收获今日道具
+        </button>`
+    }
+    ${g.stage<3?`<button class="btn btn-ghost btn-small" style="width:100%;margin-top:6px"
+      onclick="thawFromGarden(${gIdx});closeGardenPopup()">🌱 取回培育</button>`:''}
+  `;
+  popup.style.display='block';
+  refreshSprites();
+
+  if(_gardenClickOutside)document.removeEventListener('click',_gardenClickOutside);
+  _gardenClickOutside=()=>{closeGardenPopup();};
+  setTimeout(()=>document.addEventListener('click',_gardenClickOutside,{once:true}),100);
+}
+
+function closeGardenPopup(){
+  const p=document.getElementById('garden-popup');
+  if(p)p.style.display='none';
 }
 
 function renderCompendiumTab(){
@@ -2469,7 +3191,10 @@ function renderCompendiumTab(){
     const dispStage=owned?([...S.nurturing,...S.garden].find(s=>s.petId===cr.id)?.stage||1):0;
     const emoji=owned?(cr.stages[dispStage-1]?.emoji||cr.stages[0].emoji):null;
     h+=`<div class="cre-cell ${owned?'unlocked':'locked'}" title="${cr.desc}">
-      <span class="cre-emoji">${owned?emoji:'❓'}</span>
+      ${owned
+        ?`<canvas class="px-sprite" width="16" height="16" style="width:36px;height:36px;margin:0 auto 2px"
+            data-pet="${cr.id}" data-stage="${dispStage}"></canvas>`
+        :`<span class="cre-emoji">❓</span>`}
       <div class="cre-name">${owned?cr.name:'???'}</div>
       <div style="font-size:10px;color:${RARITY_COLOR[cr.rarity]};margin-top:2px">${RARITY_NAME[cr.rarity]}</div>
       ${owned?`<div style="font-size:10px;color:var(--muted)">第${dispStage}阶段</div>`:''}
