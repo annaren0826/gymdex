@@ -846,37 +846,74 @@ function partEmoji(p){return EMOJI_MAP[p]||'💪'}
 
 // ── Items ──────────────────────────────────
 // exp: experience given when fed  attr: element tag  attrVal: element points given
-// special:true → evolution item, NOT feedable
+// special:true → evolution item, NOT feedable  attrs: fire/water/wood/wind
 const ITEMS = {
-  peach:         {emoji:'🍑',name:'蜜桃',      rarity:'common',    exp:10,  attr:null,   attrVal:0,  special:false},
-  protein:       {emoji:'🥩',name:'蛋白棒',    rarity:'common',    exp:25,  attr:null,   attrVal:0,  special:false},
-  stardust:      {emoji:'⭐',name:'星尘',       rarity:'rare',      exp:50,  attr:null,   attrVal:0,  special:false},
-  rainbow_gem:   {emoji:'💎',name:'彩晶',       rarity:'epic',      exp:100, attr:null,   attrVal:0,  special:false},
-  fire_seed:     {emoji:'🔥',name:'火焰种',     rarity:'rare',      exp:0,   attr:'fire',  attrVal:30, special:false},
-  dewdrop:       {emoji:'💧',name:'清泉露',     rarity:'rare',      exp:0,   attr:'water', attrVal:20, special:false},
-  earth_crystal: {emoji:'🪨',name:'大地晶',     rarity:'rare',      exp:0,   attr:'earth', attrVal:25, special:false},
-  wind_feather:  {emoji:'🌪️',name:'风之羽',    rarity:'rare',      exp:0,   attr:'wind',  attrVal:25, special:false},
-  lava_fruit:    {emoji:'🍎',name:'熔岩果',     rarity:'epic',      exp:15,  attr:'fire',  attrVal:15, special:false},
-  ocean_pearl:   {emoji:'🦪',name:'深海珠',     rarity:'epic',      exp:15,  attr:'water', attrVal:15, special:false},
-  // Special evolution items — earned via achievements, not random drops
-  ginseng:       {emoji:'🌿',name:'千年人参',   rarity:'epic',      exp:0,   attr:null,   attrVal:0,  special:true, how:'完成10次臀A训练'},
-  power_pill:    {emoji:'💊',name:'大力丸',     rarity:'epic',      exp:0,   attr:null,   attrVal:0,  special:true, how:'肩部训练重量连续两次增加'},
-  phoenix_feather:{emoji:'🪶',name:'凤凰尾羽', rarity:'legendary', exp:0,   attr:null,   attrVal:0,  special:true, how:'连续打卡7天'},
-  ancient_scale: {emoji:'🐉',name:'远古龙鳞',  rarity:'legendary', exp:0,   attr:null,   attrVal:0,  special:true, how:'累计完成50次训练'},
+  // ─ Common exp ─
+  peach:          {emoji:'🍑',name:'蜜桃',      rarity:'common',   exp:10,  attr:null,   attrVal:0,  special:false},
+  protein:        {emoji:'🥩',name:'蛋白棒',    rarity:'common',   exp:25,  attr:null,   attrVal:0,  special:false},
+  honey_jar:      {emoji:'🍯',name:'蜂蜜罐',    rarity:'common',   exp:15,  attr:null,   attrVal:0,  special:false},
+  moonlight_cake: {emoji:'🍡',name:'月光糕',    rarity:'common',   exp:20,  attr:null,   attrVal:0,  special:false},
+  bubble_gum:     {emoji:'🫧',name:'泡泡糖',    rarity:'common',   exp:12,  attr:null,   attrVal:0,  special:false},
+  rainbow_candy:  {emoji:'🍬',name:'彩虹糖',    rarity:'common',   exp:18,  attr:null,   attrVal:0,  special:false},
+  // ─ Common attr ─
+  wind_grass:     {emoji:'🌾',name:'轻风草',    rarity:'common',   exp:0,   attr:'wind',  attrVal:10, special:false},
+  conch_shell:    {emoji:'🐚',name:'海螺壳',    rarity:'common',   exp:0,   attr:'water', attrVal:10, special:false},
+  chili_flame:    {emoji:'🌶️',name:'辣焰椒',   rarity:'common',   exp:0,   attr:'fire',  attrVal:10, special:false},
+  sprout_leaf:    {emoji:'🌱',name:'嫩芽叶',    rarity:'common',   exp:0,   attr:'wood',  attrVal:10, special:false},
+  // ─ Rare exp ─
+  stardust:       {emoji:'⭐',name:'星尘',       rarity:'rare',     exp:50,  attr:null,   attrVal:0,  special:false},
+  lingzhi:        {emoji:'🍄',name:'灵芝菇',    rarity:'rare',     exp:40,  attr:null,   attrVal:0,  special:false},
+  cherry_blossom: {emoji:'🌸',name:'樱花蜜',    rarity:'rare',     exp:45,  attr:null,   attrVal:0,  special:false},
+  cloud_cake:     {emoji:'🧁',name:'云朵糕',    rarity:'rare',     exp:55,  attr:null,   attrVal:0,  special:false},
+  // ─ Rare attr ─
+  wind_feather:   {emoji:'🍃',name:'风之羽',    rarity:'rare',     exp:0,   attr:'wind',  attrVal:25, special:false},
+  chase_stone:    {emoji:'🌀',name:'追风石',    rarity:'rare',     exp:0,   attr:'wind',  attrVal:28, special:false},
+  dewdrop:        {emoji:'💧',name:'清泉露',    rarity:'rare',     exp:0,   attr:'water', attrVal:20, special:false},
+  rain_bottle:    {emoji:'🫙',name:'雨水瓶',    rarity:'rare',     exp:0,   attr:'water', attrVal:22, special:false},
+  fire_seed:      {emoji:'🔥',name:'火焰种',    rarity:'rare',     exp:0,   attr:'fire',  attrVal:30, special:false},
+  candle_wick:    {emoji:'🕯️',name:'蜡烛心',   rarity:'rare',     exp:0,   attr:'fire',  attrVal:28, special:false},
+  earth_crystal:  {emoji:'🪨',name:'大地晶',    rarity:'rare',     exp:0,   attr:'wood',  attrVal:25, special:false},
+  sacred_nut:     {emoji:'🌰',name:'神木果',    rarity:'rare',     exp:0,   attr:'wood',  attrVal:25, special:false},
+  // ─ Rare special (achievements) ─
+  ocean_gem:      {emoji:'💙',name:'深海蓝晶',  rarity:'rare',     exp:0,   attr:null,   attrVal:0,  special:true, how:'累计完成20次水属性道具喂食'},
+  lucky_clover:   {emoji:'🍀',name:'四叶幸运草',rarity:'rare',     exp:0,   attr:null,   attrVal:0,  special:true, how:'背包同时拥有火/水/木/风各1件道具'},
+  mystery_orb:    {emoji:'🔮',name:'神秘水晶球',rarity:'rare',     exp:0,   attr:null,   attrVal:0,  special:true, how:'连续打卡14天'},
+  bloom_crown:    {emoji:'🌺',name:'盛放花冠',  rarity:'rare',     exp:0,   attr:null,   attrVal:0,  special:true, how:'(待定)'},
+  // ─ Epic exp ─
+  rainbow_gem:    {emoji:'💎',name:'彩晶',       rarity:'epic',    exp:100, attr:null,   attrVal:0,  special:false},
+  meteor_shard:   {emoji:'✨',name:'流星碎',     rarity:'epic',    exp:80,  attr:null,   attrVal:0,  special:false},
+  // ─ Epic attr ─
+  dove_feather:   {emoji:'🕊️',name:'白鸽翎',   rarity:'epic',    exp:0,   attr:'wind',  attrVal:20, special:false},
+  ice_heart:      {emoji:'🧊',name:'冰心石',    rarity:'epic',    exp:0,   attr:'water', attrVal:18, special:false},
+  volcano_ash:    {emoji:'🌋',name:'火山灰',    rarity:'epic',    exp:0,   attr:'fire',  attrVal:20, special:false},
+  ancient_wood:   {emoji:'🪵',name:'古树芯',    rarity:'epic',    exp:0,   attr:'wood',  attrVal:22, special:false},
+  // ─ Epic hybrid ─
+  ocean_pearl:    {emoji:'🦪',name:'深海珠',    rarity:'epic',    exp:15,  attr:'water', attrVal:15, special:false},
+  lava_fruit:     {emoji:'🍎',name:'熔岩果',    rarity:'epic',    exp:15,  attr:'fire',  attrVal:15, special:false},
+  // ─ Epic special (achievements) ─
+  ginseng:        {emoji:'🌿',name:'千年人参',  rarity:'epic',    exp:0,   attr:null,   attrVal:0,  special:true, how:'完成10次臀A训练'},
+  power_pill:     {emoji:'💊',name:'大力丸',    rarity:'epic',    exp:0,   attr:null,   attrVal:0,  special:true, how:'肩推重量连续两次增加'},
+  // ─ Legendary special (achievements) ─
+  phoenix_feather:{emoji:'🪶',name:'凤凰尾羽', rarity:'legendary',exp:0,  attr:null,   attrVal:0,  special:true, how:'连续打卡7天'},
+  ancient_scale:  {emoji:'🐉',name:'远古龙鳞', rarity:'legendary',exp:0,  attr:null,   attrVal:0,  special:true, how:'累计完成50次训练'},
+  legend_crown:   {emoji:'👑',name:'传说王冠',  rarity:'legendary',exp:0,  attr:null,   attrVal:0,  special:true, how:'集齐任意5只成年神宠'},
+  moon_pearl:     {emoji:'🌙',name:'月华珠',   rarity:'legendary',exp:0,  attr:null,   attrVal:0,  special:true, how:'累计打卡30次（不需连续）'},
+  thunder_core:   {emoji:'⚡',name:'雷霆核心',  rarity:'legendary',exp:0,  attr:null,   attrVal:0,  special:true, how:'单次训练破个人最重记录'},
+  honor_medal:    {emoji:'🎖️',name:'荣耀勋章', rarity:'legendary',exp:0,  attr:null,   attrVal:0,  special:true, how:'集齐全部5只普通神宠'},
 };
 
 const REWARD_POOL = {
-  '臀A':[['peach',.9],['protein',.6],['stardust',.12],['fire_seed',.2],['earth_crystal',.18],['lava_fruit',.06]],
-  '臀B':[['peach',.8],['protein',.6],['stardust',.12],['earth_crystal',.28],['wind_feather',.1]],
-  '背': [['protein',.9],['stardust',.18],['earth_crystal',.2],['rainbow_gem',.08],['ocean_pearl',.1]],
-  '肩': [['protein',.8],['stardust',.18],['wind_feather',.28],['fire_seed',.1]],
-  _default:[['peach',.8],['protein',.5],['stardust',.15],['fire_seed',.08],['dewdrop',.08]],
+  '臀A':[['peach',.8],['protein',.5],['honey_jar',.6],['fire_seed',.18],['earth_crystal',.15],['lava_fruit',.07]],
+  '臀B':[['peach',.8],['honey_jar',.5],['sprout_leaf',.4],['earth_crystal',.2],['sacred_nut',.12],['ancient_wood',.05]],
+  '背': [['protein',.8],['stardust',.2],['earth_crystal',.18],['rainbow_gem',.07],['ocean_pearl',.08],['sacred_nut',.1]],
+  '肩': [['protein',.7],['stardust',.18],['wind_feather',.25],['fire_seed',.12],['chase_stone',.1]],
+  _default:[['peach',.7],['protein',.5],['stardust',.12],['fire_seed',.08],['dewdrop',.08],['sprout_leaf',.1]],
 };
 
 const RARITY_COLOR={common:'#aaa',rare:'#7AB0FF',epic:'#C87AFF',legendary:'#FFD700'};
 const RARITY_NAME ={common:'普通',rare:'稀有',epic:'史诗',legendary:'传说'};
-const ATTR_COLOR  ={fire:'#FF6B35',water:'#4DA6FF',earth:'#8BC34A',wind:'#B39DDB'};
-const ATTR_EMOJI  ={fire:'🔥',water:'💧',earth:'🪨',wind:'🌪️'};
+const ATTR_COLOR  ={fire:'#FF6B35',water:'#4DA6FF',wood:'#8BC34A',wind:'#B39DDB'};
+const ATTR_EMOJI  ={fire:'🔥',water:'💧',wood:'🌿',wind:'🌪️'};
 
 // ── Eggs ───────────────────────────────────
 const EGG_DATA={
@@ -886,96 +923,156 @@ const EGG_DATA={
   rainbow:{emoji:'🌈🥚',name:'彩虹蛋',rarity:'legendary', needed:12},
 };
 const EGG_POOLS={
-  common: ['egg_spirit','leaf_bunny','flame_cat'],
-  silver: ['water_fox','wind_wolf','earth_turtle'],
-  gold:   ['earth_dragon','thunder_bear'],
-  rainbow:['phoenix'],
+  common: ['hamster','bunny','dog','chicken','duck'],
+  silver: ['cat','bear','turtle','butterfly'],
+  gold:   ['fox','swan','deer','tiger'],
+  rainbow:['phoenix','dragon'],
 };
 
 // ── Creatures (3 stages each) ──────────────
-// stages[0]=幼年(just hatched)  stages[1]=青年  stages[2]=成年
-// evolve on stages[0] and stages[1] = conditions to reach next stage
-// attrs: element affinities for 1.5x exp bonus when fed matching items
+// stages[0]=幼年  stages[1]=青年  stages[2]=成年
+// evolve = conditions to reach NEXT stage
+// attr: element for 1.5x exp bonus when fed matching attr items
 const CREATURES=[
-  {id:'egg_spirit', name:'蛋宝宝',  rarity:'common',    attr:null,
-   desc:'最初的相遇，神秘的存在',
+  // ── Common (5) ──────────────────────────────
+  {id:'hamster',  name:'仓鼠',  rarity:'common',    attr:null,
+   desc:'腮帮子永远塞满食物的可爱小东西',
    stages:[
-    {stage:1,name:'幼年蛋宝',  emoji:'🥚', evolve:{exp:150}},
-    {stage:2,name:'青年蛋宝',  emoji:'🐣', evolve:{exp:300}},
-    {stage:3,name:'成年蛋宝',  emoji:'🐥'},
+    {stage:1,name:'绒球',   emoji:'🟤', evolve:{exp:100}},
+    {stage:2,name:'胖达',   emoji:'🐹', evolve:{exp:200}},
+    {stage:3,name:'小仓神', emoji:'🐹✨'},
   ]},
-  {id:'leaf_bunny', name:'绿叶兔',  rarity:'common',    attr:'earth',
-   desc:'喜欢在草地蹦跳的小兔',
+  {id:'bunny',    name:'兔子',  rarity:'common',    attr:null,
+   desc:'月圆夜毛发会微微发亮的神秘小兔',
    stages:[
-    {stage:1,name:'幼年绿叶兔',emoji:'🐰', evolve:{exp:150}},
-    {stage:2,name:'青年绿叶兔',emoji:'🐇', evolve:{exp:300}},
-    {stage:3,name:'成年绿叶兔',emoji:'🐇🌿'},
+    {stage:1,name:'绒球',   emoji:'⚪', evolve:{exp:120}},
+    {stage:2,name:'软耳',   emoji:'🐰', evolve:{exp:220}},
+    {stage:3,name:'月灵兔', emoji:'🐇🌙'},
   ]},
-  {id:'flame_cat',  name:'火焰猫',  rarity:'common',    attr:'fire',
-   desc:'尾巴藏着小火苗',
+  {id:'dog',      name:'狗',    rarity:'common',    attr:null,
+   desc:'眼神温柔、毛色如阳光的暖柴犬',
    stages:[
-    {stage:1,name:'幼年火猫',  emoji:'🐱', evolve:{exp:150}},
-    {stage:2,name:'青年火猫',  emoji:'😸', evolve:{exp:300}},
-    {stage:3,name:'成年火猫',  emoji:'🐯🔥'},
+    {stage:1,name:'绒球',   emoji:'🟡', evolve:{exp:180}},
+    {stage:2,name:'摇摇',   emoji:'🐕', evolve:{exp:280}},
+    {stage:3,name:'暖柴犬', emoji:'🦮'},
   ]},
-  {id:'water_fox',  name:'水灵狐',  rarity:'rare',      attr:'water',
-   desc:'雨天总是心情特别好',
+  {id:'chicken',  name:'鸡',    rarity:'common',    attr:null,
+   desc:'最普通但最暖的小存在',
    stages:[
-    {stage:1,name:'幼年水狐',  emoji:'🦊',   evolve:{exp:250}},
-    {stage:2,name:'青年水狐',  emoji:'🦊💧',  evolve:{exp:500, attrs:{water:80}}},
-    {stage:3,name:'成年水狐',  emoji:'🦊🌊'},
+    {stage:1,name:'绒球',   emoji:'🟡', evolve:{exp:150}},
+    {stage:2,name:'嫩嫩',   emoji:'🐤', evolve:{exp:150}},
+    {stage:3,name:'金鸡',   emoji:'🐓'},
   ]},
-  {id:'wind_wolf',  name:'疾风狼',  rarity:'rare',      attr:'wind',
-   desc:'奔跑速度超过闪电',
+  {id:'duck',     name:'鸭子',  rarity:'common',    attr:null,
+   desc:'雨天特别精神的澡泡鸭',
    stages:[
-    {stage:1,name:'幼年风狼',  emoji:'🐺',   evolve:{exp:250}},
-    {stage:2,name:'青年风狼',  emoji:'🐺💨',  evolve:{exp:500, attrs:{wind:80}}},
-    {stage:3,name:'成年风狼',  emoji:'🐺⚡'},
+    {stage:1,name:'绒球',   emoji:'🟡', evolve:{exp:130}},
+    {stage:2,name:'嘎嘎',   emoji:'🐣', evolve:{exp:230}},
+    {stage:3,name:'澡泡鸭', emoji:'🦆'},
   ]},
-  {id:'earth_turtle',name:'土岩龟', rarity:'rare',      attr:'earth',
-   desc:'背上长着苔藓的古老神兽',
+  // ── Rare (4) ────────────────────────────────
+  {id:'cat',      name:'猫',    rarity:'rare',      attr:'wind',
+   desc:'银灰如霜、眼神琥珀的霜雪猫',
    stages:[
-    {stage:1,name:'幼年土龟',  emoji:'🐢',   evolve:{exp:250}},
-    {stage:2,name:'青年土龟',  emoji:'🐢🪨',  evolve:{exp:500, attrs:{earth:80}}},
-    {stage:3,name:'成年土龟',  emoji:'🐢✨'},
+    {stage:1,name:'绒球',   emoji:'🩶', evolve:{exp:250}},
+    {stage:2,name:'小爪',   emoji:'🐱', evolve:{exp:420}},
+    {stage:3,name:'霜雪猫', emoji:'🐈'},
   ]},
-  {id:'earth_dragon',name:'土古龙', rarity:'epic',      attr:'earth',
-   desc:'大地的守护神兽',
+  {id:'bear',     name:'熊',    rarity:'rare',      attr:null,
+   desc:'肚皮白白、爪子大大的蜜罐熊',
    stages:[
-    {stage:1,name:'幼年土龙',  emoji:'🐉',   evolve:{exp:500}},
-    {stage:2,name:'青年土龙',  emoji:'🐲',   evolve:{exp:800, attrs:{earth:66,fire:66,water:66}}},
-    {stage:3,name:'成年土龙',  emoji:'🐲🌋'},
+    {stage:1,name:'绒球',   emoji:'🟫', evolve:{exp:280}},
+    {stage:2,name:'蜜仔',   emoji:'🐻', evolve:{exp:450}},
+    {stage:3,name:'蜜罐熊', emoji:'🐻🍯'},
   ]},
-  {id:'thunder_bear',name:'雷震熊', rarity:'epic',      attr:'wind',
-   desc:'打雷的时候才是真正的自己',
+  {id:'turtle',   name:'乌龟',  rarity:'rare',      attr:null,
+   desc:'背壳发出幽蓝荧光的玄墨龟',
    stages:[
-    {stage:1,name:'幼年雷熊',  emoji:'🐻',   evolve:{exp:500}},
-    {stage:2,name:'青年雷熊',  emoji:'🐻⚡',  evolve:{exp:800, attrs:{wind:150}, items:{power_pill:1}}},
-    {stage:3,name:'成年雷熊',  emoji:'🐻‍❄️⚡'},
+    {stage:1,name:'鳞球',   emoji:'🟢', evolve:{exp:250}},
+    {stage:2,name:'缩缩',   emoji:'🐢', evolve:{exp:420}},
+    {stage:3,name:'玄墨龟', emoji:'🐢💙'},
   ]},
-  {id:'phoenix',    name:'火凰',    rarity:'legendary', attr:'fire',
-   desc:'涅槃重生的传说神兽',
+  {id:'butterfly',name:'蝴蝶',  rarity:'rare',      attr:'wood',
+   desc:'飞行时撒发光鳞粉的花彩蝶',
    stages:[
-    {stage:1,name:'幼年火凰',  emoji:'🐦🔥', evolve:{exp:600}},
-    {stage:2,name:'青年火凰',  emoji:'🦅',   evolve:{exp:1000, attrs:{fire:200}, items:{ginseng:1,phoenix_feather:1}}},
-    {stage:3,name:'成年火凰',  emoji:'🦅🔥'},
+    {stage:1,name:'鳞球',   emoji:'🟢', evolve:{exp:220}},
+    {stage:2,name:'蛹仔',   emoji:'🐛', evolve:{exp:480}},
+    {stage:3,name:'花彩蝶', emoji:'🦋'},
+  ]},
+  // ── Epic (4) ────────────────────────────────
+  {id:'fox',      name:'狐狸',  rarity:'epic',      attr:'fire',
+   desc:'尾巴蓬松如火焰、眼神灵动的九尾狐',
+   stages:[
+    {stage:1,name:'绒球',   emoji:'🟠', evolve:{exp:500}},
+    {stage:2,name:'小火狐', emoji:'🦊', evolve:{exp:1000}},
+    {stage:3,name:'九尾狐', emoji:'🦊🔥'},
+  ]},
+  {id:'swan',     name:'天鹅',  rarity:'epic',      attr:'water',
+   desc:'羽毛如镜面反光的冰天鹅',
+   stages:[
+    {stage:1,name:'绒球',   emoji:'⚪', evolve:{exp:550}},
+    {stage:2,name:'羽仔',   emoji:'🦢', evolve:{exp:1100}},
+    {stage:3,name:'冰天鹅', emoji:'🦢💙'},
+  ]},
+  {id:'deer',     name:'小鹿',  rarity:'epic',      attr:'wood',
+   desc:'走路时地面留花印的星尘鹿',
+   stages:[
+    {stage:1,name:'绒球',   emoji:'🟤', evolve:{exp:580}},
+    {stage:2,name:'斑仔',   emoji:'🦌', evolve:{exp:1050}},
+    {stage:3,name:'星尘鹿', emoji:'🦌🌸'},
+  ]},
+  {id:'tiger',    name:'老虎',  rarity:'epic',      attr:'fire',
+   desc:'鬃毛有火焰色渐变的烈鬃虎',
+   stages:[
+    {stage:1,name:'绒球',   emoji:'🟠', evolve:{exp:550}},
+    {stage:2,name:'虎崽',   emoji:'🐯', evolve:{exp:1100, items:{ginseng:1}}},
+    {stage:3,name:'烈鬃虎', emoji:'🐅'},
+  ]},
+  // ── Legendary (2) ───────────────────────────
+  {id:'phoenix',  name:'凤凰',  rarity:'legendary', attr:'fire',
+   desc:'涅槃重生、尾羽极长的不死鸟',
+   stages:[
+    {stage:1,name:'绒球',   emoji:'🔴', evolve:{exp:900}},
+    {stage:2,name:'朱雏',   emoji:'🐦‍🔥', evolve:{exp:1500, items:{phoenix_feather:1}}},
+    {stage:3,name:'不死鸟', emoji:'🦅🔥'},
+  ]},
+  {id:'dragon',   name:'龙',    rarity:'legendary', attr:'water',
+   desc:'飞行时云雾环绕的苍海龙',
+   stages:[
+    {stage:1,name:'鳞球',   emoji:'🔵', evolve:{exp:850}},
+    {stage:2,name:'龙仔',   emoji:'🐉', evolve:{exp:1800, items:{ancient_scale:1}}},
+    {stage:3,name:'苍海龙', emoji:'🐲💙'},
   ]},
 ];
 
 // ── Achievements (earn special items) ──────
 const ACHIEVEMENTS=[
-  {id:'glute_10',  name:'臀力达人', emoji:'🍑',
-   desc:'完成10次臀A训练',    reward:'ginseng',
-   check:()=>S.workouts.filter(w=>w.type==='臀A').length>=10},
-  {id:'streak_7',  name:'七日不息', emoji:'🔥',
-   desc:'连续打卡7天',        reward:'phoenix_feather',
-   check:()=>S.streak>=7},
-  {id:'total_50',  name:'健身达人', emoji:'💪',
-   desc:'累计完成50次训练',   reward:'ancient_scale',
-   check:()=>S.total>=50},
-  {id:'shoulder_up',name:'力量突破',emoji:'💊',
-   desc:'肩推重量连续两次增加',reward:'power_pill',
-   check:()=>checkShoulderProgress()},
+  // ─ Workout-based ─
+  {id:'glute_10',     name:'臀力达人',  emoji:'🍑',desc:'完成10次臀A训练',
+   reward:'ginseng',       check:()=>S.workouts.filter(w=>w.type==='臀A').length>=10},
+  {id:'shoulder_up',  name:'力量突破',  emoji:'💊',desc:'肩推重量连续两次增加',
+   reward:'power_pill',    check:()=>checkShoulderProgress()},
+  {id:'streak_7',     name:'七日不息',  emoji:'🔥',desc:'连续打卡7天',
+   reward:'phoenix_feather',check:()=>S.streak>=7},
+  {id:'total_50',     name:'健身达人',  emoji:'💪',desc:'累计完成50次训练',
+   reward:'ancient_scale', check:()=>S.total>=50},
+  {id:'streak_14',    name:'两周挑战',  emoji:'🌙',desc:'连续打卡14天',
+   reward:'mystery_orb',   check:()=>S.streak>=14},
+  {id:'total_30',     name:'月月不停',  emoji:'📅',desc:'累计打卡30次（不需连续）',
+   reward:'moon_pearl',    check:()=>S.total>=30},
+  // ─ Pet-based ─
+  {id:'garden_5',     name:'神宠大家庭',emoji:'🏡',desc:'集齐任意5只成年神宠',
+   reward:'legend_crown',  check:()=>S.garden.length>=5},
+  {id:'all_common',   name:'普通收集家',emoji:'🎖️',desc:'集齐全部5只普通神宠',
+   reward:'honor_medal',   check:()=>checkAllCommon()},
+  // ─ Collection-based ─
+  {id:'collect_4attrs',name:'四行收藏家',emoji:'🍀',desc:'背包同时拥有火/水/木/风各1件道具',
+   reward:'lucky_clover',  check:()=>checkCollect4Attrs()},
+  {id:'water_feed_20', name:'水系守护者',emoji:'💙',desc:'累计完成20次水属性道具喂食',
+   reward:'ocean_gem',     check:()=>(S.waterFeedTotal||0)>=20},
+  // ─ PR ─
+  {id:'pr_broken',    name:'突破极限',  emoji:'⚡',desc:'单次训练打破个人最重记录',
+   reward:'thunder_core',  check:()=>S.prBroken||false},
 ];
 
 const CIRC = 2 * Math.PI * 90;
@@ -1000,7 +1097,7 @@ let S = {
   // Pet system v2
   incubator: null,    // {eggRarity, trainCount, needed, firstEgg?} | null
   hatchQueue: [],     // ['common','silver',...] eggs waiting
-  nurturing: [],      // [{petId,stage,exp,attrs:{fire,water,earth,wind}}] max 3
+  nurturing: [],      // [{petId,stage,exp,attrs:{fire,water,wood,wind}}] max 3
   garden: [],         // [{petId,stage,exp,attrs,active,lastCollect}]
   achievements: [],   // completed achievement ids
   itemLog: [],        // item ids ever obtained (for compendium)
@@ -1053,7 +1150,7 @@ function load(){
       const cr=CREATURES.find(c=>c.id===newId);if(!cr)continue;
       const pd=S.petData[oldId]||{exp:0,level:1};
       const stage=Math.min(pd.level,3);
-      const entry={petId:newId,stage,exp:pd.exp,attrs:{fire:0,water:0,earth:0,wind:0}};
+      const entry={petId:newId,stage,exp:pd.exp,attrs:{fire:0,water:0,wood:0,wind:0}};
       if(stage===3)S.garden.push({...entry,active:true,lastCollect:null});
       else if(S.nurturing.length<3)S.nurturing.push(entry);
     }
@@ -1066,6 +1163,8 @@ function load(){
   if(!S.itemLog)S.itemLog=[];
   if(!S.hatchQueue)S.hatchQueue=[];
   if(S.hatchPending===undefined)S.hatchPending=null;
+  if(!S.waterFeedTotal)S.waterFeedTotal=0;
+  if(!S.prBroken)S.prBroken=false;
   // Give first egg to brand-new players
   if(!S.incubator&&!S.nurturing.length&&!S.garden.length&&!S.hatchPending)
     S.incubator={eggRarity:'common',trainCount:0,needed:3,firstEgg:true};
@@ -1618,6 +1717,17 @@ function checkShoulderProgress(){
   return weights[2]>weights[1]&&weights[1]>weights[0]&&weights[2]>0;
 }
 
+function checkAllCommon(){
+  const commonIds=['hamster','bunny','dog','chicken','duck'];
+  const owned=[...S.nurturing,...S.garden].map(p=>p.petId);
+  return commonIds.every(id=>owned.includes(id));
+}
+
+function checkCollect4Attrs(){
+  const attrs=['fire','water','wood','wind'];
+  return attrs.every(a=>Object.entries(S.inv).some(([id,cnt])=>cnt>0&&ITEMS[id]?.attr===a));
+}
+
 // ── Egg & hatch ────────────────────────────
 
 function dropEgg(){
@@ -1636,13 +1746,13 @@ function tickIncubator(){
 function hatchEgg(){
   const rarity=S.incubator.eggRarity;
   const isFirst=S.incubator.firstEgg;
-  let petId=isFirst?'egg_spirit':EGG_POOLS[rarity][Math.floor(Math.random()*EGG_POOLS[rarity].length)];
+  let petId=isFirst?'hamster':EGG_POOLS[rarity][Math.floor(Math.random()*EGG_POOLS[rarity].length)];
   S.incubator=null;
   if(S.hatchQueue.length){
     const next=S.hatchQueue.shift();
     S.incubator={eggRarity:next,trainCount:0,needed:EGG_DATA[next].needed};
   }
-  const entry={petId,stage:1,exp:0,attrs:{fire:0,water:0,earth:0,wind:0}};
+  const entry={petId,stage:1,exp:0,attrs:{fire:0,water:0,wood:0,wind:0}};
   if(S.nurturing.length<3){S.nurturing.push(entry);return petId;}
   S.hatchPending=petId;
   return petId;
@@ -1650,7 +1760,7 @@ function hatchEgg(){
 
 function claimHatched(){
   if(!S.hatchPending||S.nurturing.length>=3)return;
-  S.nurturing.push({petId:S.hatchPending,stage:1,exp:0,attrs:{fire:0,water:0,earth:0,wind:0}});
+  S.nurturing.push({petId:S.hatchPending,stage:1,exp:0,attrs:{fire:0,water:0,wood:0,wind:0}});
   S.hatchPending=null;
   save();renderPet();
 }
@@ -1668,6 +1778,7 @@ function feedNurturing(idx,itemId){
   const bonus=(it.attr&&cr?.attr===it.attr)?1.5:1;
   slot.exp+=Math.round((it.exp||0)*bonus);
   if(it.attr&&it.attrVal)slot.attrs[it.attr]=(slot.attrs[it.attr]||0)+it.attrVal;
+  if(it.attr==='water')S.waterFeedTotal=(S.waterFeedTotal||0)+1;
   save();renderPet();
   const msg=it.attr
     ?`${it.emoji} +${it.attrVal} ${ATTR_EMOJI[it.attr]}${it.exp?` +${Math.round(it.exp*bonus)} EXP`:''}`
@@ -1737,7 +1848,7 @@ function collectGarden(gIdx){
   if(g.lastCollect===today){toast('今天已经收集过啦！明天再来～');return;}
   g.lastCollect=today;
   // Drop 1-2 random common items
-  const pool=['peach','protein','fire_seed','dewdrop','earth_crystal','wind_feather'];
+  const pool=['peach','protein','honey_jar','fire_seed','dewdrop','earth_crystal','wind_grass','sprout_leaf','conch_shell','chili_flame'];
   const count=1+Math.floor(Math.random()*2);
   const drops={};
   for(let i=0;i<count;i++){
