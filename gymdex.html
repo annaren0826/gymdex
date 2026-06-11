@@ -1412,6 +1412,11 @@ const SPR_MAP = {
   dragon: {1:'ball_blue',  2:'ball_blue',  3:'dragon_3'},
 };
 
+// Image-based sprites (overrides canvas pixel art when defined)
+const IMG_MAP = {
+  cat: {1:'assets/cat_1.png', 2:'assets/cat_2.png', 3:'assets/cat_3.png'},
+};
+
 function getSpriteId(petId, stage){
   return SPR_MAP[petId]?.[stage] || SPR_MAP[petId]?.[1] || 'ball_warm';
 }
@@ -1440,11 +1445,14 @@ function drawSprite(canvas, petId, stage){
 
 // Draw sprite to a new <canvas> element (returns the element)
 function spriteCanvas(petId, stage, size=48){
+  const imgSrc = IMG_MAP[petId]?.[stage];
+  if(imgSrc){
+    return `<img src="${imgSrc}" class="px-sprite img-sprite" style="width:${size}px;height:${size}px;object-fit:contain;" data-pet="${petId}" data-stage="${stage}">`;
+  }
   const c=document.createElement('canvas');
   c.width=c.height=16;
   c.className='px-sprite';
   c.style.width=c.style.height=size+'px';
-  // Draw after append (needs to be in DOM for some browsers)
   requestAnimationFrame(()=>drawSprite(c,petId,stage));
   return c.outerHTML.replace('</canvas>',
     `data-pet="${petId}" data-stage="${stage}"></canvas>`);
@@ -1597,12 +1605,12 @@ const CREATURES=[
     {stage:3,name:'澡泡鸭', emoji:'🦆'},
   ]},
   // ── Rare (4) ────────────────────────────────
-  {id:'cat',      name:'猫',    rarity:'rare',      attr:'wind',
-   desc:'银灰如霜、眼神琥珀的霜雪猫',
+  {id:'cat',      name:'云尾猫',  rarity:'rare',      attr:'wind',
+   desc:'祥云缭绕、尾若流云的神秘灵猫',
    stages:[
-    {stage:1,name:'绒球',   emoji:'🩶', evolve:{exp:250}},
-    {stage:2,name:'小爪',   emoji:'🐱', evolve:{exp:420}},
-    {stage:3,name:'霜雪猫', emoji:'🐈'},
+    {stage:1,name:'云苗',   emoji:'🩶', evolve:{exp:250}},
+    {stage:2,name:'云爪',   emoji:'🐱', evolve:{exp:420}},
+    {stage:3,name:'云尾猫', emoji:'🐈'},
   ]},
   {id:'bear',     name:'熊',    rarity:'rare',      attr:null,
    desc:'肚皮白白、爪子大大的蜜罐熊',
