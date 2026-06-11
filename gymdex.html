@@ -916,11 +916,12 @@ const ATTR_COLOR  ={fire:'#FF6B35',water:'#4DA6FF',wood:'#8BC34A',wind:'#B39DDB'
 const ATTR_EMOJI  ={fire:'🔥',water:'💧',wood:'🌿',wind:'🌪️'};
 
 // ── Eggs ───────────────────────────────────
+// minTrains/maxTrains: randomized at incubation start
 const EGG_DATA={
-  common: {emoji:'🥚',  name:'普通蛋',rarity:'common',    needed:3},
-  silver: {emoji:'🪺',  name:'银蛋',  rarity:'rare',      needed:5},
-  gold:   {emoji:'✨🥚',name:'金蛋',  rarity:'epic',      needed:8},
-  rainbow:{emoji:'🌈🥚',name:'彩虹蛋',rarity:'legendary', needed:12},
+  common: {emoji:'🥚',  name:'普通蛋',rarity:'common',    minTrains:2, maxTrains:3},
+  silver: {emoji:'🪺',  name:'银蛋',  rarity:'rare',      minTrains:3, maxTrains:4},
+  gold:   {emoji:'✨🥚',name:'金蛋',  rarity:'epic',      minTrains:5, maxTrains:6},
+  rainbow:{emoji:'🌈🥚',name:'彩虹蛋',rarity:'legendary', minTrains:7, maxTrains:8},
 };
 const EGG_POOLS={
   common: ['hamster','bunny','dog','chicken','duck'],
@@ -1167,7 +1168,7 @@ function load(){
   if(!S.prBroken)S.prBroken=false;
   // Give first egg to brand-new players
   if(!S.incubator&&!S.nurturing.length&&!S.garden.length&&!S.hatchPending)
-    S.incubator={eggRarity:'common',trainCount:0,needed:3,firstEgg:true};
+    S.incubator={eggRarity:'common',trainCount:0,needed:randomNeeded('common'),firstEgg:true};
   if(!S.profile)S.profile={...DEFAULT_PROFILE};
 }
 function save(){localStorage.setItem('gd3',JSON.stringify(S))}
@@ -1640,9 +1641,14 @@ function skipToExercise(idx){
 }
 
 function restDayCheckIn(){
-  S.inv['peach']=(S.inv['peach']||0)+1;
+  const rewards=genRewards(false); // rest day budget: 30-50
+  for(const[id,n]of Object.entries(rewards)){
+    S.inv[id]=(S.inv[id]||0)+n;
+    if(!S.itemLog.includes(id))S.itemLog.push(id);
+  }
   save();
-  toast('🛌 休息打卡成功！恢复也是训练的一部分！');
+  const items=Object.entries(rewards).map(([id,n])=>`${ITEMS[id]?.emoji||''}×${n}`).join(' ');
+  toast(`🛌 休息打卡！获得：${items}`);
   renderWorkout();
 }
 
@@ -1658,7 +1664,7 @@ function finish(){
   S.total=(S.total||0)+1;
   S.streak=calcStreak();
   S.session=null;
-  const rewards=genRewards(ses.type);
+  const rewards=genRewards(true);
   for(const[id,n]of Object.entries(rewards)){
     S.inv[id]=(S.inv[id]||0)+n;
     if(!S.itemLog.includes(id))S.itemLog.push(id);
@@ -1666,7 +1672,7 @@ function finish(){
   // Egg drop (30%)
   const eggDrop=dropEgg();
   if(eggDrop){
-    if(!S.incubator)S.incubator={eggRarity:eggDrop,trainCount:0,needed:EGG_DATA[eggDrop].needed};
+    if(!S.incubator)S.incubator={eggRarity:eggDrop,trainCount:0,needed:randomNeeded(eggDrop)};
     else S.hatchQueue.push(eggDrop);
     rewards._egg=eggDrop;
   }
@@ -1680,10 +1686,38 @@ function finish(){
   sparkles();
 }
 
-function genRewards(type){
+// Drop weight & cost by rarity (special items excluded)
+const DROP_WEIGHT={common:60,rare:25,epic:10};
+const DROP_COST  ={common:10,rare:30,epic:70};
+
+function genRewards(isWorkout=true){
+  // EXP budget: 75-125 for workout, 30-50 for rest day
+  const budget=isWorkout
+    ?(75+Math.floor(Math.random()*51))
+    :(30+Math.floor(Math.random()*21));
+  return spendBudget(budget);
+}
+
+function spendBudget(budget){
+  // Build droppable item pool (no special items)
+  const pool=Object.entries(ITEMS)
+    .filter(([,it])=>!it.special&&DROP_WEIGHT[it.rarity])
+    .map(([id,it])=>({id,weight:DROP_WEIGHT[it.rarity],cost:DROP_COST[it.rarity]}));
+  const totalW=pool.reduce((s,p)=>s+p.weight,0);
   const out={};
-  const pool=REWARD_POOL[type]||REWARD_POOL._default;
-  for(const[id,p]of pool)if(Math.random()<p)out[id]=(out[id]||0)+1;
+  let remaining=budget;
+  let attempts=0;
+  while(remaining>=10&&attempts<30){
+    attempts++;
+    const affordable=pool.filter(p=>p.cost<=remaining);
+    if(!affordable.length)break;
+    const afW=affordable.reduce((s,p)=>s+p.weight,0);
+    let r=Math.random()*afW;
+    let picked=affordable[affordable.length-1];
+    for(const p of affordable){r-=p.weight;if(r<=0){picked=p;break;}}
+    out[picked.id]=(out[picked.id]||0)+1;
+    remaining-=picked.cost;
+  }
   if(!Object.keys(out).length)out['peach']=1;
   return out;
 }
@@ -1730,6 +1764,11 @@ function checkCollect4Attrs(){
 
 // ── Egg & hatch ────────────────────────────
 
+function randomNeeded(rarity){
+  const d=EGG_DATA[rarity];
+  return d.minTrains+Math.floor(Math.random()*(d.maxTrains-d.minTrains+1));
+}
+
 function dropEgg(){
   if(Math.random()>0.3)return null;
   const r=Math.random();
@@ -1750,7 +1789,7 @@ function hatchEgg(){
   S.incubator=null;
   if(S.hatchQueue.length){
     const next=S.hatchQueue.shift();
-    S.incubator={eggRarity:next,trainCount:0,needed:EGG_DATA[next].needed};
+    S.incubator={eggRarity:next,trainCount:0,needed:randomNeeded(next)};
   }
   const entry={petId,stage:1,exp:0,attrs:{fire:0,water:0,wood:0,wind:0}};
   if(S.nurturing.length<3){S.nurturing.push(entry);return petId;}
