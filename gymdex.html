@@ -179,15 +179,9 @@ body{background:var(--bg);color:var(--text)}
   background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,transparent 100%);
   display:flex;align-items:center;justify-content:space-between}
 .garden-fs-title{font-size:18px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6)}
-.garden-fs-walkers{position:absolute;bottom:24px;left:0;right:0;height:120px}
-@keyframes pet-walk-fs{0%{left:4%}48%{left:78%}50%{left:78%}98%{left:4%}100%{left:4%}}
-@keyframes pet-walk-fs-r{
-  0%{left:78%;transform:scaleX(-1)}48%{left:4%;transform:scaleX(-1)}
-  50%{left:4%;transform:scaleX(1)}98%{left:78%;transform:scaleX(1)}100%{left:78%;transform:scaleX(-1)}
-}
-.garden-pet.walking-fs{animation:pet-walk-fs var(--walk-dur,9s) linear infinite}
-.garden-pet.walking-fs .px-sprite,.garden-pet.walking-fs .img-sprite{animation:pet-bounce .45s ease-in-out infinite}
-.garden-pet.walking-fs.flip-r{animation:pet-walk-fs-r var(--walk-dur,9s) linear infinite}
+@keyframes pet-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.garden-pet.bobbing{position:absolute;animation:pet-bob var(--bob-dur,2.2s) ease-in-out infinite var(--bob-delay,0s)}
+.garden-pet.bobbing .px-sprite,.garden-pet.bobbing .img-sprite{}
 .garden-storage{margin-bottom:8px}
 .garden-storage-header{font-size:12px;color:var(--muted);font-weight:700;
   margin-bottom:8px;padding:0 2px}
@@ -3306,26 +3300,32 @@ function renderGarden(){
   const today=todayISO();
   const uncollected=active.filter(g=>g.lastCollect!==today).length;
 
-  let walkers='';
-  const walkDurs=[9,11,8,13,10,12];
-  const startOffsets=[4,15,28,42,56,68];
+  // Seeded random positions so they don't jump on re-render
+  const rng=(seed)=>{let x=Math.sin(seed+1)*10000;return x-Math.floor(x);};
+  let pets='';
   let ai=0;
   for(let i=0;i<S.garden.length;i++){
     const g=S.garden[i];if(!g.active)continue;
     const cr=CREATURES.find(c=>c.id===g.petId);
     const stageDef=cr?.stages[g.stage-1];
     const collected=g.lastCollect===today;
-    const dur=walkDurs[ai%walkDurs.length];
-    const startL=startOffsets[ai%startOffsets.length];
-    const sp=spriteCanvas(g.petId,g.stage,64);
-    walkers+=`<div class="garden-pet walking-fs" id="gp-${i}"
-      style="left:${startL}%;--walk-dur:${dur}s"
+    // y: 48%~78% maps to grass area; near bottom = bigger
+    const x=8+rng(i*3)*74;        // 8%~82%
+    const y=48+rng(i*3+1)*30;     // 48%~78%
+    const size=Math.round(32+(y-48)/30*44); // 32px(远)~76px(近)
+    const zIdx=Math.round(y);
+    const bobDur=(1.8+rng(i*3+2)*1.5).toFixed(1);
+    const bobDelay=(rng(i*7)*2).toFixed(1);
+    const sp=spriteCanvas(g.petId,g.stage,size);
+    pets+=`<div class="garden-pet bobbing" id="gp-${i}"
+      style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;z-index:${zIdx};
+             --bob-dur:${bobDur}s;--bob-delay:${bobDelay}s"
       onclick="gardenPetClick(${i},event)">
       <div class="garden-pet-inner">
         ${collected?'':'<div class="garden-collect-dot"></div>'}
         ${sp}
       </div>
-      <div class="garden-pet-label">${stageDef?.name||''}</div>
+      <div class="garden-pet-label" style="font-size:${Math.round(7+(size-32)/44*4)}px">${stageDef?.name||''}</div>
     </div>`;
     ai++;
   }
@@ -3358,7 +3358,7 @@ function renderGarden(){
       ${uncollected?`<div style="background:rgba(77,204,120,.9);color:#fff;border-radius:20px;
         padding:4px 10px;font-size:12px;font-weight:700">🎁 ×${uncollected}</div>`:''}
     </div>
-    <div class="garden-fs-walkers">${walkers}</div>
+    ${pets}
     ${emptyMsg}
     <div id="garden-popup" style="display:none" class="garden-popup"></div>
   </div>`;
