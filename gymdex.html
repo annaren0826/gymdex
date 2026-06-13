@@ -172,7 +172,7 @@ body{background:var(--bg);color:var(--text)}
 /* Full-screen garden */
 #screen-garden{padding:0}
 .garden-fs{width:100%;height:calc(100vh - 56px);
-  background:url('assets/garden_bg.jpg') center bottom/cover no-repeat;
+  background:var(--garden-bg,url('assets/garden_bg.jpg')) center bottom/cover no-repeat;
   position:relative;overflow:hidden}
 .garden-fs-header{position:absolute;top:0;left:0;right:0;z-index:5;
   padding:14px 16px;
@@ -3299,6 +3299,10 @@ function renderGarden(){
   const frozen=S.garden.filter(g=>!g.active);
   const today=todayISO();
   const uncollected=active.filter(g=>g.lastCollect!==today).length;
+  const hour=new Date().getHours();
+  const isNight=hour<6||hour>=18;
+  const bgImg=isNight?"url('assets/garden_bg_night.jpg')":"url('assets/garden_bg.jpg')";
+  document.getElementById('garden-content').style.setProperty('--garden-bg',bgImg);
 
   // Seeded random positions so they don't jump on re-render
   const rng=(seed)=>{let x=Math.sin(seed+1)*10000;return x-Math.floor(x);};
