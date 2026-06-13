@@ -169,6 +169,25 @@ body{background:var(--bg);color:var(--text)}
   border-radius:12px;padding:12px 14px;width:160px;z-index:10;box-shadow:0 4px 20px rgba(0,0,0,.5)}
 .garden-popup::before{content:'▼';position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);
   font-size:12px;color:var(--border)}
+/* Full-screen garden */
+#screen-garden{padding:0}
+.garden-fs{width:100%;height:calc(100vh - 56px);
+  background:url('assets/garden_bg.jpg') center bottom/cover no-repeat;
+  position:relative;overflow:hidden}
+.garden-fs-header{position:absolute;top:0;left:0;right:0;z-index:5;
+  padding:14px 16px;
+  background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,transparent 100%);
+  display:flex;align-items:center;justify-content:space-between}
+.garden-fs-title{font-size:18px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.garden-fs-walkers{position:absolute;bottom:24px;left:0;right:0;height:120px}
+@keyframes pet-walk-fs{0%{left:4%}48%{left:78%}50%{left:78%}98%{left:4%}100%{left:4%}}
+@keyframes pet-walk-fs-r{
+  0%{left:78%;transform:scaleX(-1)}48%{left:4%;transform:scaleX(-1)}
+  50%{left:4%;transform:scaleX(1)}98%{left:78%;transform:scaleX(1)}100%{left:78%;transform:scaleX(-1)}
+}
+.garden-pet.walking-fs{animation:pet-walk-fs var(--walk-dur,9s) linear infinite}
+.garden-pet.walking-fs .px-sprite,.garden-pet.walking-fs .img-sprite{animation:pet-bounce .45s ease-in-out infinite}
+.garden-pet.walking-fs.flip-r{animation:pet-walk-fs-r var(--walk-dur,9s) linear infinite}
 .garden-storage{margin-bottom:8px}
 .garden-storage-header{font-size:12px;color:var(--muted);font-weight:700;
   margin-bottom:8px;padding:0 2px}
@@ -764,6 +783,10 @@ select.ob-input{appearance:none;-webkit-appearance:none;
       <div id="bag-content"></div>
     </div>
 
+    <div class="screen" id="screen-garden">
+      <div id="garden-content"></div>
+    </div>
+
     <div class="screen" id="screen-history">
       <div class="screen-header">
         <div class="screen-title">训练记录 📊</div>
@@ -780,8 +803,8 @@ select.ob-input{appearance:none;-webkit-appearance:none;
     <button class="nav-btn" onclick="switchScreen('pet')">
       <span class="nav-icon">🐉</span><span>神兽</span>
     </button>
-    <button class="nav-btn" onclick="switchScreen('bag')">
-      <span class="nav-icon">🎒</span><span>背包</span>
+    <button class="nav-btn" onclick="switchScreen('garden')">
+      <span class="nav-icon">🏡</span><span>庭院</span>
     </button>
     <button class="nav-btn" onclick="switchScreen('history')">
       <span class="nav-icon">📊</span><span>记录</span>
@@ -2148,9 +2171,10 @@ function switchScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+id).classList.add('active');
-  const order=['workout','pet','bag','history'];
-  document.querySelectorAll('.nav-btn')[order.indexOf(id)].classList.add('active');
-  const renders={workout:renderWorkout,pet:renderPet,bag:renderBag,history:renderHistory};
+  const order=['workout','pet','garden','history'];
+  const navIdx=order.indexOf(id);
+  if(navIdx>=0)document.querySelectorAll('.nav-btn')[navIdx].classList.add('active');
+  const renders={workout:renderWorkout,pet:renderPet,garden:renderGarden,history:renderHistory};
   renders[id]&&renders[id]();
 }
 
@@ -2903,11 +2927,12 @@ function renderActiveSession(el){
 function renderPet(){
   const el=document.getElementById('pet-content');
   let h=`<div class="pet-tabs">
-    ${['nurturing','incubator','garden','compendium'].map((t,i)=>{
-      const labels=['培育','孵蛋器','庭院','图鉴'];
+    ${['nurturing','incubator','bag','compendium'].map((t,i)=>{
+      const labels=['培育','孵蛋器','背包','图鉴'];
+      const bagCount=Object.values(S.inv||{}).filter(n=>n>0).length;
       const badges=[S.nurturing.length||'',
         S.incubator?'🥚':S.hatchQueue.length?S.hatchQueue.length:'',
-        S.garden.filter(g=>g.active&&g.lastCollect!==todayISO()).length||'',''];
+        bagCount||'',''];
       return `<button class="pet-tab${petTab===t?' active':''}" onclick="petTab='${t}';renderPet()">
         ${labels[i]}${badges[i]?`<span class="pet-tab-badge">${badges[i]}</span>`:''}
       </button>`;
@@ -2915,7 +2940,7 @@ function renderPet(){
   </div>`;
   if(petTab==='nurturing') h+=renderNurturingTab();
   else if(petTab==='incubator') h+=renderIncubatorTab();
-  else if(petTab==='garden') h+=renderGardenTab();
+  else if(petTab==='bag') h+=renderBagTab();
   else h+=renderCompendiumTab();
   el.innerHTML=h;
   // Draw all pixel sprites after DOM update
@@ -3169,7 +3194,7 @@ function gardenPetClick(gIdx, e){
     const relTop=pr.top-sr.top;
     let left=Math.max(4,Math.min(relLeft-60,sr.width-170));
     popup.style.left=left+'px';
-    popup.style.top=Math.max(4,relTop-90)+'px';
+    popup.style.top=Math.max(50,relTop-110)+'px';
   }
 
   popup.innerHTML=`
@@ -3245,16 +3270,14 @@ function renderCompendiumTab(){
 // RENDER: BAG
 // ══════════════════════════════════════════
 
-function renderBag(){
+function renderBagTab(){
   const items=Object.entries(S.inv||{}).filter(([,n])=>n>0);
-  let h='';
   if(!items.length){
-    h=`<div class="empty-state"><div class="empty-icon">🎒</div>
+    return `<div class="empty-state"><div class="empty-icon">🎒</div>
       <div>背包是空的</div>
       <div style="margin-top:8px;font-size:13px">完成训练打卡获得道具！</div></div>`;
-    document.getElementById('bag-content').innerHTML=h;return;
   }
-  h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">道具 (${items.length}种) · 去「神兽」标签喂食</div>
+  let h=`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">道具 (${items.length}种) · 点击神兽喂食</div>
   <div class="items-grid">`;
   for(const[id,n]of items){
     const it=ITEMS[id];if(!it)continue;
@@ -3270,7 +3293,78 @@ function renderBag(){
     </div>`;
   }
   h+=`</div>`;
-  document.getElementById('bag-content').innerHTML=h;
+  return h;
+}
+
+function renderBag(){
+  document.getElementById('bag-content').innerHTML=renderBagTab();
+}
+
+function renderGarden(){
+  const active=S.garden.filter(g=>g.active);
+  const frozen=S.garden.filter(g=>!g.active);
+  const today=todayISO();
+  const uncollected=active.filter(g=>g.lastCollect!==today).length;
+
+  let walkers='';
+  const walkDurs=[9,11,8,13,10,12];
+  const startOffsets=[4,15,28,42,56,68];
+  let ai=0;
+  for(let i=0;i<S.garden.length;i++){
+    const g=S.garden[i];if(!g.active)continue;
+    const cr=CREATURES.find(c=>c.id===g.petId);
+    const stageDef=cr?.stages[g.stage-1];
+    const collected=g.lastCollect===today;
+    const dur=walkDurs[ai%walkDurs.length];
+    const startL=startOffsets[ai%startOffsets.length];
+    const sp=spriteCanvas(g.petId,g.stage,64);
+    walkers+=`<div class="garden-pet walking-fs" id="gp-${i}"
+      style="left:${startL}%;--walk-dur:${dur}s"
+      onclick="gardenPetClick(${i},event)">
+      <div class="garden-pet-inner">
+        ${collected?'':'<div class="garden-collect-dot"></div>'}
+        ${sp}
+      </div>
+      <div class="garden-pet-label">${stageDef?.name||''}</div>
+    </div>`;
+    ai++;
+  }
+
+  let frozenChips='';
+  if(frozen.length){
+    frozenChips=frozen.map((g,fi)=>{
+      const cr=CREATURES.find(c=>c.id===g.petId);
+      const stageDef=cr?.stages[g.stage-1];
+      return `<span style="background:rgba(0,0,0,.5);color:#fff;border-radius:20px;
+        padding:4px 10px;font-size:12px;cursor:pointer"
+        onclick="thawFromGarden(${S.garden.indexOf(g)})">
+        ❄️ ${stageDef?.name||g.petId}
+      </span>`;
+    }).join('');
+  }
+
+  const emptyMsg=!S.garden.length
+    ?`<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+        text-align:center;color:rgba(255,255,255,.8);text-shadow:0 1px 4px rgba(0,0,0,.6)">
+        <div style="font-size:40px">🏡</div>
+        <div style="font-size:15px;margin-top:8px">庭院还是空的</div>
+        <div style="font-size:12px;margin-top:4px">神兽成年后会搬进来</div>
+      </div>`:'';
+
+  const html=`<div class="garden-fs" id="garden-scene" onclick="closeGardenPopup()">
+    <div class="garden-fs-header">
+      <div class="garden-fs-title">🏡 庭院</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${frozenChips}</div>
+      ${uncollected?`<div style="background:rgba(77,204,120,.9);color:#fff;border-radius:20px;
+        padding:4px 10px;font-size:12px;font-weight:700">🎁 ×${uncollected}</div>`:''}
+    </div>
+    <div class="garden-fs-walkers">${walkers}</div>
+    ${emptyMsg}
+    <div id="garden-popup" style="display:none" class="garden-popup"></div>
+  </div>`;
+
+  document.getElementById('garden-content').innerHTML=html;
+  requestAnimationFrame(refreshSprites);
 }
 
 // ══════════════════════════════════════════
