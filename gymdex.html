@@ -1482,6 +1482,26 @@ const IMG_MAP = {
   duck:    {1:'assets/fluffball.png', 2:'assets/duck_2.png', 3:'assets/duck_3.png'},
 };
 
+// Per-creature size scale (multiplier on top of perspective size)
+// 1.0 = default, >1 = bigger, <1 = smaller
+const GARDEN_SCALE = {
+  hamster:  0.65,
+  bunny:    0.70,
+  chicken:  0.75,
+  duck:     0.78,
+  turtle:   0.82,
+  butterfly:0.72,
+  dog:      0.90,
+  cat:      1.10,
+  bear:     1.20,
+  fox:      1.10,
+  swan:     1.05,
+  deer:     1.25,
+  tiger:    1.30,
+  phoenix:  1.40,
+  dragon:   1.50,
+};
+
 // CSS filter tints for fluffball stage 1 variants
 const IMG_FILTER = {
   hamster: {1: 'sepia(0.3) saturate(1.5) hue-rotate(10deg)'},
@@ -3153,8 +3173,8 @@ function renderGardenTab(){
     const collected=g.lastCollect===today;
     const dur=walkDurs[ai%walkDurs.length];
     const startL=leftOffsets[ai%leftOffsets.length];
-    const spC=`<canvas class="px-sprite" width="16" height="16" style="width:40px;height:40px"
-      data-pet="${g.petId}" data-stage="${g.stage}"></canvas>`;
+    const gsz=Math.round(40*(GARDEN_SCALE[g.petId]||1.0));
+    const spC=spriteCanvas(g.petId,g.stage,gsz);
     walkers+=`<div class="garden-pet walking" id="gp-${i}"
       style="left:${startL}%;--walk-dur:${dur}s"
       onclick="gardenPetClick(${i},event)">
@@ -3424,7 +3444,9 @@ function renderGarden(){
     // y: 48%~78% maps to grass area; near bottom = bigger
     const x=8+rng(i*3)*74;        // 8%~82%
     const y=48+rng(i*3+1)*30;     // 48%~78%
-    const size=Math.round(32+(y-48)/30*44); // 32px(远)~76px(近)
+    const baseSize=Math.round(32+(y-48)/30*44); // 32px(远)~76px(近) perspective
+    const scale=GARDEN_SCALE[g.petId]||1.0;
+    const size=Math.round(baseSize*scale);
     const zIdx=Math.round(y);
     const bobDur=(1.8+rng(i*3+2)*1.5).toFixed(1);
     const bobDelay=(rng(i*7)*2).toFixed(1);
