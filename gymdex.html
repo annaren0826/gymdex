@@ -3024,22 +3024,25 @@ function renderActiveSession(el){
 
 function renderPet(){
   const el=document.getElementById('pet-content');
+  const bagCount=Object.values(S.inv||{}).filter(n=>n>0).length;
+  const hatchBadge=S.incubator?'🥚':S.hatchQueue.length?S.hatchQueue.length:'';
+  const nurtureBadge=S.nurturing.length+(hatchBadge?1:0)||'';
+  const tabs=[
+    {id:'nurturing', label:'培育&孵蛋', badge:nurtureBadge},
+    {id:'bag',       label:'背包',       badge:bagCount||''},
+    {id:'creature',  label:'神兽图鉴',   badge:''},
+    {id:'item',      label:'道具图鉴',   badge:''},
+  ];
   let h=`<div class="pet-tabs">
-    ${['nurturing','incubator','bag','compendium'].map((t,i)=>{
-      const labels=['培育','孵蛋器','背包','图鉴'];
-      const bagCount=Object.values(S.inv||{}).filter(n=>n>0).length;
-      const badges=[S.nurturing.length||'',
-        S.incubator?'🥚':S.hatchQueue.length?S.hatchQueue.length:'',
-        bagCount||'',''];
-      return `<button class="pet-tab${petTab===t?' active':''}" onclick="petTab='${t}';renderPet()">
-        ${labels[i]}${badges[i]?`<span class="pet-tab-badge">${badges[i]}</span>`:''}
-      </button>`;
-    }).join('')}
+    ${tabs.map(t=>`<button class="pet-tab${petTab===t.id?' active':''}" onclick="petTab='${t.id}';renderPet()">
+      ${t.label}${t.badge?`<span class="pet-tab-badge">${t.badge}</span>`:''}
+    </button>`).join('')}
   </div>`;
   if(petTab==='nurturing') h+=renderNurturingTab();
-  else if(petTab==='incubator') h+=renderIncubatorTab();
   else if(petTab==='bag') h+=renderBagTab();
-  else h+=renderCompendiumTab();
+  else if(petTab==='creature') h+=renderCreatureDexTab();
+  else if(petTab==='item') h+=renderItemDexTab();
+  else h+=renderNurturingTab();
   el.innerHTML=h;
   // Draw all pixel sprites after DOM update
   requestAnimationFrame(refreshSprites);
@@ -3141,6 +3144,40 @@ function renderNurturingTab(){
       h+=`</div>`;
     }
     h+=`</div>`;
+  }
+
+  // ── Incubator section ──
+  h+=`<div style="font-size:13px;font-weight:700;margin:20px 0 10px">🥚 孵蛋器</div>`;
+  if(S.incubator){
+    const ed=EGG_DATA[S.incubator.eggRarity];
+    const pct=Math.min(100,S.incubator.trainCount/S.incubator.needed*100);
+    h+=`<div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+      <div style="font-size:44px;flex-shrink:0">${ed.emoji}</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700;margin-bottom:2px">${ed.name}
+          <span class="badge badge-${ed.rarity}" style="margin-left:6px;font-size:10px">${RARITY_NAME[ed.rarity]}</span>
+        </div>
+        <div style="font-size:12px;color:var(--pink);font-weight:700;margin-bottom:4px">
+          ${S.incubator.trainCount} / ${S.incubator.needed} 次训练</div>
+        <div class="exp-bar"><div class="exp-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  } else {
+    h+=`<div style="text-align:center;padding:16px;background:var(--card);border:1px solid var(--border);
+      border-radius:12px;color:var(--muted);font-size:13px;margin-bottom:10px">
+      孵蛋器空着 · 完成训练有概率获得蛋 🥚</div>`;
+  }
+  if(S.hatchQueue.length){
+    h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:6px">等待孵化 (${S.hatchQueue.length})</div>`;
+    for(const r of S.hatchQueue){
+      const ed=EGG_DATA[r];
+      h+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
+        background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px">
+        <span style="font-size:22px">${ed.emoji}</span>
+        <div style="flex:1;font-size:13px">${ed.name}</div>
+        <span class="badge badge-${ed.rarity}">${RARITY_NAME[ed.rarity]}</span>
+      </div>`;
+    }
   }
   return h;
 }
@@ -3338,7 +3375,7 @@ function getUnlockedStages(crId){
   return Math.max(...match.map(s=>s.stage));
 }
 
-function renderCompendiumTab(){
+function renderCreatureDexTab(){
   const totalStages=CREATURES.length*3;
   let unlockedCount=0;
   CREATURES.forEach(cr=>{unlockedCount+=getUnlockedStages(cr.id);});
@@ -3350,17 +3387,21 @@ function renderCompendiumTab(){
     for(let s=1;s<=3;s++){
       const unlocked=s<=maxStage;
       const stgDef=cr.stages[s-1];
-      const emoji=stgDef?.emoji||'❓';
       const onclick=unlocked?`onclick="showDexDetail('${cr.id}',${s})"`:'' ;
       h+=`<div class="dex-thumb ${unlocked?'unlocked':'locked'}" ${onclick}>
         <span class="dex-thumb-stage">S${s}</span>
-        <span class="dex-thumb-emoji">${unlocked?emoji:'❓'}</span>
+        <span class="dex-thumb-emoji">${unlocked?stgDef?.emoji||'✨':'❓'}</span>
         <div class="dex-thumb-name">${unlocked?stgDef.name:'???'}</div>
       </div>`;
     }
   }
-  h+=`</div>
-  <div style="font-size:13px;font-weight:700;margin:20px 0 10px">道具图鉴 (${S.itemLog.length}/${Object.keys(ITEMS).length})</div>
+  h+=`</div>`;
+  return h;
+}
+
+function renderItemDexTab(){
+  let h=`<div style="font-size:13px;color:var(--muted);margin-bottom:12px">
+    已获得 ${S.itemLog.length} / ${Object.keys(ITEMS).length} 种道具</div>
   <div class="items-grid">`;
   for(const[id,it]of Object.entries(ITEMS)){
     const seen=S.itemLog.includes(id);
