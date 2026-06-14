@@ -1492,9 +1492,9 @@ const GARDEN_SCALE = {
   turtle:   0.82,
   butterfly:0.72,
   dog:      0.90,
-  cat:      1.10,
+  cat:      1.40,
   bear:     1.20,
-  fox:      1.10,
+  fox:      1.40,
   swan:     1.05,
   deer:     1.25,
   tiger:    1.30,
@@ -3441,8 +3441,9 @@ function renderGarden(){
     const cr=CREATURES.find(c=>c.id===g.petId);
     const stageDef=cr?.stages[g.stage-1];
     const collected=g.lastCollect===today;
-    // y: 48%~78% maps to grass area; near bottom = bigger
-    const x=8+rng(i*3)*74;        // 8%~82%
+    // Divide x into equal slots per active pet count to avoid clustering
+    const slotW=80/active.length;
+    const x=8+ai*slotW+rng(i*3)*slotW*0.5; // evenly spaced + small random offset
     const y=48+rng(i*3+1)*30;     // 48%~78%
     const baseSize=Math.round(64+(y-48)/30*88); // 64px(远)~152px(近) perspective
     const scale=GARDEN_SCALE[g.petId]||1.0;
