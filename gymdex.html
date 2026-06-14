@@ -244,6 +244,37 @@ body{background:var(--bg);color:var(--text)}
 .cre-name{font-size:11px;color:var(--muted)}
 .cre-cell.unlocked .cre-name{color:var(--text)}
 
+/* DEX THUMB GRID */
+.dex-thumb-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:4px}
+.dex-thumb{background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:8px 4px 6px;text-align:center;cursor:pointer;transition:transform .1s,border-color .2s;
+  position:relative}
+.dex-thumb:active{transform:scale(.92)}
+.dex-thumb.unlocked{border-color:rgba(255,107,157,.3)}
+.dex-thumb.locked{opacity:.35;filter:grayscale(1);cursor:default}
+.dex-thumb-emoji{font-size:28px;display:block;line-height:1.1}
+.dex-thumb-stage{position:absolute;top:4px;right:5px;font-size:9px;
+  color:var(--muted);font-weight:700;line-height:1}
+.dex-thumb-name{font-size:9px;color:var(--muted);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dex-thumb.unlocked .dex-thumb-name{color:var(--text)}
+
+/* DEX DETAIL MODAL */
+.dex-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);
+  z-index:500;display:flex;align-items:center;justify-content:center}
+.dex-modal-overlay.hidden{display:none}
+.dex-modal-box{background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:24px 20px 20px;width:min(320px,90vw);position:relative;text-align:center}
+.dex-modal-close{position:absolute;top:12px;right:14px;font-size:20px;
+  cursor:pointer;color:var(--muted);line-height:1;background:none;border:none}
+.dex-modal-big-emoji{font-size:72px;display:block;margin:8px 0 4px;
+  filter:drop-shadow(0 4px 12px rgba(255,107,157,.3))}
+.dex-modal-title{font-size:20px;font-weight:800;margin-bottom:2px}
+.dex-modal-stage-name{font-size:13px;color:var(--muted);margin-bottom:10px}
+.dex-modal-attrs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.dex-attr-chip{background:rgba(255,255,255,.07);border-radius:8px;
+  padding:4px 10px;font-size:12px;font-weight:600}
+
 /* BAG */
 .items-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .item-cell{background:var(--card);border:1px solid var(--border);border-radius:12px;
@@ -838,6 +869,17 @@ select.ob-input{appearance:none;-webkit-appearance:none;
 </div>
 
 <div id="toast"></div>
+<div class="dex-modal-overlay hidden" id="dex-modal" onclick="closeDexModal(event)">
+  <div class="dex-modal-box">
+    <button class="dex-modal-close" onclick="document.getElementById('dex-modal').classList.add('hidden')">✕</button>
+    <span class="dex-modal-big-emoji" id="dex-modal-emoji"></span>
+    <div class="dex-modal-title" id="dex-modal-title"></div>
+    <div class="dex-modal-stage-name" id="dex-modal-stage-name"></div>
+    <div id="dex-modal-rarity"></div>
+    <div class="dex-modal-attrs" id="dex-modal-attrs"></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px" id="dex-modal-desc"></div>
+  </div>
+</div>
 <div class="sparkle-wrap" id="sparkles"></div>
 
 <input type="file" id="csv-input" accept=".csv" onchange="handleCsvImport(event)">
@@ -3224,28 +3266,39 @@ function closeGardenPopup(){
   if(p)p.style.display='none';
 }
 
+function getUnlockedStages(crId){
+  // Returns max stage reached for this creature (0 = never seen)
+  const all=[...S.nurturing,...S.garden];
+  const match=all.filter(s=>s.petId===crId);
+  if(!match.length&&S.hatchPending!==crId)return 0;
+  // hatchPending means stage 1 just hatched
+  if(!match.length)return 1;
+  return Math.max(...match.map(s=>s.stage));
+}
+
 function renderCompendiumTab(){
-  const ownedIds=new Set([...S.nurturing.map(n=>n.petId),...S.garden.map(g=>g.petId),
-    ...(S.hatchPending?[S.hatchPending]:[])]);
+  const totalStages=CREATURES.length*3;
+  let unlockedCount=0;
+  CREATURES.forEach(cr=>{unlockedCount+=getUnlockedStages(cr.id);});
   let h=`<div style="font-size:13px;color:var(--muted);margin-bottom:12px">
-    已解锁 ${ownedIds.size} / ${CREATURES.length} 种神兽</div>
-  <div class="cre-grid">`;
+    已收集 ${unlockedCount} / ${totalStages} 个图鉴</div>
+  <div class="dex-thumb-grid">`;
   for(const cr of CREATURES){
-    const owned=ownedIds.has(cr.id);
-    const dispStage=owned?([...S.nurturing,...S.garden].find(s=>s.petId===cr.id)?.stage||1):0;
-    const emoji=owned?(cr.stages[dispStage-1]?.emoji||cr.stages[0].emoji):null;
-    h+=`<div class="cre-cell ${owned?'unlocked':'locked'}" title="${cr.desc}">
-      ${owned
-        ?`<canvas class="px-sprite" width="16" height="16" style="width:36px;height:36px;margin:0 auto 2px"
-            data-pet="${cr.id}" data-stage="${dispStage}"></canvas>`
-        :`<span class="cre-emoji">❓</span>`}
-      <div class="cre-name">${owned?cr.name:'???'}</div>
-      <div style="font-size:10px;color:${RARITY_COLOR[cr.rarity]};margin-top:2px">${RARITY_NAME[cr.rarity]}</div>
-      ${owned?`<div style="font-size:10px;color:var(--muted)">第${dispStage}阶段</div>`:''}
-    </div>`;
+    const maxStage=getUnlockedStages(cr.id);
+    for(let s=1;s<=3;s++){
+      const unlocked=s<=maxStage;
+      const stgDef=cr.stages[s-1];
+      const emoji=stgDef?.emoji||'❓';
+      const onclick=unlocked?`onclick="showDexDetail('${cr.id}',${s})"`:'' ;
+      h+=`<div class="dex-thumb ${unlocked?'unlocked':'locked'}" ${onclick}>
+        <span class="dex-thumb-stage">S${s}</span>
+        <span class="dex-thumb-emoji">${unlocked?emoji:'❓'}</span>
+        <div class="dex-thumb-name">${unlocked?stgDef.name:'???'}</div>
+      </div>`;
+    }
   }
   h+=`</div>
-  <div style="font-size:13px;font-weight:700;margin:16px 0 10px">道具图鉴 (${S.itemLog.length}/${Object.keys(ITEMS).length})</div>
+  <div style="font-size:13px;font-weight:700;margin:20px 0 10px">道具图鉴 (${S.itemLog.length}/${Object.keys(ITEMS).length})</div>
   <div class="items-grid">`;
   for(const[id,it]of Object.entries(ITEMS)){
     const seen=S.itemLog.includes(id);
@@ -3258,6 +3311,61 @@ function renderCompendiumTab(){
   }
   h+=`</div>`;
   return h;
+}
+
+function showDexDetail(crId, stage){
+  const cr=CREATURES.find(c=>c.id===crId);
+  if(!cr)return;
+  const stgDef=cr.stages[stage-1];
+  const pet=[...S.nurturing,...S.garden].find(p=>p.petId===crId);
+  // Use real image if available, else emoji
+  const imgSrc=IMG_MAP[crId]?.[stage];
+  const mediaEl=document.getElementById('dex-modal-emoji');
+  if(imgSrc){
+    mediaEl.style.cssText='display:flex;justify-content:center;margin:8px 0 4px;font-size:0';
+    mediaEl.innerHTML=`<img src="${imgSrc}" style="width:140px;height:140px;object-fit:contain;border-radius:12px">`;
+  }else{
+    mediaEl.style.cssText='';
+    mediaEl.innerHTML='';
+    mediaEl.textContent=stgDef.emoji||'✨';
+  }
+  document.getElementById('dex-modal-title').textContent=cr.name;
+  document.getElementById('dex-modal-stage-name').textContent=`第${stage}阶段 · ${stgDef.name}`;
+  document.getElementById('dex-modal-rarity').innerHTML=
+    `<span style="font-size:12px;font-weight:700;color:${RARITY_COLOR[cr.rarity]}">${RARITY_NAME[cr.rarity]}</span>`;
+  // Attributes
+  const ATTR_LABEL={fire:'🔥火',water:'💧水',wood:'🌿木',wind:'🌀风'};
+  let attrsHtml='';
+  if(cr.attr){
+    attrsHtml+=`<span class="dex-attr-chip">${ATTR_LABEL[cr.attr]||cr.attr} 系</span>`;
+  }
+  if(pet?.attrs){
+    const a=pet.attrs;
+    ['fire','water','wood','wind'].forEach(k=>{
+      if(a[k]>0)attrsHtml+=`<span class="dex-attr-chip">${ATTR_EMOJI[k]} ${a[k]}</span>`;
+    });
+  }
+  document.getElementById('dex-modal-attrs').innerHTML=attrsHtml||'<span style="color:var(--muted);font-size:12px">属性未知</span>';
+  // Evolve hint
+  const nextStgDef=cr.stages[stage];
+  let desc='';
+  if(nextStgDef?.evolve){
+    desc=`进化至第${stage+1}阶段需要 ${nextStgDef.evolve.exp} EXP`;
+    if(nextStgDef.evolve.items){
+      const itemNames=Object.entries(nextStgDef.evolve.items)
+        .map(([id,n])=>`${ITEMS[id]?.emoji||id}×${n}`).join(' ');
+      desc+=` + ${itemNames}`;
+    }
+  }else if(stage===3){
+    desc='已达到最终形态 ✨';
+  }
+  document.getElementById('dex-modal-desc').textContent=desc;
+  document.getElementById('dex-modal').classList.remove('hidden');
+}
+
+function closeDexModal(e){
+  if(e.target===document.getElementById('dex-modal'))
+    document.getElementById('dex-modal').classList.add('hidden');
 }
 
 // ══════════════════════════════════════════
