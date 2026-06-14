@@ -3444,7 +3444,7 @@ function renderGarden(){
     // y: 48%~78% maps to grass area; near bottom = bigger
     const x=8+rng(i*3)*74;        // 8%~82%
     const y=48+rng(i*3+1)*30;     // 48%~78%
-    const baseSize=Math.round(32+(y-48)/30*44); // 32px(远)~76px(近) perspective
+    const baseSize=Math.round(64+(y-48)/30*88); // 64px(远)~152px(近) perspective
     const scale=GARDEN_SCALE[g.petId]||1.0;
     const size=Math.round(baseSize*scale);
     const zIdx=Math.round(y);
