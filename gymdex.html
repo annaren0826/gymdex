@@ -246,17 +246,21 @@ body{background:var(--bg);color:var(--text)}
 .cre-cell.unlocked .cre-name{color:var(--text)}
 
 /* DEX THUMB GRID */
-.dex-thumb-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:4px}
+.dex-thumb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
 .dex-thumb{background:var(--card);border:1px solid var(--border);border-radius:10px;
-  padding:8px 4px 6px;text-align:center;cursor:pointer;transition:transform .1s,border-color .2s;
-  position:relative}
+  padding:0 0 6px;text-align:center;cursor:pointer;transition:transform .1s,border-color .2s;
+  position:relative;overflow:hidden}
 .dex-thumb:active{transform:scale(.92)}
 .dex-thumb.unlocked{border-color:rgba(255,107,157,.3)}
 .dex-thumb.locked{opacity:.35;filter:grayscale(1);cursor:default}
-.dex-thumb-emoji{font-size:28px;display:block;line-height:1.1}
+.dex-thumb-head{width:100%;aspect-ratio:1;overflow:hidden;border-radius:8px 8px 0 0}
+.dex-thumb-head img{width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block}
+.dex-thumb-emoji{font-size:32px;display:flex;align-items:center;justify-content:center;
+  width:100%;aspect-ratio:1;background:rgba(255,255,255,.04)}
 .dex-thumb-stage{position:absolute;top:4px;right:5px;font-size:9px;
-  color:var(--muted);font-weight:700;line-height:1}
-.dex-thumb-name{font-size:9px;color:var(--muted);margin-top:3px;
+  color:white;font-weight:700;line-height:1;background:rgba(0,0,0,.45);
+  border-radius:4px;padding:1px 4px}
+.dex-thumb-name{font-size:10px;color:var(--muted);margin-top:4px;padding:0 4px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dex-thumb.unlocked .dex-thumb-name{color:var(--text)}
 
@@ -3388,9 +3392,13 @@ function renderCreatureDexTab(){
       const unlocked=s<=maxStage;
       const stgDef=cr.stages[s-1];
       const onclick=unlocked?`onclick="showDexDetail('${cr.id}',${s})"`:'' ;
+      const imgSrc=unlocked?(IMG_MAP[cr.id]?.[s]||null):null;
+      const headHtml=imgSrc
+        ?`<div class="dex-thumb-head"><img src="${imgSrc}" alt="${stgDef?.name||''}"></div>`
+        :`<div class="dex-thumb-emoji">${unlocked?stgDef?.emoji||'✨':'❓'}</div>`;
       h+=`<div class="dex-thumb ${unlocked?'unlocked':'locked'}" ${onclick}>
         <span class="dex-thumb-stage">S${s}</span>
-        <span class="dex-thumb-emoji">${unlocked?stgDef?.emoji||'✨':'❓'}</span>
+        ${headHtml}
         <div class="dex-thumb-name">${unlocked?stgDef.name:'???'}</div>
       </div>`;
     }
