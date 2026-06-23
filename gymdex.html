@@ -2374,15 +2374,42 @@ function skipToExercise(idx){
 }
 
 function restDayCheckIn(){
-  const rewards=genRewards(false); // rest day budget: 30-50
+  // Pre-scheduled rest day: also write a record so streak counts
+  const today=todayISO();
+  if(!S.workouts.find(w=>w.date===today)){
+    S.workouts.push({date:today,type:'休息',exercises:[]});
+    S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
+  }
+  const rewards=genRewards(false);
   for(const[id,n]of Object.entries(rewards)){
     S.inv[id]=(S.inv[id]||0)+n;
     if(!S.itemLog.includes(id))S.itemLog.push(id);
   }
+  S.todayRewards={date:today,rewards,type:'休息'};
+  S.streak=calcStreak();
   save();
   const items=Object.entries(rewards).map(([id,n])=>`${ITEMS[id]?.emoji||''}×${n}`).join(' ');
   toast(`🛌 休息打卡！获得：${items}`);
   renderWorkout();
+}
+
+function trainingDayRestCheckIn(){
+  const today=todayISO();
+  if(S.workouts.find(w=>w.date===today)){toast('今天已打卡了！');return;}
+  if(!confirm('今天就休息一下？会记录打卡，连击不断，但道具掉落比正常训练少哦~')) return;
+  S.workouts.push({date:today,type:'休息',exercises:[]});
+  S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
+  const rewards=genRewards(false);
+  for(const[id,n]of Object.entries(rewards)){
+    S.inv[id]=(S.inv[id]||0)+n;
+    if(!S.itemLog.includes(id))S.itemLog.push(id);
+  }
+  S.todayRewards={date:today,rewards,type:'休息'};
+  S.streak=calcStreak();
+  save();
+  renderWorkout();
+  const items=Object.entries(rewards).map(([id,n])=>`${ITEMS[id]?.emoji||''}×${n}`).join(' ');
+  toast(`🛌 休息打卡！连击继续！获得：${items}`);
 }
 
 function finish(){
@@ -2990,7 +3017,11 @@ function buildExerciseSelection(type,color,last){
   <div id="custom-ex-list"></div>
   <button class="btn btn-primary" style="margin-top:18px" onclick="confirmStartSession('${type}')">
     开始训练 ${partEmoji(type)}
-  </button>`;
+  </button>
+  <div style="text-align:center;margin-top:10px">
+    <button class="btn btn-ghost" onclick="trainingDayRestCheckIn()"
+      style="font-size:13px;color:var(--muted)">🛌 今天休息（连击不断）</button>
+  </div>`;
   return h;
 }
 
