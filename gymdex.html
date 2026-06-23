@@ -2414,6 +2414,8 @@ function finish(){
   if(hatched)rewards._hatched=hatched;
   // Check achievements
   const newAchievements=checkAchievements();
+  // Store today's rewards for post-workout display
+  S.todayRewards={date:todayISO(),rewards,type:ses.type};
   save();renderWorkout();
   showReward(ses.type,rewards,newAchievements);
   sparkles();
@@ -2774,6 +2776,10 @@ function renderWorkout(){
     <div class="stat-card"><div class="stat-number">${(S.nurturing?.length||0)+(S.garden?.length||0)}</div><div class="stat-label">神兽数量</div></div>
   </div>`;
 
+  // Check if already worked out today
+  const today=todayISO();
+  const todayWorkouts=S.workouts.filter(w=>w.date===today);
+
   if(isTodayRestDay()){
     h+=`<div class="card" style="text-align:center;padding:28px 16px;margin-bottom:14px">
       <div style="font-size:44px;margin-bottom:8px">🛌</div>
@@ -2786,9 +2792,82 @@ function renderWorkout(){
     el.innerHTML=h;return;
   }
 
+  if(todayWorkouts.length>0){
+    h+=buildTodayDoneView(todayWorkouts,type);
+    el.innerHTML=h;return;
+  }
+
   h+=buildExerciseSelection(type,color,last);
   h+=buildExerciseLibrary();
   el.innerHTML=h;
+}
+
+function buildTodayDoneView(todayWorkouts,nextT){
+  const name=S.profile?.name||'你';
+  const typesDone=todayWorkouts.map(w=>w.type).join(' + ');
+  const tr=S.todayRewards?.date===todayISO()?S.todayRewards:null;
+  let h='';
+
+  // Done card
+  h+=`<div class="card" style="text-align:center;padding:28px 16px;margin-bottom:14px">
+    <div style="font-size:44px;margin-bottom:8px">🎉</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:6px">今天练完了！</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">${name}今天练了 <strong>${typesDone}</strong>，超棒！</div>
+  </div>`;
+
+  // Today's rewards
+  if(tr){
+    const {rewards}=tr;
+    const itemEntries=Object.entries(rewards).filter(([id])=>!id.startsWith('_'));
+    if(itemEntries.length||rewards._egg||rewards._hatched){
+      h+=`<div class="card" style="margin-bottom:14px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:12px">🎁 今日收获</div>`;
+      if(itemEntries.length){
+        h+=`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px">`;
+        for(const[id,n]of itemEntries){
+          const it=ITEMS[id];if(!it)continue;
+          h+=`<div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);
+            border-radius:10px;padding:8px 12px">
+            <span style="font-size:24px">${it.emoji}</span>
+            <div>
+              <div style="font-size:13px;font-weight:600">${it.name}</div>
+              <div style="font-size:11px;color:var(--muted)">×${n}</div>
+            </div>
+          </div>`;
+        }
+        h+=`</div>`;
+      }
+      if(rewards._egg){
+        const ed=EGG_DATA[rewards._egg];
+        h+=`<div style="padding:10px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.25);
+          border-radius:10px;display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:28px">${ed.emoji}</span>
+          <div><div style="font-weight:700;color:var(--gold)">${ed.name}</div>
+          <div style="font-size:12px;color:var(--muted)">已放入孵蛋器</div></div>
+        </div>`;
+      }
+      if(rewards._hatched){
+        const cr=CREATURES.find(c=>c.id===rewards._hatched);
+        h+=`<div style="padding:10px;background:rgba(180,77,255,.08);border:1px solid rgba(180,77,255,.3);
+          border-radius:10px;display:flex;align-items:center;gap:10px">
+          <span style="font-size:28px">${cr?.stages[0].emoji||'🐣'}</span>
+          <div><div style="font-weight:700;color:#B44DFF">${cr?.stages[0].name} 孵化了！</div>
+          <div style="font-size:12px;color:var(--muted)">已加入培育槽</div></div>
+        </div>`;
+      }
+      h+=`</div>`;
+    }
+  }
+
+  // Option to train another part (no rewards)
+  h+=`<div style="text-align:center;margin-top:4px">
+    <button class="btn btn-ghost" onclick="showExerciseSelection('${nextT}')"
+      style="font-size:13px;color:var(--muted)">
+      ➕ 继续练其他部位（不额外掉落）
+    </button>
+  </div>`;
+
+  return h;
 }
 
 let exLibOpen=false;
