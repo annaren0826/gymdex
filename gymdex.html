@@ -2901,10 +2901,38 @@ function buildExerciseSelection(type,color,last){
     }
   }
 
-  h+=`<button class="btn btn-primary" style="margin-top:18px" onclick="confirmStartSession('${type}')">
+  h+=`<div class="ex-category-label" style="margin-top:12px">✏️ 自定义动作</div>
+  <div style="display:flex;gap:8px;margin-bottom:4px">
+    <input id="custom-ex-input" type="text" placeholder="输入动作名称..."
+      style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;
+        padding:8px 12px;color:var(--text);font-size:14px"
+      onkeydown="if(event.key==='Enter')addCustomExercise()">
+    <button class="btn btn-secondary" onclick="addCustomExercise()" style="white-space:nowrap">+ 添加</button>
+  </div>
+  <div id="custom-ex-list"></div>
+  <button class="btn btn-primary" style="margin-top:18px" onclick="confirmStartSession('${type}')">
     开始训练 ${partEmoji(type)}
   </button>`;
   return h;
+}
+
+function addCustomExercise(){
+  const inp=document.getElementById('custom-ex-input');
+  const name=(inp?.value||'').trim();
+  if(!name){toast('请输入动作名称');return;}
+  inp.value='';
+  const list=document.getElementById('custom-ex-list');
+  if(!list)return;
+  // check not duplicate
+  if(document.querySelector(`.ex-select-box[data-name="${CSS.escape(name)}"]`)){
+    toast('已有这个动作了');return;
+  }
+  const row=document.createElement('label');
+  row.className='ex-select-row';
+  row.innerHTML=`<input type="checkbox" class="ex-select-box" data-name="${name}" checked>
+    <div style="flex:1"><div style="font-size:14px;font-weight:600">${name}</div>
+    <div style="font-size:12px;color:var(--muted)">自定义动作</div></div>`;
+  list.appendChild(row);
 }
 
 function showExerciseSelection(type){
@@ -3663,20 +3691,44 @@ function renderHistory(){
     </tr></thead><tbody>`;
   for(const w of page){
     const col=partColor(w.type);
+    const wIdx=S.workouts.findIndex(x=>x.date===w.date&&x.type===w.type);
     const exs=(w.exercises||[]).filter(ex=>(ex.sets||[]).some(s=>s.weight||s.reps));
     if(!exs.length)continue;
     exs.forEach((ex,ei)=>{
       const sets=(ex.sets||[]).filter(s=>s.weight||s.reps);
       const setsStr=sets.map(s=>`${s.weight||'BW'}×${s.reps||'?'}`).join(' ');
       h+=`<tr style="border-bottom:1px solid rgba(255,255,255,.04);${ei===exs.length-1?'border-bottom:1px solid var(--border)':''}">
-        ${ei===0?`<td style="padding:4px 6px;color:var(--muted);white-space:nowrap" rowspan="${exs.length}">${w.date}</td>
-          <td style="padding:4px 6px" rowspan="${exs.length}">
+        ${ei===0?`<td style="padding:4px 6px;color:var(--muted);white-space:nowrap;vertical-align:top" rowspan="${exs.length}">${w.date}
+            <div style="margin-top:4px">
+              <button onclick="showAddExerciseForm(${wIdx})" style="background:none;border:1px dashed var(--border);
+                border-radius:5px;color:var(--muted);font-size:10px;padding:2px 5px;cursor:pointer">+补录</button>
+            </div>
+          </td>
+          <td style="padding:4px 6px;vertical-align:top" rowspan="${exs.length}">
             <span style="padding:1px 6px;border-radius:6px;font-weight:600;background:${col}22;color:${col}">${w.type}</span>
           </td>`:''}
         <td style="padding:4px 6px;color:var(--text)">${ex.name}${ex.note?` <span style="color:#FFB347">📝</span>`:''}</td>
         <td style="padding:4px 6px;color:var(--muted)">${setsStr}</td>
       </tr>`;
     });
+    // inline add-exercise form (hidden by default)
+    h+=`<tr id="add-ex-row-${wIdx}" style="display:none;border-bottom:1px solid var(--border)">
+      <td colspan="4" style="padding:8px 6px">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+          <input id="add-ex-name-${wIdx}" type="text" placeholder="动作名称"
+            style="flex:2;min-width:90px;background:var(--bg);border:1px solid var(--border);
+              border-radius:7px;padding:5px 9px;color:var(--text);font-size:13px">
+          <input id="add-ex-weight-${wIdx}" type="text" placeholder="重量"
+            style="flex:1;min-width:60px;background:var(--bg);border:1px solid var(--border);
+              border-radius:7px;padding:5px 9px;color:var(--text);font-size:13px">
+          <input id="add-ex-reps-${wIdx}" type="text" placeholder="组x次"
+            style="flex:1;min-width:60px;background:var(--bg);border:1px solid var(--border);
+              border-radius:7px;padding:5px 9px;color:var(--text);font-size:13px">
+          <button class="btn btn-primary btn-small" onclick="confirmAddExercise(${wIdx})">保存</button>
+          <button class="btn btn-ghost btn-small" onclick="document.getElementById('add-ex-row-${wIdx}').style.display='none'">取消</button>
+        </div>
+      </td>
+    </tr>`;
   }
   h+=`</tbody></table>`;
 
@@ -3741,6 +3793,27 @@ function parseCSV(text){
     sessionMap[key].exercises.push({name,sets,note});
   }
   return Object.values(sessionMap);
+}
+
+function showAddExerciseForm(wIdx){
+  const row=document.getElementById(`add-ex-row-${wIdx}`);
+  if(!row)return;
+  row.style.display=row.style.display==='none'?'table-row':'none';
+  if(row.style.display!=='none')document.getElementById(`add-ex-name-${wIdx}`)?.focus();
+}
+
+function confirmAddExercise(wIdx){
+  const w=S.workouts[wIdx];
+  if(!w)return;
+  const name=(document.getElementById(`add-ex-name-${wIdx}`)?.value||'').trim();
+  const weight=(document.getElementById(`add-ex-weight-${wIdx}`)?.value||'').trim();
+  const reps=(document.getElementById(`add-ex-reps-${wIdx}`)?.value||'').trim();
+  if(!name){toast('请填写动作名称');return;}
+  if(!w.exercises)w.exercises=[];
+  w.exercises.push({name,sets:[{weight:weight||'',reps:reps||'?',done:true}],note:''});
+  save();
+  toast(`✅ 已补录：${name}`);
+  renderHistory();
 }
 
 function csvEscape(v){
