@@ -1901,6 +1901,8 @@ function load(){
   // Give first egg to brand-new players
   if(!S.incubator&&!S.nurturing.length&&!S.garden.length&&!S.hatchPending)
     S.incubator={eggRarity:'common',trainCount:0,needed:1,firstEgg:true};
+  // Fix first egg needed count if old save had wrong value
+  if(S.incubator?.firstEgg&&S.incubator.needed!==1)S.incubator.needed=1;
   if(!S.profile)S.profile={...DEFAULT_PROFILE};
 }
 function save(){localStorage.setItem('gd3',JSON.stringify(S))}
