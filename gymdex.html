@@ -1899,7 +1899,7 @@ function load(){
   if(!S.prBroken)S.prBroken=false;
   // Give first egg to brand-new players
   if(!S.incubator&&!S.nurturing.length&&!S.garden.length&&!S.hatchPending)
-    S.incubator={eggRarity:'common',trainCount:0,needed:randomNeeded('common'),firstEgg:true};
+    S.incubator={eggRarity:'common',trainCount:0,needed:1,firstEgg:true};
   if(!S.profile)S.profile={...DEFAULT_PROFILE};
 }
 function save(){localStorage.setItem('gd3',JSON.stringify(S))}
@@ -3158,9 +3158,7 @@ function renderNurturingTab(){
         <div style="font-size:15px;font-weight:700;margin-bottom:2px">${ed.name}
           <span class="badge badge-${ed.rarity}" style="margin-left:6px;font-size:10px">${RARITY_NAME[ed.rarity]}</span>
         </div>
-        <div style="font-size:12px;color:var(--pink);font-weight:700;margin-bottom:4px">
-          ${S.incubator.trainCount} / ${S.incubator.needed} 次训练</div>
-        <div class="exp-bar"><div class="exp-fill" style="width:${pct}%"></div></div>
+        <div class="exp-bar" style="margin-bottom:4px"><div class="exp-fill" style="width:${pct}%"></div></div>
       </div>
     </div>`;
   } else {
@@ -3193,10 +3191,8 @@ function renderIncubatorTab(){
       <div style="font-size:18px;font-weight:800;margin-bottom:4px">${ed.name}</div>
       <span class="badge badge-${ed.rarity}" style="margin-bottom:14px">${RARITY_NAME[ed.rarity]}</span>
       <div style="font-size:13px;color:var(--muted);margin:10px 0 6px">孵化进度</div>
-      <div style="font-size:22px;font-weight:800;color:var(--pink);margin-bottom:6px">
-        ${S.incubator.trainCount} / ${S.incubator.needed} 次训练</div>
-      <div class="exp-bar"><div class="exp-fill" style="width:${pct}%"></div></div>
-      <div style="font-size:12px;color:var(--muted);margin-top:8px">完成训练打卡即可孵化</div>
+      <div class="exp-bar" style="margin-bottom:8px"><div class="exp-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:12px;color:var(--muted)">完成训练打卡即可孵化</div>
     </div>`;
   } else {
     h+=`<div class="empty-state"><div class="empty-icon">🥚</div>
@@ -3211,7 +3207,7 @@ function renderIncubatorTab(){
         background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px">
         <span style="font-size:24px">${ed.emoji}</span>
         <div style="flex:1"><div style="font-size:14px">${ed.name}</div>
-          <div style="font-size:12px;color:var(--muted)">需要 ${ed.needed} 次训练</div>
+          <div style="font-size:12px;color:var(--muted)">${RARITY_NAME[ed.rarity]}</div>
         </div>
         <span class="badge badge-${ed.rarity}">${RARITY_NAME[ed.rarity]}</span>
       </div>`;
