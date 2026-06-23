@@ -921,6 +921,7 @@ const PRESET_EXERCISES = {
     {name:'绳索侧平举',   sets:3,reps:'12-15',unit:'lbs'},
     {name:'面拉',         sets:3,reps:'15',   unit:'lbs'},
     {name:'蝴蝶机肩后束', sets:3,reps:'12-15',unit:'lbs'},
+    {name:'俯身飞鸟',     sets:3,reps:'12-15',unit:'lbs'},
   ],
   '胸':[
     {name:'卧推',         sets:4,reps:'8-10', unit:'lbs'},
@@ -2815,9 +2816,7 @@ function buildExerciseLibrary(){
       <div style="display:flex;flex-wrap:wrap;gap:5px">`;
     for(const ex of exs){
       h+=`<span style="background:rgba(255,255,255,.07);border-radius:6px;
-        padding:3px 8px;font-size:12px;color:var(--text)">${ex.name}
-        <span style="color:var(--muted);font-size:10px">${ex.reps} ${ex.unit}</span>
-      </span>`;
+        padding:3px 8px;font-size:12px;color:var(--text)">${ex.name}</span>`;
     }
     h+=`</div></div>`;
   }
