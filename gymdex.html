@@ -3085,17 +3085,17 @@ function buildExerciseLibrary(){
   let h=`<div class="card" style="margin-top:14px;padding:0;overflow:hidden">
     <div onclick="toggleExLib()" style="display:flex;align-items:center;justify-content:space-between;
       padding:14px 16px;cursor:pointer;user-select:none">
-      <div style="font-weight:700;font-size:14px">📋 动作库</div>
+      <div style="font-weight:700;font-size:14px">📋 ${t('动作库','Exercise Library')}</div>
       <span id="ex-lib-arrow" style="color:var(--muted);font-size:12px">▼</span>
     </div>
     <div id="ex-lib-body" style="display:none;padding:0 16px 14px">
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
-        以下动作名称可直接用于 CSV 导入，名字需完全匹配</div>`;
+        ${t('以下动作名称可直接用于 CSV 导入，名字需完全匹配','Exercise names below can be used for CSV import — must match exactly')}</div>`;
   for(const [part, exs] of Object.entries(PRESET_EXERCISES)){
     const col=partColor(part);
     h+=`<div style="margin-bottom:10px">
       <div style="font-size:12px;font-weight:700;color:${col};margin-bottom:5px">
-        ${partEmoji(part)} ${part}</div>
+        ${partEmoji(part)} ${tPart(part)}</div>
       <div style="display:flex;flex-wrap:wrap;gap:5px">`;
     for(const ex of exs){
       h+=`<span style="background:rgba(255,255,255,.07);border-radius:6px;
@@ -3105,7 +3105,7 @@ function buildExerciseLibrary(){
   }
   h+=`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);
     font-size:12px;color:var(--muted)">
-    💡 CSV 里有这里没有的动作名？导入后也会保留，只是不会出现在训练建议里。
+    💡 ${t('CSV 里有这里没有的动作名？导入后也会保留，只是不会出现在训练建议里。','Exercise names not listed here will still be imported from CSV, just won\'t appear in workout suggestions.')}
   </div>
   </div></div>`;
   return h;
