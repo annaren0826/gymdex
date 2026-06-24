@@ -2378,6 +2378,7 @@ function skipToExercise(idx){
 function restDayCheckIn(){
   // Pre-scheduled rest day: also write a record so streak counts
   const today=todayISO();
+  if(S.todayRewards?.date===today&&S.todayRewards?.type==='休息'){toast('今天已经打卡啦！明天再来～');return;}
   if(!S.workouts.find(w=>w.date===today)){
     S.workouts.push({date:today,type:'休息',exercises:[]});
     S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
@@ -2390,9 +2391,33 @@ function restDayCheckIn(){
   S.todayRewards={date:today,rewards,type:'休息'};
   S.streak=calcStreak();
   save();
-  const items=Object.entries(rewards).map(([id,n])=>`${ITEMS[id]?.emoji||''}×${n}`).join(' ');
-  toast(`🛌 休息打卡！获得：${items}`);
+  showRestDayReward(rewards);
   renderWorkout();
+}
+function showRestDayReward(rewards){
+  let h=`<div style="font-size:52px;margin-bottom:6px">🛌</div>
+    <div class="reward-title">休息打卡成功！</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:4px">好好休息，明天更强！🌙</div>
+    <hr>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">获得道具</div>
+    <div class="reward-items">`;
+  for(const[id,n]of Object.entries(rewards)){
+    const it=ITEMS[id];if(!it)continue;
+    h+=`<div class="reward-item">
+      <span class="reward-item-emoji">${it.emoji}</span>
+      <div class="reward-item-cnt">×${n}</div>
+      <div class="reward-item-name">${it.name}</div>
+    </div>`;
+  }
+  h+=`</div>`;
+  document.getElementById('reward-content').innerHTML=h;
+  const btn=document.querySelector('#reward-modal .btn');
+  btn.textContent='收下啦 🎉';
+  btn.onclick=closeRestDayReward;
+  document.getElementById('reward-modal').classList.add('on');
+}
+function closeRestDayReward(){
+  document.getElementById('reward-modal').classList.remove('on');
 }
 
 function trainingDayRestCheckIn(){
@@ -2821,11 +2846,20 @@ function renderWorkout(){
   const todayWorkouts=S.workouts.filter(w=>w.date===today);
 
   if(isTodayRestDay()){
+    const checkedIn=S.todayRewards?.date===today&&S.todayRewards?.type==='休息';
+    let checkinBtn,rewardLine='';
+    if(checkedIn){
+      const items=Object.entries(S.todayRewards.rewards||{}).map(([id,n])=>`${ITEMS[id]?.emoji||'❓'}×${n}`).join('  ');
+      rewardLine=`<div style="font-size:15px;margin-bottom:14px;color:var(--muted)">今日获得：<span style="color:var(--text)">${items}</span></div>`;
+      checkinBtn=`<button class="btn btn-secondary" style="margin-bottom:10px;opacity:.4;cursor:not-allowed" disabled>✅ 今日已打卡</button>`;
+    }else{
+      checkinBtn=`<button class="btn btn-secondary" style="margin-bottom:10px" onclick="restDayCheckIn()">🎁 休息打卡领奖励</button>`;
+    }
     h+=`<div class="card" style="text-align:center;padding:28px 16px;margin-bottom:14px">
       <div style="font-size:44px;margin-bottom:8px">🛌</div>
       <div style="font-size:20px;font-weight:800;margin-bottom:6px">今天是休息日</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:18px">好好恢复，明天更强！</div>
-      <button class="btn btn-secondary" style="margin-bottom:10px" onclick="restDayCheckIn()">🎁 休息打卡领奖励</button>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:${checkedIn?'10px':'18px'}">好好恢复，明天更强！</div>
+      ${rewardLine}${checkinBtn}
       <button class="btn btn-ghost" onclick="showExerciseSelection('${type}')">今天也要练！💪</button>
     </div>`;
     h+=buildExerciseLibrary();
