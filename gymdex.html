@@ -2431,11 +2431,10 @@ function finish(){
     S.inv[id]=(S.inv[id]||0)+n;
     if(!S.itemLog.includes(id))S.itemLog.push(id);
   }
-  // Egg drop (30%)
+  // Egg drop (30%) — always goes to egg inventory
   const eggDrop=dropEgg();
   if(eggDrop){
-    if(!S.incubator)S.incubator={eggRarity:eggDrop,trainCount:0,needed:randomNeeded(eggDrop)};
-    else S.hatchQueue.push(eggDrop);
+    S.hatchQueue.push(eggDrop);
     rewards._egg=eggDrop;
   }
   // Tick incubator
@@ -2541,6 +2540,7 @@ function dropEgg(){
 
 function tickIncubator(){
   if(!S.incubator)return null;
+  if(S.incubator.ready)return null; // waiting for nurturing slot
   S.incubator.trainCount++;
   if(S.incubator.trainCount>=S.incubator.needed)return hatchEgg();
   return null;
@@ -2549,22 +2549,33 @@ function tickIncubator(){
 function hatchEgg(){
   const rarity=S.incubator.eggRarity;
   const isFirst=S.incubator.firstEgg;
-  let petId=isFirst?'hamster':EGG_POOLS[rarity][Math.floor(Math.random()*EGG_POOLS[rarity].length)];
-  S.incubator=null;
-  if(S.hatchQueue.length){
-    const next=S.hatchQueue.shift();
-    S.incubator={eggRarity:next,trainCount:0,needed:randomNeeded(next)};
+  const petId=isFirst?'hamster':EGG_POOLS[rarity][Math.floor(Math.random()*EGG_POOLS[rarity].length)];
+  if(S.nurturing.length>=3){
+    // Nurturing full — freeze incubator until space opens
+    S.incubator.ready=true;
+    S.hatchPending=petId;
+    return null;
   }
-  const entry={petId,stage:1,exp:0,attrs:{fire:0,water:0,wood:0,wind:0}};
-  if(S.nurturing.length<3){S.nurturing.push(entry);return petId;}
-  S.hatchPending=petId;
+  S.incubator=null;
+  S.nurturing.push({petId,stage:1,exp:0,attrs:{fire:0,water:0,wood:0,wind:0}});
   return petId;
+}
+
+function placeEggInIncubator(idx){
+  if(S.incubator){toast('孵蛋器里已经有蛋了！');return;}
+  const rarity=S.hatchQueue[idx];
+  if(!rarity)return;
+  S.hatchQueue.splice(idx,1);
+  S.incubator={eggRarity:rarity,trainCount:0,needed:randomNeeded(rarity)};
+  save();renderPet();
+  toast('🥚 已放入孵蛋器！');
 }
 
 function claimHatched(){
   if(!S.hatchPending||S.nurturing.length>=3)return;
   S.nurturing.push({petId:S.hatchPending,stage:1,exp:0,attrs:{fire:0,water:0,wood:0,wind:0}});
   S.hatchPending=null;
+  S.incubator=null; // clear incubator after claiming
   save();renderPet();
 }
 
@@ -3290,32 +3301,57 @@ function renderNurturingTab(){
   h+=`<div style="font-size:13px;font-weight:700;margin:20px 0 10px">🥚 孵蛋器</div>`;
   if(S.incubator){
     const ed=EGG_DATA[S.incubator.eggRarity];
-    const pct=Math.min(100,S.incubator.trainCount/S.incubator.needed*100);
-    h+=`<div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
-      <div style="font-size:44px;flex-shrink:0">${ed.emoji}</div>
-      <div style="flex:1">
-        <div style="font-size:15px;font-weight:700;margin-bottom:2px">${ed.name}
-          <span class="badge badge-${ed.rarity}" style="margin-left:6px;font-size:10px">${RARITY_NAME[ed.rarity]}</span>
+    if(S.incubator.ready){
+      // Hatched but nurturing full
+      h+=`<div class="card" style="border-color:#B44DFF66;text-align:center;padding:18px 16px;margin-bottom:10px">
+        <div style="font-size:48px;margin-bottom:6px">${ed.emoji}</div>
+        <div style="font-size:15px;font-weight:700;color:#B44DFF;margin-bottom:4px">蛋孵化了！✨</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">培育槽已满，请先将神兽移至庭院</div>
+        <button class="btn btn-secondary btn-small" onclick="claimHatched()" ${S.nurturing.length<3?'':'disabled'}>
+          ${S.nurturing.length<3?'领取神兽':'槽位已满'}
+        </button>
+      </div>`;
+    } else {
+      h+=`<div class="card" style="display:flex;align-items:center;gap:14px;padding:16px;margin-bottom:10px">
+        <div style="font-size:48px;flex-shrink:0">${ed.emoji}</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px">${ed.name}
+            <span class="badge badge-${ed.rarity}" style="margin-left:6px;font-size:10px">${RARITY_NAME[ed.rarity]}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted)">🔥 孵化中…每次训练打卡都有进展</div>
         </div>
-        <div class="exp-bar" style="margin-bottom:4px"><div class="exp-fill" style="width:${pct}%"></div></div>
-      </div>
-    </div>`;
-  } else {
-    h+=`<div style="text-align:center;padding:16px;background:var(--card);border:1px solid var(--border);
-      border-radius:12px;color:var(--muted);font-size:13px;margin-bottom:10px">
-      孵蛋器空着 · 完成训练有概率获得蛋 🥚</div>`;
-  }
-  if(S.hatchQueue.length){
-    h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:6px">等待孵化 (${S.hatchQueue.length})</div>`;
-    for(const r of S.hatchQueue){
-      const ed=EGG_DATA[r];
-      h+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
-        background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px">
-        <span style="font-size:22px">${ed.emoji}</span>
-        <div style="flex:1;font-size:13px">${ed.name}</div>
-        <span class="badge badge-${ed.rarity}">${RARITY_NAME[ed.rarity]}</span>
       </div>`;
     }
+  } else {
+    h+=`<div style="text-align:center;padding:20px 16px;background:var(--card);border:2px dashed var(--border);
+      border-radius:12px;color:var(--muted);font-size:13px;margin-bottom:10px">
+      <div style="font-size:32px;margin-bottom:6px">🫙</div>
+      孵蛋器空着<br>
+      <span style="font-size:12px">从下方蛋背包选一颗放进来</span>
+    </div>`;
+  }
+
+  // ── Egg inventory ──
+  h+=`<div style="font-size:13px;font-weight:700;margin:16px 0 8px">🎒 蛋背包 ${S.hatchQueue.length?`(${S.hatchQueue.length})`:''}</div>`;
+  if(S.hatchQueue.length){
+    for(let i=0;i<S.hatchQueue.length;i++){
+      const ed=EGG_DATA[S.hatchQueue[i]];
+      h+=`<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;
+        background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px">
+        <span style="font-size:28px">${ed.emoji}</span>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600">${ed.name}</div>
+          <span class="badge badge-${ed.rarity}">${RARITY_NAME[ed.rarity]}</span>
+        </div>
+        <button class="btn btn-secondary btn-small" onclick="placeEggInIncubator(${i})"
+          ${S.incubator?'disabled':''} style="${S.incubator?'opacity:.4':''}">
+          放入孵蛋器
+        </button>
+      </div>`;
+    }
+  } else {
+    h+=`<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">
+      没有蛋 · 完成训练有30%概率掉落 🥚</div>`;
   }
   return h;
 }
