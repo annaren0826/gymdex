@@ -2533,7 +2533,7 @@ function randomNeeded(rarity){
 }
 
 function dropEgg(){
-  if(Math.random()>0.5)return null;
+  if(Math.random()>0.3)return null;
   const r=Math.random();
   return r<0.60?'common':r<0.85?'silver':r<0.95?'gold':'rainbow';
 }
