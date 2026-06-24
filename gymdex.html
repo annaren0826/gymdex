@@ -3369,8 +3369,7 @@ function renderNurturingTab(){
     const cr=CREATURES.find(c=>c.id===S.hatchPending);
     h+=`<div class="card" style="border-color:#B44DFF66;margin-bottom:14px;text-align:center;padding:16px">
       <div style="display:flex;justify-content:center;margin-bottom:6px">
-        <canvas class="px-sprite" width="16" height="16" style="width:48px;height:48px"
-          data-pet="${S.hatchPending}" data-stage="1"></canvas>
+        <div style="font-size:48px;line-height:1">${cr?.stages[0].emoji||'🐣'}</div>
       </div>
       <div style="font-size:14px;font-weight:700;color:#B44DFF;margin:4px 0">新神兽等待入槽！</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:10px">${cr?.stages[0].name} — 需要空出培育槽</div>
@@ -3395,8 +3394,7 @@ function renderNurturingTab(){
     const rc=RARITY_COLOR[cr?.rarity]||'#aaa';
     h+=`<div class="nurture-slot" style="border-color:${rc}44">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-        <canvas class="px-sprite" width="16" height="16" style="width:52px;height:52px;flex-shrink:0"
-          data-pet="${slot.petId}" data-stage="${slot.stage}"></canvas>
+        <div style="font-size:52px;line-height:1;flex-shrink:0">${stageDef?.emoji||'🐣'}</div>
         <div style="flex:1">
           <div style="font-size:15px;font-weight:700">${stageDef?.name}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
