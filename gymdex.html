@@ -2175,7 +2175,7 @@ function updateNavLabels(){
     if(el)el.textContent=v;
   }
   const petTitle=document.getElementById('screen-title-pet');
-  if(petTitle)petTitle.textContent=isEn?'Creatures ✨':'神兽图鉴 ✨';
+  if(petTitle)petTitle.textContent=isEn?'Bestiary ✨':'神兽图鉴 ✨';
   const histTitle=document.getElementById('screen-title-history');
   if(histTitle)histTitle.textContent=isEn?'Workout Log 📊':'训练记录 📊';
 }
@@ -3343,14 +3343,14 @@ function renderPet(){
   const hatchBadge=S.incubator?'🥚':S.hatchQueue.length?S.hatchQueue.length:'';
   const nurtureBadge=S.nurturing.length+(hatchBadge?1:0)||'';
   const tabs=[
-    {id:'nurturing', label:'培育&孵蛋', badge:nurtureBadge},
-    {id:'bag',       label:'背包',       badge:bagCount||''},
-    {id:'creature',  label:'神兽图鉴',   badge:''},
-    {id:'item',      label:'道具图鉴',   badge:''},
+    {id:'nurturing', label:t('培育&孵蛋','Nursery'), badge:nurtureBadge},
+    {id:'bag',       label:t('背包','Bag'),           badge:bagCount||''},
+    {id:'creature',  label:t('神兽图鉴','Bestiary'),  badge:''},
+    {id:'item',      label:t('道具图鉴','Items'),      badge:''},
   ];
   let h=`<div class="pet-tabs">
-    ${tabs.map(t=>`<button class="pet-tab${petTab===t.id?' active':''}" onclick="petTab='${t.id}';renderPet()">
-      ${t.label}${t.badge?`<span class="pet-tab-badge">${t.badge}</span>`:''}
+    ${tabs.map(tab=>`<button class="pet-tab${petTab===tab.id?' active':''}" onclick="petTab='${tab.id}';renderPet()">
+      ${tab.label}${tab.badge?`<span class="pet-tab-badge">${tab.badge}</span>`:''}
     </button>`).join('')}
   </div>`;
   if(petTab==='nurturing') h+=renderNurturingTab();
