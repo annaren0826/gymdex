@@ -3694,15 +3694,6 @@ function gardenPetClick(gIdx, e){
   setTimeout(()=>document.addEventListener('click',_gardenClickOutside,{once:true}),100);
 }
 
-function testFillGarden(){
-  const testPets=['hamster','chicken','duck','cat','fox'];
-  S.garden=testPets.map(id=>({
-    petId:id, stage:3, exp:999,
-    attrs:{fire:0,water:0,wood:0,wind:0},
-    active:true, lastCollect:null
-  }));
-  save();renderGarden();
-}
 
 function closeGardenPopup(){
   const p=document.getElementById('garden-popup');
@@ -3911,9 +3902,6 @@ function renderGarden(){
         <div style="font-size:40px">🏡</div>
         <div style="font-size:15px;margin-top:8px">庭院还是空的</div>
         <div style="font-size:12px;margin-top:4px">神兽成年后会搬进来</div>
-        <button onclick="testFillGarden()" style="margin-top:14px;padding:8px 18px;
-          background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);
-          border-radius:20px;color:#fff;font-size:12px;cursor:pointer">🧪 测试填充</button>
       </div>`:'';
 
   const html=`<div class="garden-fs" id="garden-scene" onclick="closeGardenPopup()">
