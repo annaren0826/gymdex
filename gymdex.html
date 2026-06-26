@@ -2619,10 +2619,10 @@ function genRewards(isWorkout=true){
     ?(75+Math.floor(Math.random()*51))
     :(30+Math.floor(Math.random()*21));
   const out=spendBudget(budget);
-  // Attr item: separate 0-50 roll, workout only
+  // Attr items: separate 0-50 budget roll, workout only
   if(isWorkout){
-    const attrId=rollAttrDrop();
-    if(attrId)out[attrId]=(out[attrId]||0)+1;
+    for(const[id,n]of Object.entries(rollAttrDrop()))
+      out[id]=(out[id]||0)+n;
   }
   return out;
 }
@@ -2651,13 +2651,27 @@ function spendBudget(budget){
   return out;
 }
 
-// Roll 0-50 attr points; drop one eligible attr item if roll >= its attrVal
+// Roll 0-50 attr budget; spend it on attr items (cost = attrVal, weight by rarity)
 function rollAttrDrop(){
-  const roll=Math.floor(Math.random()*51);
-  const eligible=Object.entries(ITEMS)
-    .filter(([,it])=>!it.special&&it.attr&&it.attrVal>0&&it.attrVal<=roll);
-  if(!eligible.length)return null;
-  return eligible[Math.floor(Math.random()*eligible.length)][0];
+  const budget=Math.floor(Math.random()*51);
+  const pool=Object.entries(ITEMS)
+    .filter(([,it])=>!it.special&&it.attr&&it.attrVal>0&&DROP_WEIGHT[it.rarity])
+    .map(([id,it])=>({id,weight:DROP_WEIGHT[it.rarity],cost:it.attrVal}));
+  const out={};
+  let remaining=budget;
+  let attempts=0;
+  while(remaining>0&&attempts<20){
+    attempts++;
+    const affordable=pool.filter(p=>p.cost<=remaining);
+    if(!affordable.length)break;
+    const afW=affordable.reduce((s,p)=>s+p.weight,0);
+    let r=Math.random()*afW;
+    let picked=affordable[affordable.length-1];
+    for(const p of affordable){r-=p.weight;if(r<=0){picked=p;break;}}
+    out[picked.id]=(out[picked.id]||0)+1;
+    remaining-=picked.cost;
+  }
+  return out;
 }
 
 function checkAchievements(){
