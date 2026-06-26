@@ -2842,7 +2842,7 @@ function feedNurturing(idx,itemId){
   const it=ITEMS[itemId];
   if(!slot||!it||it.special)return;
   if(!(S.inv[itemId]>0))return;
-  if(todayFeedCount(slot)>=DAILY_FEED_LIMIT){toast('今天已喂食5次，明天再来！');return;}
+  if(todayFeedCount(slot)>=DAILY_FEED_LIMIT){toast('宝宝已经吃饱啦，明天再来喂我吧～ 🥰');return;}
   S.inv[itemId]--;
   slot.exp+=(it.exp||0);
   if(it.attr&&it.attrVal)slot.attrs[it.attr]=(slot.attrs[it.attr]||0)+it.attrVal;
