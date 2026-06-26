@@ -3119,6 +3119,14 @@ function renderWorkout(){
   // Check if already worked out today
   const today=todayISO();
   const todayWorkouts=S.workouts.filter(w=>w.date===today);
+  const realWorkouts=todayWorkouts.filter(w=>w.type!=='休息');
+
+  // A real workout logged today → show the done view, even on a rest day.
+  // Prevents re-claiming the rest reward or training again after training.
+  if(realWorkouts.length>0){
+    h+=buildTodayDoneView(realWorkouts,type);
+    el.innerHTML=h;return;
+  }
 
   if(isTodayRestDay()){
     const checkedIn=S.todayRewards?.date===today&&S.todayRewards?.type==='休息';
