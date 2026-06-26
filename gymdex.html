@@ -3931,7 +3931,6 @@ function renderGarden(){
     ai++;
   }
 
-  const frozen=S.garden.filter(g=>!g.active);
   const frozenChips=frozen.map(g=>{
     const idx=S.garden.indexOf(g);
     const cr=CREATURES.find(c=>c.id===g.petId);
