@@ -2776,14 +2776,22 @@ function claimHatched(){
 
 // ── Nurturing ──────────────────────────────
 
+const DAILY_FEED_LIMIT=5;
+function todayFeedCount(slot){
+  if(!slot.feedToday||slot.feedToday.date!==todayISO())return 0;
+  return slot.feedToday.count||0;
+}
+
 function feedNurturing(idx,itemId){
   const slot=S.nurturing[idx];
   const it=ITEMS[itemId];
   if(!slot||!it||it.special)return;
   if(!(S.inv[itemId]>0))return;
+  if(todayFeedCount(slot)>=DAILY_FEED_LIMIT){toast('今天已喂食5次，明天再来！');return;}
   S.inv[itemId]--;
   slot.exp+=(it.exp||0);
   if(it.attr&&it.attrVal)slot.attrs[it.attr]=(slot.attrs[it.attr]||0)+it.attrVal;
+  slot.feedToday={date:todayISO(),count:(todayFeedCount(slot))+1};
   if(it.attr==='water')S.waterFeedTotal=(S.waterFeedTotal||0)+1;
   save();
   const msg=it.attr
@@ -2806,8 +2814,13 @@ function openFeedModal(idx){
     .filter(([k,v])=>v>0&&ITEMS[k]&&!ITEMS[k].special&&(ITEMS[k].exp>0||ITEMS[k].attrVal>0))
     .sort(itemDefSort);
   const spriteHtml=spriteCanvas(slot.petId,slot.stage,52);
+  const fedToday=todayFeedCount(slot);
+  const remaining=DAILY_FEED_LIMIT-fedToday;
+  const limitReached=remaining<=0;
   let itemsHtml='';
-  if(!feedable.length){
+  if(limitReached){
+    itemsHtml=`<div style="text-align:center;color:var(--muted);padding:24px 0">今天已喂食5次 🌙<br><span style="font-size:12px">明天再来吧！</span></div>`;
+  } else if(!feedable.length){
     itemsHtml=`<div style="text-align:center;color:var(--muted);padding:24px 0">背包里没有可喂食的道具</div>`;
   } else {
     itemsHtml=`<div class="items-grid">`;
@@ -2832,7 +2845,10 @@ function openFeedModal(idx){
         ${evolCond?`<div style="font-size:12px;color:var(--muted);margin-top:2px">EXP ${slot.exp} / ${evolCond.exp}</div>`:''}
       </div>
     </div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">选择道具喂食</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:12px;color:var(--muted)">选择道具喂食</div>
+      <div style="font-size:12px;color:${limitReached?'#FF6B6B':'var(--muted)'}">今日还可喂 ${remaining} 次</div>
+    </div>
     ${itemsHtml}`;
   document.getElementById('feed-modal').style.display='flex';
   requestAnimationFrame(refreshSprites);
