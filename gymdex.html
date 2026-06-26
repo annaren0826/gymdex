@@ -2937,9 +2937,9 @@ function freezeToGarden(idx){
 function thawFromGarden(gIdx){
   if(S.nurturing.length>=3){toast('培育槽已满！');return;}
   const entry=S.garden.splice(gIdx,1)[0];
-  if(!entry){save();renderPet();return;}
+  if(!entry){save();renderPet();renderGarden();return;}
   S.nurturing.push(entry);
-  save();renderPet();
+  save();renderPet();renderGarden();
   const cr=CREATURES.find(c=>c.id===entry.petId);
   toast(`🌱 ${cr?.stages[entry.stage-1].name} 回到培育槽`);
 }
