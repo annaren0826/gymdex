@@ -3396,7 +3396,7 @@ function addCustomExercise(){
   row.className='ex-select-row';
   row.innerHTML=`<input type="checkbox" class="ex-select-box" data-name="${name}" checked>
     <div style="flex:1"><div style="font-size:14px;font-weight:600">${name}</div>
-    <div style="font-size:12px;color:var(--muted)">自定义动作</div></div>`;
+    <div style="font-size:12px;color:var(--muted)">${t('自定义动作','Custom exercise')}</div></div>`;
   list.appendChild(row);
 }
 
@@ -3550,8 +3550,8 @@ function renderNurturingTab(){
       <div style="display:flex;justify-content:center;margin-bottom:6px">
         <div style="font-size:48px;line-height:1">${cr?.stages[0].emoji||'🐣'}</div>
       </div>
-      <div style="font-size:14px;font-weight:700;color:#B44DFF;margin:4px 0">新神兽等待入槽！</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">${cr?.stages[0].name} — 需要空出培育槽</div>
+      <div style="font-size:14px;font-weight:700;color:#B44DFF;margin:4px 0">${t('新神兽等待入槽！','New creature waiting!')}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">${t(`${cr?.stages[0].name} — 需要空出培育槽`,`${cr?.stages[0].name} — free up a nursery slot`)}</div>
       <button class="btn btn-secondary btn-small" onclick="claimHatched()" ${S.nurturing.length<3?'':'disabled'}>
         ${S.nurturing.length<3?'领取神兽':'槽位已满，请先移至庭院'}
       </button>
@@ -3561,7 +3561,7 @@ function renderNurturingTab(){
     const slot=S.nurturing[i];
     if(!slot){
       h+=`<div class="nurture-slot empty"><span style="font-size:28px;opacity:.3">＋</span>
-        <div style="color:var(--muted);font-size:13px;margin-top:4px">空槽位</div></div>`;
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">${t('空槽位','Empty slot')}</div></div>`;
       continue;
     }
     const cr=CREATURES.find(c=>c.id===slot.petId);
@@ -3582,7 +3582,7 @@ function renderNurturingTab(){
             ${cr?.attr?`<span style="font-size:11px;color:${ATTR_COLOR[cr.attr]}">${ATTR_EMOJI[cr.attr]}</span>`:''}
           </div>
         </div>
-        <button class="btn btn-ghost btn-small" onclick="freezeToGarden(${i})" title="移至庭院冻结">❄️</button>
+        <button class="btn btn-ghost btn-small" onclick="freezeToGarden(${i})" title="${t('移至庭院冻结','Freeze to garden')}">❄️</button>
       </div>`;
     if(evolCond){
       h+=`<div style="font-size:11px;color:var(--muted);margin-bottom:4px">EXP ${slot.exp} / ${evolCond.exp}</div>
@@ -3621,22 +3621,22 @@ function renderNurturingTab(){
         ${full?'🍖 已吃饱':'🍖 喂食'}
       </button>
       <button class="btn ${ready?'btn-green':'btn-secondary'} btn-small" style="flex:1" ${ready?'':'disabled'} onclick="evolveNurturing(${i})">
-        ${slot.stage>=3?'✨ 最终形态':(ready?`✨ 进化 → ${nextName}`:'🔒 进化（未满足）')}
+        ${slot.stage>=3?t('✨ 最终形态','✨ Final form'):(ready?`✨ ${t('进化','Evolve')} → ${nextName}`:t('🔒 进化（未满足）','🔒 Evolve (locked)'))}
       </button>
     </div>
     </div>`;
   }
 
   // ── Incubator section ──
-  h+=`<div style="font-size:13px;font-weight:700;margin:20px 0 10px">🥚 孵蛋器</div>`;
+  h+=`<div style="font-size:13px;font-weight:700;margin:20px 0 10px">${t('🥚 孵蛋器','🥚 Incubator')}</div>`;
   if(S.incubator){
     const ed=EGG_DATA[S.incubator.eggRarity];
     if(S.incubator.ready){
       // Hatched but nurturing full
       h+=`<div class="card" style="border-color:#B44DFF66;text-align:center;padding:18px 16px;margin-bottom:10px">
         <div style="font-size:48px;margin-bottom:6px">${ed.emoji}</div>
-        <div style="font-size:15px;font-weight:700;color:#B44DFF;margin-bottom:4px">蛋孵化了！✨</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">培育槽已满，请先将神兽移至庭院</div>
+        <div style="font-size:15px;font-weight:700;color:#B44DFF;margin-bottom:4px">${t('蛋孵化了！✨','Egg hatched! ✨')}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">${t('培育槽已满，请先将神兽移至庭院','Nursery full — move a creature to the garden first')}</div>
         <button class="btn btn-secondary btn-small" onclick="claimHatched()" ${S.nurturing.length<3?'':'disabled'}>
           ${S.nurturing.length<3?'领取神兽':'槽位已满'}
         </button>
@@ -3648,7 +3648,7 @@ function renderNurturingTab(){
           <div style="font-size:15px;font-weight:700;margin-bottom:4px">${ed.name}
             <span class="badge badge-${ed.rarity}" style="margin-left:6px;font-size:10px">${RARITY_NAME[ed.rarity]}</span>
           </div>
-          <div style="font-size:12px;color:var(--muted)">🔥 孵化中…每次训练打卡都有进展</div>
+          <div style="font-size:12px;color:var(--muted)">${t('🔥 孵化中…每次训练打卡都有进展','🔥 Incubating… every workout helps')}</div>
         </div>
       </div>`;
     }
@@ -3656,13 +3656,13 @@ function renderNurturingTab(){
     h+=`<div style="text-align:center;padding:20px 16px;background:var(--card);border:2px dashed var(--border);
       border-radius:12px;color:var(--muted);font-size:13px;margin-bottom:10px">
       <div style="font-size:32px;margin-bottom:6px">🫙</div>
-      孵蛋器空着<br>
-      <span style="font-size:12px">从下方蛋背包选一颗放进来</span>
+      ${t('孵蛋器空着','Incubator is empty')}<br>
+      <span style="font-size:12px">${t('从下方蛋背包选一颗放进来','Pick an egg from your bag below')}</span>
     </div>`;
   }
 
   // ── Egg inventory ──
-  h+=`<div style="font-size:13px;font-weight:700;margin:16px 0 8px">🎒 蛋背包 ${S.hatchQueue.length?`(${S.hatchQueue.length})`:''}</div>`;
+  h+=`<div style="font-size:13px;font-weight:700;margin:16px 0 8px">${t('🎒 蛋背包','🎒 Egg Bag')} ${S.hatchQueue.length?`(${S.hatchQueue.length})`:''}</div>`;
   if(S.hatchQueue.length){
     for(let i=0;i<S.hatchQueue.length;i++){
       const ed=EGG_DATA[S.hatchQueue[i]];
@@ -3675,13 +3675,13 @@ function renderNurturingTab(){
         </div>
         <button class="btn btn-secondary btn-small" onclick="placeEggInIncubator(${i})"
           ${S.incubator?'disabled':''} style="${S.incubator?'opacity:.4':''}">
-          放入孵蛋器
+          ${t('放入孵蛋器','Place in incubator')}
         </button>
       </div>`;
     }
   } else {
     h+=`<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">
-      没有蛋 · 完成训练有50%概率掉落 🥚</div>`;
+      ${t('没有蛋 · 完成训练有50%概率掉落 🥚','No eggs · 50% drop chance per workout 🥚')}</div>`;
   }
   return h;
 }
@@ -3693,10 +3693,10 @@ function renderIncubatorTab(){
     if(S.incubator.ready){
       h+=`<div class="card" style="text-align:center;padding:32px 16px;margin-bottom:14px">
         <div style="font-size:72px;margin-bottom:12px;animation:pet-bounce .6s ease-in-out infinite">${ed.emoji}</div>
-        <div style="font-size:18px;font-weight:800;margin-bottom:4px">${ed.name}孵化好了！</div>
+        <div style="font-size:18px;font-weight:800;margin-bottom:4px">${t(`${ed.name}孵化好了！`,`${ed.name} has hatched!`)}</div>
         <span class="badge badge-${ed.rarity}" style="margin-bottom:20px">${RARITY_NAME[ed.rarity]}</span>
         <button class="btn btn-primary" style="margin-top:12px;font-size:17px;padding:14px"
-          onclick="manualHatch()">✨ 点击孵化</button>
+          onclick="manualHatch()">${t('✨ 点击孵化','✨ Tap to hatch')}</button>
       </div>`;
     } else {
       const pct=Math.min(100,S.incubator.trainCount/S.incubator.needed*100);
@@ -3704,18 +3704,18 @@ function renderIncubatorTab(){
         <div style="font-size:56px;margin-bottom:8px">${ed.emoji}</div>
         <div style="font-size:18px;font-weight:800;margin-bottom:4px">${ed.name}</div>
         <span class="badge badge-${ed.rarity}" style="margin-bottom:14px">${RARITY_NAME[ed.rarity]}</span>
-        <div style="font-size:13px;color:var(--muted);margin:10px 0 6px">孵化进度</div>
+        <div style="font-size:13px;color:var(--muted);margin:10px 0 6px">${t('孵化进度','Hatch progress')}</div>
         <div class="exp-bar" style="margin-bottom:8px"><div class="exp-fill" style="width:${pct}%"></div></div>
-        <div style="font-size:12px;color:var(--muted)">完成训练打卡即可孵化</div>
+        <div style="font-size:12px;color:var(--muted)">${t('完成训练打卡即可孵化','Finish a workout to hatch')}</div>
       </div>`;
     }
   } else {
     h+=`<div class="empty-state"><div class="empty-icon">🥚</div>
-      <div>孵蛋器空着</div>
-      <div style="font-size:13px;margin-top:6px">完成训练有50%概率获得蛋</div></div>`;
+      <div>${t('孵蛋器空着','Incubator is empty')}</div>
+      <div style="font-size:13px;margin-top:6px">${t('完成训练有50%概率获得蛋','50% chance to get an egg per workout')}</div></div>`;
   }
   if(S.hatchQueue.length){
-    h+=`<div style="font-size:13px;font-weight:700;margin:12px 0 8px">等待孵化 (${S.hatchQueue.length})</div>`;
+    h+=`<div style="font-size:13px;font-weight:700;margin:12px 0 8px">${t('等待孵化','Waiting to hatch')} (${S.hatchQueue.length})</div>`;
     for(const r of S.hatchQueue){
       const ed=EGG_DATA[r];
       h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
@@ -3772,13 +3772,13 @@ function gardenPetClick(gIdx, e){
     ${g.stage===3
       ?(canCollect
         ?`<button class="btn btn-green btn-small" style="width:100%" onclick="collectGarden(${gIdx});closeGardenPopup()">🎁 收获今日道具</button>`
-        :`<div style="font-size:12px;color:var(--muted);text-align:center;padding:4px 0">✓ 今日已收获～</div>`)
-      :`<div style="font-size:12px;color:var(--muted);text-align:center;padding:4px 0">成年后才能产出道具</div>`
+        :`<div style="font-size:12px;color:var(--muted);text-align:center;padding:4px 0">${t('✓ 今日已收获～','✓ Collected today~')}</div>`)
+      :`<div style="font-size:12px;color:var(--muted);text-align:center;padding:4px 0">${t('成年后才能产出道具','Produces items only as an adult')}</div>`
     }
     ${!g.active?`<button class="btn btn-ghost btn-small" style="width:100%;margin-top:6px"
-      onclick="thawFromGarden(${gIdx});closeGardenPopup()" ${S.nurturing.length<3?'':'disabled'}>🌱 解冻取回培育</button>`:''}
+      onclick="thawFromGarden(${gIdx});closeGardenPopup()" ${S.nurturing.length<3?'':'disabled'}>${t('🌱 解冻取回培育','🌱 Thaw & nurture')}</button>`:''}
     ${g.active&&g.stage<3?`<button class="btn btn-ghost btn-small" style="width:100%;margin-top:6px"
-      onclick="thawFromGarden(${gIdx});closeGardenPopup()">🌱 取回培育</button>`:''}
+      onclick="thawFromGarden(${gIdx});closeGardenPopup()">${t('🌱 取回培育','🌱 Back to nursery')}</button>`:''}
   `;
   popup.style.display='block';
   refreshSprites();
@@ -3809,7 +3809,7 @@ function renderCreatureDexTab(){
   let unlockedCount=0;
   CREATURES.forEach(cr=>{unlockedCount+=getUnlockedStages(cr.id);});
   let h=`<div style="font-size:13px;color:var(--muted);margin-bottom:12px">
-    已收集 ${unlockedCount} / ${totalStages} 个图鉴</div>
+    ${t(`已收集 ${unlockedCount} / ${totalStages} 个图鉴`,`Collected ${unlockedCount} / ${totalStages}`)}</div>
   <div class="dex-thumb-grid">`;
   for(const cr of CREATURES){
     const maxStage=getUnlockedStages(cr.id);
@@ -3837,13 +3837,13 @@ function renderCreatureDexTab(){
 
 function renderItemDexTab(){
   let h=`<div style="font-size:13px;color:var(--muted);margin-bottom:12px">
-    已获得 ${S.itemLog.length} / ${Object.keys(ITEMS).length} 种道具</div>
+    ${t(`已获得 ${S.itemLog.length} / ${Object.keys(ITEMS).length} 种道具`,`Collected ${S.itemLog.length} / ${Object.keys(ITEMS).length} items`)}</div>
   <div class="items-grid">`;
   for(const[id,it]of Object.entries(ITEMS)){
     const seen=S.itemLog.includes(id);
     let stat='';
     if(seen){
-      if(it.special) stat='🔑成就';
+      if(it.special) stat=t('🔑成就','🔑 Achievement');
       else if(it.exp&&it.attr) stat=`+${it.exp}EXP ${ATTR_EMOJI[it.attr]}+${it.attrVal}`;
       else if(it.exp) stat=`+${it.exp} EXP`;
       else if(it.attr) stat=`${ATTR_EMOJI[it.attr]} +${it.attrVal}`;
@@ -3887,18 +3887,18 @@ function showDexDetail(crId, stage){
   const alreadyPassed=maxStage>stage;
   let descHtml='';
   if(curEvolve){
-    descHtml+=`<div style="margin-top:10px;font-size:13px">进化需要 <b>${curEvolve.exp}</b> EXP</div>`;
+    descHtml+=`<div style="margin-top:10px;font-size:13px">${t('进化需要','Needs')} <b>${curEvolve.exp}</b> EXP</div>`;
     if(curEvolve.items){
       if(alreadyPassed){
         const itemNames=Object.entries(curEvolve.items)
           .map(([id,n])=>`${ITEMS[id]?.emoji||id}×${n}`).join(' ');
         descHtml+=`<div style="font-size:12px;color:var(--muted);margin-top:4px">+ ${itemNames}</div>`;
       }else{
-        descHtml+=`<div style="font-size:12px;color:var(--muted);margin-top:4px">+ 需要特殊材料???</div>`;
+        descHtml+=`<div style="font-size:12px;color:var(--muted);margin-top:4px">${t('+ 需要特殊材料???','+ special material ???')}</div>`;
       }
     }
   }else if(stage===3){
-    descHtml=`<div style="margin-top:10px;font-size:13px;color:var(--muted)">已达到最终形态 ✨</div>`;
+    descHtml=`<div style="margin-top:10px;font-size:13px;color:var(--muted)">${t('已达到最终形态 ✨','Final form reached ✨')}</div>`;
   }
   document.getElementById('dex-modal-desc').innerHTML=descHtml;
   document.getElementById('dex-modal').classList.remove('hidden');
@@ -3917,10 +3917,10 @@ function renderBagTab(){
   const items=Object.entries(S.inv||{}).filter(([,n])=>n>0).sort(itemDefSort);
   if(!items.length){
     return `<div class="empty-state"><div class="empty-icon">🎒</div>
-      <div>背包是空的</div>
-      <div style="margin-top:8px;font-size:13px">完成训练打卡获得道具！</div></div>`;
+      <div>${t('背包是空的','Your bag is empty')}</div>
+      <div style="margin-top:8px;font-size:13px">${t('完成训练打卡获得道具！','Finish workouts to earn items!')}</div></div>`;
   }
-  let h=`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">道具 (${items.length}种) · 点击神兽喂食</div>
+  let h=`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">${t(`道具 (${items.length}种) · 点击神兽喂食`,`Items (${items.length}) · tap a creature to feed`)}</div>
   <div class="items-grid" style="grid-template-columns:repeat(5,1fr);gap:6px">`;
   for(const[id,n]of items){
     const it=ITEMS[id];if(!it)continue;
@@ -4009,13 +4009,13 @@ function renderGarden(){
     ?`<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
         text-align:center;color:rgba(255,255,255,.8);text-shadow:0 1px 4px rgba(0,0,0,.6)">
         <div style="font-size:40px">🏡</div>
-        <div style="font-size:15px;margin-top:8px">庭院还是空的</div>
-        <div style="font-size:12px;margin-top:4px">神兽成年后会搬进来</div>
+        <div style="font-size:15px;margin-top:8px">${t('庭院还是空的','The garden is empty')}</div>
+        <div style="font-size:12px;margin-top:4px">${t('神兽成年后会搬进来','Adult creatures move in here')}</div>
       </div>`:'';
 
   const html=`<div class="garden-fs" id="garden-scene" onclick="closeGardenPopup()">
     <div class="garden-fs-header">
-      <div class="garden-fs-title">🏡 庭院</div>
+      <div class="garden-fs-title">${t('🏡 庭院','🏡 Garden')}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         ${frozenChips}
         ${uncollected?`<div style="background:rgba(77,204,120,.9);color:#fff;border-radius:20px;
@@ -4047,16 +4047,16 @@ function renderHistory(){
   const types=[...new Set(S.workouts.map(w=>w.type))].filter(Boolean).sort();
 
   let h=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-    <button class="btn btn-secondary btn-small" onclick="exportCSV()">📤 导出 CSV</button>
-    <button class="btn btn-secondary btn-small" onclick="document.getElementById('csv-input').click()">📥 导入 CSV</button>
-    <button class="btn btn-secondary btn-small" onclick="exportGame()">💾 导出存档</button>
-    <button class="btn btn-secondary btn-small" onclick="document.getElementById('game-import-input').click()">🔄 恢复存档</button>
+    <button class="btn btn-secondary btn-small" onclick="exportCSV()">${t('📤 导出 CSV','📤 Export CSV')}</button>
+    <button class="btn btn-secondary btn-small" onclick="document.getElementById('csv-input').click()">${t('📥 导入 CSV','📥 Import CSV')}</button>
+    <button class="btn btn-secondary btn-small" onclick="exportGame()">${t('💾 导出存档','💾 Export save')}</button>
+    <button class="btn btn-secondary btn-small" onclick="document.getElementById('game-import-input').click()">${t('🔄 恢复存档','🔄 Restore save')}</button>
   </div>`;
 
   if(!S.workouts.length){
     h+=`<div class="empty-state"><div class="empty-icon">📊</div>
-      <div>还没有记录</div>
-      <div style="margin-top:8px;font-size:13px">完成第一次训练或导入 CSV！</div></div>`;
+      <div>${t('还没有记录','No records yet')}</div>
+      <div style="margin-top:8px;font-size:13px">${t('完成第一次训练或导入 CSV！','Finish your first workout or import a CSV!')}</div></div>`;
     el.innerHTML=h;return;
   }
 
@@ -4065,17 +4065,17 @@ function renderHistory(){
     <select id="hist-month" onchange="histFilter.month=this.value;histPage=0;renderHistory()"
       style="flex:1;min-width:110px;background:var(--card);border:1px solid var(--border);
         border-radius:8px;padding:6px 10px;color:var(--text);font-size:13px">
-      <option value="">全部月份</option>
+      <option value="">${t('全部月份','All months')}</option>
       ${months.map(m=>`<option value="${m}" ${histFilter.month===m?'selected':''}>${m}</option>`).join('')}
     </select>
     <select id="hist-type" onchange="histFilter.type=this.value;histPage=0;renderHistory()"
       style="flex:1;min-width:100px;background:var(--card);border:1px solid var(--border);
         border-radius:8px;padding:6px 10px;color:var(--text);font-size:13px">
-      <option value="">全部部位</option>
+      <option value="">${t('全部部位','All groups')}</option>
       ${types.map(t=>`<option value="${t}" ${histFilter.type===t?'selected':''}>${partEmoji(t)} ${t}</option>`).join('')}
     </select>
     ${(histFilter.month||histFilter.type)?`<button class="btn btn-secondary btn-small"
-      onclick="histFilter={month:'',type:''};histPage=0;renderHistory()" style="white-space:nowrap">✕ 清除</button>`:''}
+      onclick="histFilter={month:'',type:''};histPage=0;renderHistory()" style="white-space:nowrap">${t('✕ 清除','✕ Clear')}</button>`:''}
   </div>`;
 
   // Apply filters
@@ -4088,14 +4088,14 @@ function renderHistory(){
   const page=filtered.slice(histPage*HIST_PAGE,(histPage+1)*HIST_PAGE);
 
   h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">
-    共 ${total} 条记录${histFilter.month||histFilter.type?' (已筛选)':''}</div>`;
+    ${t(`共 ${total} 条记录`,`${total} records`)}${histFilter.month||histFilter.type?t(' (已筛选)',' (filtered)'):''}</div>`;
 
   h+=`<table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="color:var(--muted);border-bottom:1px solid var(--border)">
-      <th style="text-align:left;padding:4px 6px;font-weight:600">日期</th>
-      <th style="text-align:left;padding:4px 6px;font-weight:600">部位</th>
-      <th style="text-align:left;padding:4px 6px;font-weight:600">动作</th>
-      <th style="text-align:left;padding:4px 6px;font-weight:600">重量×次</th>
+      <th style="text-align:left;padding:4px 6px;font-weight:600">${t('日期','Date')}</th>
+      <th style="text-align:left;padding:4px 6px;font-weight:600">${t('部位','Group')}</th>
+      <th style="text-align:left;padding:4px 6px;font-weight:600">${t('动作','Exercise')}</th>
+      <th style="text-align:left;padding:4px 6px;font-weight:600">${t('重量×次','Weight×reps')}</th>
     </tr></thead><tbody>`;
   for(const w of page){
     const col=partColor(w.type);
@@ -4109,7 +4109,7 @@ function renderHistory(){
         ${ei===0?`<td style="padding:4px 6px;color:var(--muted);white-space:nowrap;vertical-align:top" rowspan="${exs.length}">${w.date}
             <div style="margin-top:4px">
               <button onclick="showAddExerciseForm(${wIdx})" style="background:none;border:1px dashed var(--border);
-                border-radius:5px;color:var(--muted);font-size:10px;padding:2px 5px;cursor:pointer">+补录</button>
+                border-radius:5px;color:var(--muted);font-size:10px;padding:2px 5px;cursor:pointer">${t('+补录','+ Add')}</button>
             </div>
           </td>
           <td style="padding:4px 6px;vertical-align:top" rowspan="${exs.length}">
@@ -4123,13 +4123,13 @@ function renderHistory(){
     h+=`<tr id="add-ex-row-${wIdx}" style="display:none;border-bottom:1px solid var(--border)">
       <td colspan="4" style="padding:8px 6px">
         <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
-          <input id="add-ex-name-${wIdx}" type="text" placeholder="动作名称"
+          <input id="add-ex-name-${wIdx}" type="text" placeholder="${t('动作名称','Exercise name')}"
             style="flex:2;min-width:90px;background:var(--bg);border:1px solid var(--border);
               border-radius:7px;padding:5px 9px;color:var(--text);font-size:13px">
-          <input id="add-ex-weight-${wIdx}" type="text" placeholder="重量"
+          <input id="add-ex-weight-${wIdx}" type="text" placeholder="${t('重量','Weight')}"
             style="flex:1;min-width:60px;background:var(--bg);border:1px solid var(--border);
               border-radius:7px;padding:5px 9px;color:var(--text);font-size:13px">
-          <input id="add-ex-reps-${wIdx}" type="text" placeholder="组x次"
+          <input id="add-ex-reps-${wIdx}" type="text" placeholder="${t('组x次','Sets×reps')}"
             style="flex:1;min-width:60px;background:var(--bg);border:1px solid var(--border);
               border-radius:7px;padding:5px 9px;color:var(--text);font-size:13px">
           <button class="btn btn-primary btn-small" onclick="confirmAddExercise(${wIdx})">${t('保存','Save')}</button>
@@ -4144,10 +4144,10 @@ function renderHistory(){
   if(totalPages>1){
     h+=`<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:16px">
       <button class="btn btn-secondary btn-small" onclick="histPage--;renderHistory()"
-        ${histPage===0?'disabled':''}>◀ 上一页</button>
+        ${histPage===0?'disabled':''}>${t('◀ 上一页','◀ Prev')}</button>
       <span style="font-size:13px;color:var(--muted)">${histPage+1} / ${totalPages}</span>
       <button class="btn btn-secondary btn-small" onclick="histPage++;renderHistory()"
-        ${histPage>=totalPages-1?'disabled':''}>下一页 ▶</button>
+        ${histPage>=totalPages-1?'disabled':''}>${t('下一页 ▶','Next ▶')}</button>
     </div>`;
   }
 
