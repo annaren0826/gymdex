@@ -252,7 +252,7 @@ body{background:var(--bg);color:var(--text)}
   position:relative}
 .dex-thumb:active{transform:scale(.92)}
 .dex-thumb.unlocked{border-color:rgba(255,107,157,.3)}
-.dex-thumb.locked{cursor:default}
+.dex-thumb.locked{opacity:.45;cursor:default}
 .dex-thumb-emoji{font-size:36px;display:block;line-height:1.1}
 .dex-locked-q{font-size:38px;color:#e03;font-weight:900;display:block;line-height:1.1}
 .dex-thumb-name{font-size:11px;color:var(--muted);margin-top:5px;
@@ -3954,7 +3954,7 @@ function renderGarden(){
   const active=S.garden.filter(g=>g.active);
   const frozen=S.garden.filter(g=>!g.active);
   const today=todayISO();
-  const uncollected=active.filter(g=>g.lastCollect!==today).length;
+  const uncollected=S.garden.filter(g=>g.stage===3&&g.lastCollect!==today).length;
   const hour=new Date().getHours();
   const isNight=hour<6||hour>=18;
   const bgImg=isNight?"url('assets/garden_bg_night.jpg')":"url('assets/garden_bg.jpg')";
@@ -3964,14 +3964,16 @@ function renderGarden(){
   const rng=(seed)=>{let x=Math.sin(seed+1)*10000;return x-Math.floor(x);};
   let pets='';
   let ai=0;
+  const totalPets=S.garden.length;
   for(let i=0;i<S.garden.length;i++){
-    const g=S.garden[i];if(!g.active)continue;
+    const g=S.garden[i];
     const cr=CREATURES.find(c=>c.id===g.petId);
     const stageDef=cr?.stages[g.stage-1];
     const collected=g.lastCollect===today;
-    // Divide x into equal slots per active pet count to avoid clustering
-    const slotW=80/active.length;
-    const x=8+ai*slotW+rng(i*3)*slotW*0.5; // evenly spaced + small random offset
+    const canCollect=g.stage===3&&!collected;
+    // Divide x into equal slots per total pet count to avoid clustering
+    const slotW=80/(totalPets||1);
+    const x=8+ai*slotW+rng(i*3)*slotW*0.5;
     const y=48+rng(i*3+1)*30;     // 48%~78%
     const baseSize=Math.round(64+(y-48)/30*88); // 64px(远)~152px(近) perspective
     const scale=GARDEN_SCALE[g.petId]||1.0;
@@ -3980,30 +3982,20 @@ function renderGarden(){
     const bobDur=(1.8+rng(i*3+2)*1.5).toFixed(1);
     const bobDelay=(rng(i*7)*2).toFixed(1);
     const sp=spriteCanvas(g.petId,g.stage,size);
+    const frozenOverlay=!g.active
+      ?`<div style="position:absolute;top:-8px;right:-4px;font-size:10px;line-height:1">❄️</div>`:'';
     pets+=`<div class="garden-pet bobbing" id="gp-${i}"
       style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;z-index:${zIdx};
-             --bob-dur:${bobDur}s;--bob-delay:${bobDelay}s"
+             --bob-dur:${bobDur}s;--bob-delay:${bobDelay}s${!g.active?';opacity:0.65':''}"
       onclick="gardenPetClick(${i},event)">
-      <div class="garden-pet-inner">
-        ${collected?'':'<div class="garden-collect-dot"></div>'}
+      <div class="garden-pet-inner" style="position:relative">
+        ${canCollect?'<div class="garden-collect-dot"></div>':''}
+        ${frozenOverlay}
         ${sp}
       </div>
       <div class="garden-pet-label" style="font-size:${Math.round(7+(size-32)/44*4)}px">${stageDef?.name||''}</div>
     </div>`;
     ai++;
-  }
-
-  let frozenChips='';
-  if(frozen.length){
-    frozenChips=frozen.map((g,fi)=>{
-      const cr=CREATURES.find(c=>c.id===g.petId);
-      const stageDef=cr?.stages[g.stage-1];
-      return `<span style="background:rgba(0,0,0,.5);color:#fff;border-radius:20px;
-        padding:4px 10px;font-size:12px;cursor:pointer"
-        onclick="thawFromGarden(${S.garden.indexOf(g)})">
-        ❄️ ${stageDef?.name||g.petId}
-      </span>`;
-    }).join('');
   }
 
   const emptyMsg=!S.garden.length
@@ -4017,7 +4009,6 @@ function renderGarden(){
   const html=`<div class="garden-fs" id="garden-scene" onclick="closeGardenPopup()">
     <div class="garden-fs-header">
       <div class="garden-fs-title">🏡 庭院</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">${frozenChips}</div>
       ${uncollected?`<div style="background:rgba(77,204,120,.9);color:#fff;border-radius:20px;
         padding:4px 10px;font-size:12px;font-weight:700">🎁 ×${uncollected}</div>`:''}
     </div>
