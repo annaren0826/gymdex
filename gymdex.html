@@ -809,7 +809,7 @@ select.ob-input{appearance:none;-webkit-appearance:none;
 
     <div class="screen" id="screen-bag">
       <div class="screen-header">
-        <div class="screen-title">背包 🎒</div>
+        <div class="screen-title" id="screen-title-bag">背包 🎒</div>
       </div>
       <div id="bag-content"></div>
     </div>
@@ -845,7 +845,7 @@ select.ob-input{appearance:none;-webkit-appearance:none;
 
 <!-- REST TIMER -->
 <div id="rest-overlay">
-  <div class="timer-label">💤 组间休息</div>
+  <div class="timer-label" id="timer-label">💤 组间休息</div>
   <div id="timer-wrap">
     <svg id="timer-svg" viewBox="0 0 200 200">
       <defs>
@@ -861,8 +861,8 @@ select.ob-input{appearance:none;-webkit-appearance:none;
   </div>
   <div class="timer-hint" id="timer-hint">下一组加油！</div>
   <div class="timer-btns">
-    <button class="btn btn-ghost btn-small" onclick="addTime(30)">+30秒</button>
-    <button class="btn btn-secondary btn-small" onclick="skipTimer()">跳过休息</button>
+    <button class="btn btn-ghost btn-small" id="timer-add-btn" onclick="addTime(30)">+30秒</button>
+    <button class="btn btn-secondary btn-small" id="timer-skip-btn" onclick="skipTimer()">跳过休息</button>
   </div>
 </div>
 
@@ -870,7 +870,7 @@ select.ob-input{appearance:none;-webkit-appearance:none;
 <div id="reward-modal">
   <div class="reward-box">
     <div id="reward-content"></div>
-    <button class="btn btn-primary" onclick="closeReward()" style="margin-top:18px">收下啦 🎉</button>
+    <button class="btn btn-primary" id="reward-close-btn" onclick="closeReward()" style="margin-top:18px">收下啦 🎉</button>
   </div>
 </div>
 
@@ -1951,14 +1951,14 @@ function obNext(){
   // Validate current step
   if(OB.step===1){
     const name=document.getElementById('ob-name').value.trim();
-    if(!name){toast('输入你的名字先！');return}
+    if(!name){toast(t('输入你的名字先！','Enter your name first!'));return}
     OB.selectedGoals=[];
     document.querySelectorAll('#goal-chips .chip.on').forEach(c=>{
       OB.selectedGoals.push(c.dataset.val||c.textContent.trim().replace(/^[^一-龥a-zA-Z]*/,''));
     });
   }
   if(OB.step===2&&OB.selectedParts.length===0){
-    toast('至少选一个训练部位！');return;
+    toast(t('至少选一个训练部位！','Pick at least one muscle group!'));return;
   }
   if(OB.step===TOTAL_OB_STEPS-1){
     buildDoneScreen();
@@ -1975,7 +1975,7 @@ function obSkipIfExisting(){
   if(S.onboarded){
     launchApp();
   }else{
-    toast('还没有设置过，请先完成设置 😊');
+    toast(t('还没有设置过，请先完成设置 😊','Not set up yet — please finish setup first 😊'));
   }
 }
 
@@ -2006,7 +2006,7 @@ function addCustomPart(){
   const inp=document.getElementById('part-custom');
   const val=inp.value.trim();
   if(!val)return;
-  if(OB.selectedParts.includes(val)){toast('已经加过了！');return}
+  if(OB.selectedParts.includes(val)){toast(t('已经加过了！','Already added!'));return}
   OB.selectedParts.push(val);
   // Add as chip
   const chip=document.createElement('div');
@@ -2076,7 +2076,7 @@ function handleCsvImport(e){
     OB.csvImported=true;
     document.getElementById('csv-status').innerHTML=
       `✅ 成功导入 <strong>${rows.length}</strong> 条记录`;
-    toast(`📥 已导入 ${rows.length} 条训练记录`);
+    toast(t(`📥 已导入 ${rows.length} 条训练记录`,`📥 Imported ${rows.length} records`));
   };
   reader.readAsText(file,'UTF-8');
   e.target.value='';
@@ -2103,7 +2103,7 @@ function handleGameImport(e){
       const total=(S.nurturing?.length||0)+(S.garden?.length||0);
       document.getElementById('game-status').innerHTML=
         `✅ 存档恢复成功！${total} 只神兽，背包 ${Object.values(S.inv).reduce((a,b)=>a+b,0)} 件道具`;
-      toast('💾 游戏存档恢复成功！');
+      toast(t('💾 游戏存档恢复成功！','💾 Save restored!'));
     }catch(err){
       document.getElementById('game-status').textContent='❌ 文件格式错误，请选择正确的 JSON 存档';
     }
@@ -2182,17 +2182,37 @@ const PART_EN={'臀A':'Glutes A','臀B':'Glutes B','背':'Back','肩':'Shoulders
   '胸':'Chest','腿':'Legs','腹':'Core','手臂':'Arms','全身':'Full Body',
   '休息':'Rest','背+臀B':'Back+Glutes B','肩+臀B':'Shoulders+Glutes B'};
 function tPart(p){return S.lang==='en'?(PART_EN[p]||p):p}
+// Exercise-name English map. `name` stays Chinese (it's the data key / CSV match);
+// tEx() only swaps the displayed label when language is English.
+const EX_EN={
+  '臀推':'Hip Thrust','哑铃RDL':'Dumbbell RDL','保加利亚分腿蹲':'Bulgarian Split Squat',
+  '髋外展':'Hip Abduction','绳索后踢':'Cable Glute Kickback','绳索侧踢':'Cable Side Kick',
+  '山羊挺身':'Back Extension','坐姿早安':'Seated Good Morning','辅助引体向上':'Assisted Pull-up',
+  '高位宽距下拉':'Wide-Grip Lat Pulldown','中距下拉':'Mid-Grip Lat Pulldown','坐姿划船':'Seated Cable Row',
+  '杠铃划船':'Barbell Row','直臂下压':'Straight-Arm Pulldown','面拉':'Face Pull',
+  '肩推':'Shoulder Press','侧平举':'Lateral Raise','绳索侧平举':'Cable Lateral Raise',
+  '蝴蝶机肩后束':'Reverse Pec Deck','俯身飞鸟':'Bent-Over Reverse Fly','卧推':'Bench Press',
+  '上斜哑铃推':'Incline Dumbbell Press','蝴蝶机夹胸':'Pec Deck Fly','深蹲':'Squat',
+  '腿举':'Leg Press','腿弯举':'Leg Curl','小腿提踵':'Calf Raise','卷腹':'Crunch',
+  '平板支撑':'Plank','二头弯举':'Bicep Curl','锤式弯举':'Hammer Curl','三头下压':'Tricep Pushdown',
+  '硬拉':'Deadlift','哑铃推举':'Dumbbell Press','划船':'Row',
+};
+function tEx(name){return S.lang==='en'?(EX_EN[name]||name):name}
 function updateNavLabels(){
   const isEn=S.lang==='en';
-  const labels={workout:isEn?'':'训练',pet:isEn?'':'神兽',garden:isEn?'':'庭院',history:isEn?'':'记录'};
+  const labels={workout:isEn?'Train':'训练',pet:isEn?'Creatures':'神兽',garden:isEn?'Garden':'庭院',history:isEn?'Log':'记录'};
   for(const[k,v]of Object.entries(labels)){
     const el=document.getElementById('nav-label-'+k);
     if(el)el.textContent=v;
   }
-  const petTitle=document.getElementById('screen-title-pet');
-  if(petTitle)petTitle.textContent=isEn?'Bestiary ✨':'神兽图鉴 ✨';
-  const histTitle=document.getElementById('screen-title-history');
-  if(histTitle)histTitle.textContent=isEn?'Workout Log 📊':'训练记录 📊';
+  const set=(id,zh,en)=>{const el=document.getElementById(id);if(el)el.textContent=isEn?en:zh;};
+  set('screen-title-pet','神兽图鉴 ✨','Bestiary ✨');
+  set('screen-title-history','训练记录 📊','Workout Log 📊');
+  set('screen-title-bag','背包 🎒','Bag 🎒');
+  set('timer-label','💤 组间休息','💤 Rest between sets');
+  set('timer-add-btn','+30秒','+30s');
+  set('timer-skip-btn','跳过休息','Skip rest');
+  set('reward-close-btn','收下啦 🎉','Got it 🎉');
 }
 
 function rotation(){return S.profile?.parts?.length?S.profile.parts:DEFAULT_ROTATION}
@@ -2335,7 +2355,7 @@ function showSettings(){
     h+=`</div>`;
 
     if(selParts.length){
-      h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:6px">当前顺序：</div>
+      h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:6px">${t('当前顺序：','Current order: ')}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">`;
       selParts.forEach((p,i)=>{
         h+=`<span style="padding:4px 10px;border-radius:10px;background:var(--accent)22;
@@ -2357,8 +2377,8 @@ function showSettings(){
     render();
   };
   window.saveSettings=function(){
-    if(!selDays.size){toast('至少选一个训练日');return;}
-    if(!selParts.length){toast('至少选一个训练部位');return;}
+    if(!selDays.size){toast(t('至少选一个训练日','Pick at least one training day'));return;}
+    if(!selParts.length){toast(t('至少选一个训练部位','Pick at least one muscle group'));return;}
     S.profile.days=[...selDays];
     S.profile.parts=[...selParts];
     const langSel=document.querySelector('input[name="lang-sel"]:checked');
@@ -2380,13 +2400,13 @@ function showSettings(){
     modal.innerHTML=`<div style="background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:480px;
       max-height:85vh;overflow-y:auto;padding:24px 20px 40px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-        <div style="font-size:18px;font-weight:800">⚙️ 训练设置</div>
+        <div style="font-size:18px;font-weight:800">${t('⚙️ 训练设置','⚙️ Workout Settings')}</div>
         <button onclick="document.getElementById('settings-modal').style.display='none'"
           style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">✕</button>
       </div>
       <div id="settings-modal-body"></div>
-      <button class="btn btn-primary" style="margin-top:8px" onclick="saveSettings()">保存</button>
-      <button class="btn btn-secondary" style="margin-top:8px;width:100%" onclick="location.reload()">🔄 刷新更新（不影响存档）</button>
+      <button class="btn btn-primary" style="margin-top:8px" onclick="saveSettings()">${t('保存','Save')}</button>
+      <button class="btn btn-secondary" style="margin-top:8px;width:100%" onclick="location.reload()">${t('🔄 刷新更新（不影响存档）','🔄 Refresh update (save kept)')}</button>
     </div>`;
     document.body.appendChild(modal);
   }
@@ -2479,7 +2499,7 @@ function startSession(type,selectedNames){
 }
 
 function cancelSession(){
-  if(confirm('放弃这次训练？'))S.session=null,save(),renderWorkout();
+  if(confirm(t('放弃这次训练？','Discard this workout?')))S.session=null,save(),renderWorkout();
 }
 
 function completeCurrentSet(){
@@ -2492,7 +2512,7 @@ function completeCurrentSet(){
   if(w)ex.lastW=w;
   if(r)ex.lastR=r;
   save();
-  startTimer(60,`${ex.name} 第${ex.sets.length}组完成！休息一下 💪`);
+  startTimer(60,t(`${ex.name} 第${ex.sets.length}组完成！休息一下 💪`,`${tEx(ex.name)} set ${ex.sets.length} done! Take a rest 💪`));
   renderWorkout();
 }
 
@@ -2524,7 +2544,7 @@ function skipToExercise(idx){
 function restDayCheckIn(){
   // Pre-scheduled rest day: also write a record so streak counts
   const today=todayISO();
-  if(S.todayRewards?.date===today&&S.todayRewards?.type==='休息'){toast('今天已经打卡啦！明天再来～');return;}
+  if(S.todayRewards?.date===today&&S.todayRewards?.type==='休息'){toast(t('今天已经打卡啦！明天再来～','Already checked in today! Come back tomorrow~'));return;}
   if(!S.workouts.find(w=>w.date===today)){
     S.workouts.push({date:today,type:'休息',exercises:[]});
     S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
@@ -2542,10 +2562,10 @@ function restDayCheckIn(){
 }
 function showRestDayReward(rewards){
   let h=`<div style="font-size:52px;margin-bottom:6px">🛌</div>
-    <div class="reward-title">休息打卡成功！</div>
-    <div style="color:var(--muted);font-size:13px;margin-bottom:4px">好好休息，明天更强！🌙</div>
+    <div class="reward-title">${t('休息打卡成功！','Rest-day check-in done!')}</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:4px">${t('好好休息，明天更强！🌙','Rest well — stronger tomorrow! 🌙')}</div>
     <hr>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">获得道具</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${t('获得道具','Items earned')}</div>
     <div class="reward-items">`;
   for(const[id,n]of Object.entries(rewards)){
     const it=ITEMS[id];if(!it)continue;
@@ -2558,7 +2578,7 @@ function showRestDayReward(rewards){
   h+=`</div>`;
   document.getElementById('reward-content').innerHTML=h;
   const btn=document.querySelector('#reward-modal .btn');
-  btn.textContent='收下啦 🎉';
+  btn.textContent=t('收下啦 🎉','Got it 🎉');
   btn.onclick=closeRestDayReward;
   document.getElementById('reward-modal').classList.add('on');
 }
@@ -2568,8 +2588,8 @@ function closeRestDayReward(){
 
 function trainingDayRestCheckIn(){
   const today=todayISO();
-  if(S.workouts.find(w=>w.date===today)){toast('今天已打卡了！');return;}
-  if(!confirm('今天就休息一下？会记录打卡，连击不断，但道具掉落比正常训练少哦~')) return;
+  if(S.workouts.find(w=>w.date===today)){toast(t('今天已打卡了！','Already checked in today!'));return;}
+  if(!confirm(t('今天就休息一下？会记录打卡，连击不断，但道具掉落比正常训练少哦~','Take a rest day? It still counts for your streak, but drops are fewer than a real workout~'))) return;
   S.workouts.push({date:today,type:'休息',exercises:[]});
   S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
   const rewards=genRewards(false);
@@ -2582,7 +2602,7 @@ function trainingDayRestCheckIn(){
   save();
   renderWorkout();
   const items=Object.entries(rewards).map(([id,n])=>`${ITEMS[id]?.emoji||''}×${n}`).join(' ');
-  toast(`🛌 休息打卡！连击继续！获得：${items}`);
+  toast(t(`🛌 休息打卡！连击继续！获得：${items}`,`🛌 Rest-day check-in! Streak continues! Got: ${items}`));
 }
 
 function finish(){
@@ -2794,26 +2814,26 @@ function manualHatch(){
   const isFull=S.hatchPending&&!petId;
   document.getElementById('reward-content').innerHTML=`
     <div style="text-align:center;padding:8px 0">
-      <div style="font-size:15px;color:var(--muted);margin-bottom:16px">✨ 恭喜！孵化出了</div>
+      <div style="font-size:15px;color:var(--muted);margin-bottom:16px">${t('✨ 恭喜！孵化出了','✨ Congrats! Hatched')}</div>
       <div style="display:flex;justify-content:center;margin-bottom:12px">${spriteHtml}</div>
       <div style="font-size:24px;font-weight:800;margin-bottom:6px">${stage.name}</div>
       <span class="badge badge-${cr.rarity}" style="font-size:13px">${RARITY_NAME[cr.rarity]}</span>
       <div style="font-size:13px;color:var(--muted);margin-top:14px">${cr.desc}</div>
-      ${isFull?`<div style="margin-top:12px;font-size:12px;color:#FFB347">⚠️ 培育槽已满，请先清理槽位</div>`
-               :`<div style="margin-top:12px;font-size:12px;color:#4DCC78">已加入培育槽 🌱</div>`}
+      ${isFull?`<div style="margin-top:12px;font-size:12px;color:#FFB347">${t('⚠️ 培育槽已满，请先清理槽位','⚠️ Nursery full — clear a slot first')}</div>`
+               :`<div style="margin-top:12px;font-size:12px;color:#4DCC78">${t('已加入培育槽 🌱','Added to nursery 🌱')}</div>`}
     </div>`;
   document.getElementById('reward-modal').style.display='flex';
   requestAnimationFrame(refreshSprites);
 }
 
 function placeEggInIncubator(idx){
-  if(S.incubator){toast('孵蛋器里已经有蛋了！');return;}
+  if(S.incubator){toast(t('孵蛋器里已经有蛋了！','There is already an egg in the incubator!'));return;}
   const rarity=S.hatchQueue[idx];
   if(!rarity)return;
   S.hatchQueue.splice(idx,1);
   S.incubator={eggRarity:rarity,trainCount:0,needed:randomNeeded(rarity)};
   save();renderPet();
-  toast('🥚 已放入孵蛋器！');
+  toast(t('🥚 已放入孵蛋器！','🥚 Egg placed in the incubator!'));
 }
 
 function claimHatched(){
@@ -2837,7 +2857,7 @@ function feedNurturing(idx,itemId){
   const it=ITEMS[itemId];
   if(!slot||!it||it.special)return;
   if(!(S.inv[itemId]>0))return;
-  if(todayFeedCount(slot)>=DAILY_FEED_LIMIT){toast('宝宝已经吃饱啦，明天再来吧～ 🥰');return;}
+  if(todayFeedCount(slot)>=DAILY_FEED_LIMIT){toast(t('宝宝已经吃饱啦，明天再来吧～ 🥰','Your buddy is full — come back tomorrow~ 🥰'));return;}
   S.inv[itemId]--;
   slot.exp+=(it.exp||0);
   if(it.attr&&it.attrVal)slot.attrs[it.attr]=(slot.attrs[it.attr]||0)+it.attrVal;
@@ -2869,7 +2889,7 @@ function openFeedModal(idx){
   const limitReached=remaining<=0;
   let itemsHtml='';
   if(!feedable.length){
-    itemsHtml=`<div style="text-align:center;color:var(--muted);padding:24px 0">背包里没有可喂食的道具</div>`;
+    itemsHtml=`<div style="text-align:center;color:var(--muted);padding:24px 0">${t('背包里没有可喂食的道具','No feedable items in your bag')}</div>`;
   } else {
     itemsHtml=`<div class="items-grid">`;
     for(const[id,n]of feedable){
@@ -2893,7 +2913,7 @@ function openFeedModal(idx){
         ${evolCond?`<div style="font-size:12px;color:var(--muted);margin-top:2px">EXP ${slot.exp} / ${evolCond.exp}</div>`:''}
       </div>
     </div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">选择道具喂食</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${t('选择道具喂食','Pick an item to feed')}</div>
     ${itemsHtml}`;
   document.getElementById('feed-modal').style.display='flex';
   requestAnimationFrame(refreshSprites);
@@ -2925,7 +2945,7 @@ function evolveNurturing(idx){
   slot.stage++;slot.exp=0;
   const stageDef=cr.stages[slot.stage-1];
   save();sparkles();renderPet();
-  toast(`🎉 ${stageDef.name} 进化成功！`);
+  toast(t(`🎉 ${stageDef.name} 进化成功！`,`🎉 ${stageDef.name} evolved!`));
   if(slot.stage===3){
     // Move to garden automatically
     setTimeout(()=>graduateToGarden(idx),1200);
@@ -2938,7 +2958,7 @@ function graduateToGarden(idx){
   S.garden.push({...slot,active:true,lastCollect:null});
   save();renderPet();
   const cr=CREATURES.find(c=>c.id===slot.petId);
-  toast(`🏡 ${cr?.stages[2].name} 搬进庭院了！`);
+  toast(t(`🏡 ${cr?.stages[2].name} 搬进庭院了！`,`🏡 ${cr?.stages[2].name} moved into the garden!`));
   if(S.hatchPending&&S.nurturing.length<3)claimHatched();
 }
 
@@ -2948,25 +2968,25 @@ function freezeToGarden(idx){
   S.garden.push({...slot,active:false,lastCollect:null});
   save();renderPet();
   const cr=CREATURES.find(c=>c.id===slot.petId);
-  toast(`❄️ ${cr?.stages[slot.stage-1].name} 已冻结移至庭院`);
+  toast(t(`❄️ ${cr?.stages[slot.stage-1].name} 已冻结移至庭院`,`❄️ ${cr?.stages[slot.stage-1].name} frozen and moved to the garden`));
   if(S.hatchPending&&S.nurturing.length<3)claimHatched();
 }
 
 function thawFromGarden(gIdx){
-  if(S.nurturing.length>=3){toast('培育槽已满！');return;}
+  if(S.nurturing.length>=3){toast(t('培育槽已满！','Nursery is full!'));return;}
   const entry=S.garden.splice(gIdx,1)[0];
   if(!entry){save();renderPet();renderGarden();return;}
   S.nurturing.push(entry);
   save();renderPet();renderGarden();
   const cr=CREATURES.find(c=>c.id===entry.petId);
-  toast(`🌱 ${cr?.stages[entry.stage-1].name} 回到培育槽`);
+  toast(t(`🌱 ${cr?.stages[entry.stage-1].name} 回到培育槽`,`🌱 ${cr?.stages[entry.stage-1].name} back in the nursery`));
 }
 
 function collectGarden(gIdx){
   const g=S.garden[gIdx];
   if(!g||g.stage!==3)return;
   const today=todayISO();
-  if(g.lastCollect===today){toast('今天已经收集过啦！明天再来～');return;}
+  if(g.lastCollect===today){toast(t('今天已经收集过啦！明天再来～','Already collected today! Come back tomorrow~'));return;}
   g.lastCollect=today;
   // Drop 1-2 random common items
   const pool=['peach','protein','honey_jar','fire_seed','dewdrop','earth_crystal','wind_grass','sprout_leaf','conch_shell','chili_flame'];
@@ -2979,7 +2999,7 @@ function collectGarden(gIdx){
     if(!S.itemLog.includes(id))S.itemLog.push(id);
   }
   save();renderPet();
-  toast('🏡 收获：'+Object.entries(drops).map(([id,n])=>`${ITEMS[id].emoji}×${n}`).join(' '));
+  toast(t('🏡 收获：','🏡 Harvest: ')+Object.entries(drops).map(([id,n])=>`${ITEMS[id].emoji}×${n}`).join(' '));
 }
 
 // ══════════════════════════════════════════
@@ -2991,7 +3011,7 @@ let timerInterval=null,timerLeft=0,timerTotal=60;
 function startTimer(sec,hint){
   timerLeft=timerTotal=sec;
   document.getElementById('rest-overlay').classList.add('on');
-  document.getElementById('timer-hint').textContent=hint||'下一组加油！';
+  document.getElementById('timer-hint').textContent=hint||t('下一组加油！','Next set — you got this!');
   updateTimer();
   clearInterval(timerInterval);
   timerInterval=setInterval(()=>{
@@ -3000,7 +3020,7 @@ function startTimer(sec,hint){
       clearInterval(timerInterval);timerLeft=0;
       updateTimer();
       setTimeout(()=>document.getElementById('rest-overlay').classList.remove('on'),400);
-      toast('⏰ 休息结束，开始！');
+      toast(t('⏰ 休息结束，开始！','⏰ Rest over — go!'));
     }else updateTimer();
   },1000);
 }
@@ -3012,7 +3032,7 @@ function updateTimer(){
   arc.style.strokeDashoffset=CIRC*(1-timerLeft/timerTotal);
 }
 
-function addTime(n){timerLeft+=n;toast(`+${n}秒 😴`)}
+function addTime(n){timerLeft+=n;toast(t(`+${n}秒 😴`,`+${n}s 😴`))}
 function skipTimer(){clearInterval(timerInterval);document.getElementById('rest-overlay').classList.remove('on')}
 
 // ══════════════════════════════════════════
@@ -3022,10 +3042,10 @@ function skipTimer(){clearInterval(timerInterval);document.getElementById('rest-
 function showReward(type,rewards,newAchievements){
   let h=`
     <div style="font-size:52px;margin-bottom:6px">${partEmoji(type)}</div>
-    <div class="reward-title">训练完成！</div>
-    <div style="color:var(--muted);font-size:13px;margin-bottom:4px">今天的${type}练完啦，${S.profile?.name||'你'}超棒！🎉</div>
+    <div class="reward-title">${t('训练完成！','Workout complete!')}</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:4px">${t(`今天的${type}练完啦，${S.profile?.name||'你'}超棒！🎉`,`Crushed ${tPart(type)} today, ${S.profile?.name||'you'}! 🎉`)}</div>
     <hr>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">获得道具</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${t('获得道具','Items earned')}</div>
     <div class="reward-items">`;
   for(const[id,n]of Object.entries(rewards)){
     if(id.startsWith('_'))continue;
@@ -3042,24 +3062,24 @@ function showReward(type,rewards,newAchievements){
     h+=`<div style="margin:10px 0;padding:10px;background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.3);
       border-radius:12px;text-align:center">
       <div style="font-size:28px">${ed.emoji}</div>
-      <div style="font-weight:700;color:var(--gold)">获得了一颗${ed.name}！</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">${S.incubator?.eggRarity===rewards._egg?'已放入孵蛋器':'已加入孵蛋队列'}</div>
+      <div style="font-weight:700;color:var(--gold)">${t(`获得了一颗${ed.name}！`,`Got a ${ed.name}!`)}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">${S.incubator?.eggRarity===rewards._egg?t('已放入孵蛋器','Placed in incubator'):t('已加入孵蛋队列','Added to egg queue')}</div>
     </div>`;
   }
   if(rewards._hatched==='ready'){
     h+=`<div style="margin:10px 0;padding:12px;background:rgba(180,77,255,.1);border:1px solid rgba(180,77,255,.4);
       border-radius:12px;text-align:center">
       <div style="font-size:36px">🥚</div>
-      <div style="font-weight:700;color:#B44DFF;margin-top:4px">蛋孵化好了！</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px">去孵蛋器点击孵化 ✨</div>
+      <div style="font-weight:700;color:#B44DFF;margin-top:4px">${t('蛋孵化好了！','Egg has hatched!')}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">${t('去孵蛋器点击孵化 ✨','Tap the incubator to hatch ✨')}</div>
     </div>`;
   }
   if(newAchievements.length){
     for(const a of newAchievements){
       h+=`<div style="margin:8px 0;padding:10px;background:rgba(77,204,120,.1);border:1px solid rgba(77,204,120,.3);
         border-radius:12px;text-align:center">
-        <div style="font-size:13px;color:#4DCC78;font-weight:700">🏆 成就达成：${a.name}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">${ITEMS[a.reward].emoji} ${ITEMS[a.reward].name} 已加入背包</div>
+        <div style="font-size:13px;color:#4DCC78;font-weight:700">${t(`🏆 成就达成：${a.name}`,`🏆 Achievement: ${a.name}`)}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${ITEMS[a.reward].emoji} ${t(`${ITEMS[a.reward].name} 已加入背包`,`${ITEMS[a.reward].name} added to bag`)}</div>
       </div>`;
     }
   }
@@ -3068,15 +3088,15 @@ function showReward(type,rewards,newAchievements){
     <div style="display:flex;justify-content:space-around">
       <div style="text-align:center">
         <div style="font-size:22px;font-weight:800;color:var(--pink)">${S.total}</div>
-        <div style="font-size:11px;color:var(--muted)">总打卡</div>
+        <div style="font-size:11px;color:var(--muted)">${t('总打卡','Total')}</div>
       </div>
       <div style="text-align:center">
         <div style="font-size:22px;font-weight:800;color:var(--gold)">${S.streak}</div>
-        <div style="font-size:11px;color:var(--muted)">连续天数</div>
+        <div style="font-size:11px;color:var(--muted)">${t('连续天数','Streak')}</div>
       </div>
       <div style="text-align:center">
         <div style="font-size:22px;font-weight:800;color:#B44DFF">${inGarden+S.nurturing.length}</div>
-        <div style="font-size:11px;color:var(--muted)">神兽数量</div>
+        <div style="font-size:11px;color:var(--muted)">${t('神兽数量','Creatures')}</div>
       </div>
     </div>`;
   document.getElementById('reward-content').innerHTML=h;
@@ -3166,7 +3186,7 @@ function renderWorkout(){
 
 function buildTodayDoneView(todayWorkouts,nextT){
   const name=S.profile?.name||'你';
-  const typesDone=todayWorkouts.map(w=>w.type).join(' + ');
+  const typesDone=todayWorkouts.map(w=>tPart(w.type)).join(' + ');
   const tr=S.todayRewards?.date===todayISO()?S.todayRewards:null;
   let h='';
 
@@ -3257,7 +3277,7 @@ function buildExerciseLibrary(){
       <div style="display:flex;flex-wrap:wrap;gap:5px">`;
     for(const ex of exs){
       h+=`<span style="background:rgba(255,255,255,.07);border-radius:6px;
-        padding:3px 8px;font-size:12px;color:var(--text)">${ex.name}</span>`;
+        padding:3px 8px;font-size:12px;color:var(--text)">${tEx(ex.name)}</span>`;
     }
     h+=`</div></div>`;
   }
@@ -3310,7 +3330,7 @@ function buildExerciseSelection(type,color,last){
       h+=`<label class="ex-select-row">
         <input type="checkbox" class="ex-select-box" data-name="${ex.name}" checked>
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:600">${ex.name}</div>
+          <div style="font-size:14px;font-weight:600">${tEx(ex.name)}</div>
           ${lw?`<div style="font-size:12px;color:var(--muted)">${t('上次','Last')} ${lw}${ex.unit?' '+ex.unit:'lbs'}${lr?` × ${lr}${t('次','reps')}`:''}</div>`:''}
         </div>
       </label>`;
@@ -3324,7 +3344,7 @@ function buildExerciseSelection(type,color,last){
       h+=`<label class="ex-select-row">
         <input type="checkbox" class="ex-select-box" data-name="${ex.name}">
         <div style="flex:1">
-          <div style="font-size:14px">${ex.name}</div>
+          <div style="font-size:14px">${tEx(ex.name)}</div>
           ${lw?`<div style="font-size:12px;color:var(--muted)">${t('上次','Last')} ${lw}${ex.unit?' '+ex.unit:'lbs'}${lr?` × ${lr}${t('次','reps')}`:''}</div>`:''}
         </div>
       </label>`;
@@ -3336,7 +3356,7 @@ function buildExerciseSelection(type,color,last){
     for(const ex of getExercises(type)){
       h+=`<label class="ex-select-row">
         <input type="checkbox" class="ex-select-box" data-name="${ex.name}" checked>
-        <div style="flex:1"><div style="font-size:14px">${ex.name}</div></div>
+        <div style="flex:1"><div style="font-size:14px">${tEx(ex.name)}</div></div>
       </label>`;
     }
   }
@@ -3363,19 +3383,19 @@ function buildExerciseSelection(type,color,last){
 function addCustomExercise(){
   const inp=document.getElementById('custom-ex-input');
   const name=(inp?.value||'').trim();
-  if(!name){toast('请输入动作名称');return;}
+  if(!name){toast(t('请输入动作名称','Enter an exercise name'));return;}
   inp.value='';
   const list=document.getElementById('custom-ex-list');
   if(!list)return;
   // check not duplicate
   if(document.querySelector(`.ex-select-box[data-name="${CSS.escape(name)}"]`)){
-    toast('已有这个动作了');return;
+    toast(t('已有这个动作了','That exercise is already added'));return;
   }
   const row=document.createElement('label');
   row.className='ex-select-row';
   row.innerHTML=`<input type="checkbox" class="ex-select-box" data-name="${name}" checked>
     <div style="flex:1"><div style="font-size:14px;font-weight:600">${name}</div>
-    <div style="font-size:12px;color:var(--muted)">自定义动作</div></div>`;
+    <div style="font-size:12px;color:var(--muted)">${t('自定义动作','Custom exercise')}</div></div>`;
   list.appendChild(row);
 }
 
@@ -3387,7 +3407,7 @@ function showExerciseSelection(type){
 function confirmStartSession(type){
   const boxes=document.querySelectorAll('.ex-select-box:checked');
   const selected=[...boxes].map(b=>b.dataset.name);
-  if(!selected.length){toast('至少选一个动作！');return;}
+  if(!selected.length){toast(t('至少选一个动作！','Pick at least one exercise!'));return;}
   startSession(type,selected);
 }
 
@@ -3417,46 +3437,46 @@ function renderActiveSession(el){
   if(activeEx){
     const setNum=activeEx.sets.length+1;
     h+=`<div class="active-ex-card" style="border-color:${color}">
-      <div style="font-size:11px;color:${color};font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">当前动作</div>
-      <div style="font-size:22px;font-weight:800;margin-bottom:4px">${activeEx.name}</div>
-      ${activeEx.lastW?`<div style="font-size:12px;color:var(--muted);margin-bottom:14px">上次: ${activeEx.lastW} ${activeEx.unit||'lbs'}${activeEx.lastR?' × '+activeEx.lastR+'次':''}</div>`:'<div style="margin-bottom:14px"></div>'}`;
+      <div style="font-size:11px;color:${color};font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${t('当前动作','Current exercise')}</div>
+      <div style="font-size:22px;font-weight:800;margin-bottom:4px">${tEx(activeEx.name)}</div>
+      ${activeEx.lastW?`<div style="font-size:12px;color:var(--muted);margin-bottom:14px">${t('上次','Last')}: ${activeEx.lastW} ${activeEx.unit||'lbs'}${activeEx.lastR?' × '+activeEx.lastR+t('次','reps'):''}</div>`:'<div style="margin-bottom:14px"></div>'}`;
 
     if(activeEx.sets.length){
       h+=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">`;
       for(let i=0;i<activeEx.sets.length;i++){
         const s=activeEx.sets[i];
         h+=`<div style="background:${color}22;border:1px solid ${color}44;border-radius:8px;
-          padding:5px 10px;font-size:12px">第${i+1}组 ${s.weight||'BW'}×${s.reps||'?'}</div>`;
+          padding:5px 10px;font-size:12px">${t(`第${i+1}组`,`Set ${i+1}`)} ${s.weight||'BW'}×${s.reps||'?'}</div>`;
       }
       h+=`</div>`;
     }
 
-    h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--muted)">第 ${setNum} 组</div>
+    h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--muted)">${t(`第 ${setNum} 组`,`Set ${setNum}`)}</div>
       <div style="display:flex;gap:12px;margin-bottom:16px">
         <div style="flex:1">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:5px">重量 (${activeEx.unit||'lbs'})</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:5px">${t('重量','Weight')} (${activeEx.unit||'lbs'})</div>
           <input id="cur-weight" class="set-input" type="number" inputmode="decimal"
-            placeholder="${activeEx.lastW||'重量'}" value="${activeEx.lastW||''}"
+            placeholder="${activeEx.lastW||t('重量','Weight')}" value="${activeEx.lastW||''}"
             style="width:100%;font-size:20px;padding:10px;text-align:center;border-radius:10px">
         </div>
         <div style="flex:1">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:5px">次数</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:5px">${t('次数','Reps')}</div>
           <input id="cur-reps" class="set-input" type="number" inputmode="numeric"
-            placeholder="次数" value="${activeEx.lastR||''}"
+            placeholder="${t('次数','Reps')}" value="${activeEx.lastR||''}"
             style="width:100%;font-size:20px;padding:10px;text-align:center;border-radius:10px">
         </div>
       </div>
       <button class="btn btn-primary" style="margin-bottom:10px" onclick="completeCurrentSet()">
-        ✅ 完成第 ${setNum} 组 → 休息60秒
+        ${t(`✅ 完成第 ${setNum} 组 → 休息60秒`,`✅ Complete set ${setNum} → rest 60s`)}
       </button>
       <button class="btn btn-ghost" onclick="endCurrentExercise()">
-        ⏭ 结束「${activeEx.name}」进入下一个
+        ${t(`⏭ 结束「${activeEx.name}」进入下一个`,`⏭ Finish "${tEx(activeEx.name)}" — next`)}
       </button>
       <div style="margin-top:14px">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:5px">备注（可选）</div>
-        ${activeEx.lastN?`<div style="font-size:11px;color:#FFB347;margin-bottom:5px">📝 上次备注：${activeEx.lastN}</div>`:''}
+        <div style="font-size:11px;color:var(--muted);margin-bottom:5px">${t('备注（可选）','Note (optional)')}</div>
+        ${activeEx.lastN?`<div style="font-size:11px;color:#FFB347;margin-bottom:5px">📝 ${t('上次备注','Last note')}：${activeEx.lastN}</div>`:''}
         <input id="ex-note" class="set-input" type="text" inputmode="text"
-          placeholder="例：膝盖有点抖、带了绑带..."
+          placeholder="${t('例：膝盖有点抖、带了绑带...','e.g. knees shaky, used straps...')}"
           value="${activeEx.note||''}"
           oninput="S.session.exercises[S.session.activeExIdx].note=this.value;save()"
           style="width:100%;font-size:13px;padding:9px;text-align:left;border-radius:10px">
@@ -3471,7 +3491,7 @@ function renderActiveSession(el){
   }
 
   // Exercise list overview
-  h+=`<div style="margin-top:20px;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px">训练列表</div>`;
+  h+=`<div style="margin-top:20px;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px">${t('训练列表','Exercise list')}</div>`;
   for(let i=0;i<ses.exercises.length;i++){
     const ex=ses.exercises[i];
     const isActive=ex.status==='active',isDone=ex.status==='done';
@@ -3481,10 +3501,10 @@ function renderActiveSession(el){
         ${isDone?'✓':isActive?'▶':(i+1)}
       </div>
       <div style="flex:1">
-        <div style="font-size:14px;font-weight:${isActive?700:400};color:${isDone?'var(--muted)':'var(--text)'}">${ex.name}</div>
-        ${ex.sets.length?`<div style="font-size:12px;color:var(--muted)">${ex.sets.length}组已完成</div>`:''}
+        <div style="font-size:14px;font-weight:${isActive?700:400};color:${isDone?'var(--muted)':'var(--text)'}">${tEx(ex.name)}</div>
+        ${ex.sets.length?`<div style="font-size:12px;color:var(--muted)">${t(`${ex.sets.length}组已完成`,`${ex.sets.length} sets done`)}</div>`:''}
       </div>
-      ${!isDone&&!isActive?`<span style="font-size:12px;color:var(--muted)">点击跳转</span>`:''}
+      ${!isDone&&!isActive?`<span style="font-size:12px;color:var(--muted)">${t('点击跳转','Tap to jump')}</span>`:''}
     </div>`;
   }
 
@@ -3529,8 +3549,8 @@ function renderNurturingTab(){
       <div style="display:flex;justify-content:center;margin-bottom:6px">
         <div style="font-size:48px;line-height:1">${cr?.stages[0].emoji||'🐣'}</div>
       </div>
-      <div style="font-size:14px;font-weight:700;color:#B44DFF;margin:4px 0">新神兽等待入槽！</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">${cr?.stages[0].name} — 需要空出培育槽</div>
+      <div style="font-size:14px;font-weight:700;color:#B44DFF;margin:4px 0">${t('新神兽等待入槽！','New creature waiting!')}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">${t(`${cr?.stages[0].name} — 需要空出培育槽`,`${cr?.stages[0].name} — free up a nursery slot`)}</div>
       <button class="btn btn-secondary btn-small" onclick="claimHatched()" ${S.nurturing.length<3?'':'disabled'}>
         ${S.nurturing.length<3?'领取神兽':'槽位已满，请先移至庭院'}
       </button>
@@ -3540,7 +3560,7 @@ function renderNurturingTab(){
     const slot=S.nurturing[i];
     if(!slot){
       h+=`<div class="nurture-slot empty"><span style="font-size:28px;opacity:.3">＋</span>
-        <div style="color:var(--muted);font-size:13px;margin-top:4px">空槽位</div></div>`;
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">${t('空槽位','Empty slot')}</div></div>`;
       continue;
     }
     const cr=CREATURES.find(c=>c.id===slot.petId);
@@ -3561,7 +3581,7 @@ function renderNurturingTab(){
             ${cr?.attr?`<span style="font-size:11px;color:${ATTR_COLOR[cr.attr]}">${ATTR_EMOJI[cr.attr]}</span>`:''}
           </div>
         </div>
-        <button class="btn btn-ghost btn-small" onclick="freezeToGarden(${i})" title="移至庭院冻结">❄️</button>
+        <button class="btn btn-ghost btn-small" onclick="freezeToGarden(${i})" title="${t('移至庭院冻结','Freeze to garden')}">❄️</button>
       </div>`;
     if(evolCond){
       h+=`<div style="font-size:11px;color:var(--muted);margin-bottom:4px">EXP ${slot.exp} / ${evolCond.exp}</div>
@@ -3600,22 +3620,22 @@ function renderNurturingTab(){
         ${full?'🍖 已吃饱':'🍖 喂食'}
       </button>
       <button class="btn ${ready?'btn-green':'btn-secondary'} btn-small" style="flex:1" ${ready?'':'disabled'} onclick="evolveNurturing(${i})">
-        ${slot.stage>=3?'✨ 最终形态':(ready?`✨ 进化 → ${nextName}`:'🔒 进化（未满足）')}
+        ${slot.stage>=3?t('✨ 最终形态','✨ Final form'):(ready?`✨ ${t('进化','Evolve')} → ${nextName}`:t('🔒 进化（未满足）','🔒 Evolve (locked)'))}
       </button>
     </div>
     </div>`;
   }
 
   // ── Incubator section ──
-  h+=`<div style="font-size:13px;font-weight:700;margin:20px 0 10px">🥚 孵蛋器</div>`;
+  h+=`<div style="font-size:13px;font-weight:700;margin:20px 0 10px">${t('🥚 孵蛋器','🥚 Incubator')}</div>`;
   if(S.incubator){
     const ed=EGG_DATA[S.incubator.eggRarity];
     if(S.incubator.ready){
       // Hatched but nurturing full
       h+=`<div class="card" style="border-color:#B44DFF66;text-align:center;padding:18px 16px;margin-bottom:10px">
         <div style="font-size:48px;margin-bottom:6px">${ed.emoji}</div>
-        <div style="font-size:15px;font-weight:700;color:#B44DFF;margin-bottom:4px">蛋孵化了！✨</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">培育槽已满，请先将神兽移至庭院</div>
+        <div style="font-size:15px;font-weight:700;color:#B44DFF;margin-bottom:4px">${t('蛋孵化了！✨','Egg hatched! ✨')}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">${t('培育槽已满，请先将神兽移至庭院','Nursery full — move a creature to the garden first')}</div>
         <button class="btn btn-secondary btn-small" onclick="claimHatched()" ${S.nurturing.length<3?'':'disabled'}>
           ${S.nurturing.length<3?'领取神兽':'槽位已满'}
         </button>
@@ -3627,7 +3647,7 @@ function renderNurturingTab(){
           <div style="font-size:15px;font-weight:700;margin-bottom:4px">${ed.name}
             <span class="badge badge-${ed.rarity}" style="margin-left:6px;font-size:10px">${RARITY_NAME[ed.rarity]}</span>
           </div>
-          <div style="font-size:12px;color:var(--muted)">🔥 孵化中…每次训练打卡都有进展</div>
+          <div style="font-size:12px;color:var(--muted)">${t('🔥 孵化中…每次训练打卡都有进展','🔥 Incubating… every workout helps')}</div>
         </div>
       </div>`;
     }
@@ -3635,13 +3655,13 @@ function renderNurturingTab(){
     h+=`<div style="text-align:center;padding:20px 16px;background:var(--card);border:2px dashed var(--border);
       border-radius:12px;color:var(--muted);font-size:13px;margin-bottom:10px">
       <div style="font-size:32px;margin-bottom:6px">🫙</div>
-      孵蛋器空着<br>
-      <span style="font-size:12px">从下方蛋背包选一颗放进来</span>
+      ${t('孵蛋器空着','Incubator is empty')}<br>
+      <span style="font-size:12px">${t('从下方蛋背包选一颗放进来','Pick an egg from your bag below')}</span>
     </div>`;
   }
 
   // ── Egg inventory ──
-  h+=`<div style="font-size:13px;font-weight:700;margin:16px 0 8px">🎒 蛋背包 ${S.hatchQueue.length?`(${S.hatchQueue.length})`:''}</div>`;
+  h+=`<div style="font-size:13px;font-weight:700;margin:16px 0 8px">${t('🎒 蛋背包','🎒 Egg Bag')} ${S.hatchQueue.length?`(${S.hatchQueue.length})`:''}</div>`;
   if(S.hatchQueue.length){
     for(let i=0;i<S.hatchQueue.length;i++){
       const ed=EGG_DATA[S.hatchQueue[i]];
@@ -3654,13 +3674,13 @@ function renderNurturingTab(){
         </div>
         <button class="btn btn-secondary btn-small" onclick="placeEggInIncubator(${i})"
           ${S.incubator?'disabled':''} style="${S.incubator?'opacity:.4':''}">
-          放入孵蛋器
+          ${t('放入孵蛋器','Place in incubator')}
         </button>
       </div>`;
     }
   } else {
     h+=`<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">
-      没有蛋 · 完成训练有50%概率掉落 🥚</div>`;
+      ${t('没有蛋 · 完成训练有50%概率掉落 🥚','No eggs · 50% drop chance per workout 🥚')}</div>`;
   }
   return h;
 }
@@ -3672,10 +3692,10 @@ function renderIncubatorTab(){
     if(S.incubator.ready){
       h+=`<div class="card" style="text-align:center;padding:32px 16px;margin-bottom:14px">
         <div style="font-size:72px;margin-bottom:12px;animation:pet-bounce .6s ease-in-out infinite">${ed.emoji}</div>
-        <div style="font-size:18px;font-weight:800;margin-bottom:4px">${ed.name}孵化好了！</div>
+        <div style="font-size:18px;font-weight:800;margin-bottom:4px">${t(`${ed.name}孵化好了！`,`${ed.name} has hatched!`)}</div>
         <span class="badge badge-${ed.rarity}" style="margin-bottom:20px">${RARITY_NAME[ed.rarity]}</span>
         <button class="btn btn-primary" style="margin-top:12px;font-size:17px;padding:14px"
-          onclick="manualHatch()">✨ 点击孵化</button>
+          onclick="manualHatch()">${t('✨ 点击孵化','✨ Tap to hatch')}</button>
       </div>`;
     } else {
       const pct=Math.min(100,S.incubator.trainCount/S.incubator.needed*100);
@@ -3683,18 +3703,18 @@ function renderIncubatorTab(){
         <div style="font-size:56px;margin-bottom:8px">${ed.emoji}</div>
         <div style="font-size:18px;font-weight:800;margin-bottom:4px">${ed.name}</div>
         <span class="badge badge-${ed.rarity}" style="margin-bottom:14px">${RARITY_NAME[ed.rarity]}</span>
-        <div style="font-size:13px;color:var(--muted);margin:10px 0 6px">孵化进度</div>
+        <div style="font-size:13px;color:var(--muted);margin:10px 0 6px">${t('孵化进度','Hatch progress')}</div>
         <div class="exp-bar" style="margin-bottom:8px"><div class="exp-fill" style="width:${pct}%"></div></div>
-        <div style="font-size:12px;color:var(--muted)">完成训练打卡即可孵化</div>
+        <div style="font-size:12px;color:var(--muted)">${t('完成训练打卡即可孵化','Finish a workout to hatch')}</div>
       </div>`;
     }
   } else {
     h+=`<div class="empty-state"><div class="empty-icon">🥚</div>
-      <div>孵蛋器空着</div>
-      <div style="font-size:13px;margin-top:6px">完成训练有50%概率获得蛋</div></div>`;
+      <div>${t('孵蛋器空着','Incubator is empty')}</div>
+      <div style="font-size:13px;margin-top:6px">${t('完成训练有50%概率获得蛋','50% chance to get an egg per workout')}</div></div>`;
   }
   if(S.hatchQueue.length){
-    h+=`<div style="font-size:13px;font-weight:700;margin:12px 0 8px">等待孵化 (${S.hatchQueue.length})</div>`;
+    h+=`<div style="font-size:13px;font-weight:700;margin:12px 0 8px">${t('等待孵化','Waiting to hatch')} (${S.hatchQueue.length})</div>`;
     for(const r of S.hatchQueue){
       const ed=EGG_DATA[r];
       h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
@@ -3750,14 +3770,14 @@ function gardenPetClick(gIdx, e){
     </div>
     ${g.stage===3
       ?(canCollect
-        ?`<button class="btn btn-green btn-small" style="width:100%" onclick="collectGarden(${gIdx});closeGardenPopup()">🎁 收获今日道具</button>`
-        :`<div style="font-size:12px;color:var(--muted);text-align:center;padding:4px 0">✓ 今日已收获～</div>`)
-      :`<div style="font-size:12px;color:var(--muted);text-align:center;padding:4px 0">成年后才能产出道具</div>`
+        ?`<button class="btn btn-green btn-small" style="width:100%" onclick="collectGarden(${gIdx});closeGardenPopup()">${t('🎁 收获今日道具','🎁 Collect today\'s items')}</button>`
+        :`<div style="font-size:12px;color:var(--muted);text-align:center;padding:4px 0">${t('✓ 今日已收获～','✓ Collected today~')}</div>`)
+      :`<div style="font-size:12px;color:var(--muted);text-align:center;padding:4px 0">${t('成年后才能产出道具','Produces items only as an adult')}</div>`
     }
     ${!g.active?`<button class="btn btn-ghost btn-small" style="width:100%;margin-top:6px"
-      onclick="thawFromGarden(${gIdx});closeGardenPopup()" ${S.nurturing.length<3?'':'disabled'}>🌱 解冻取回培育</button>`:''}
+      onclick="thawFromGarden(${gIdx});closeGardenPopup()" ${S.nurturing.length<3?'':'disabled'}>${t('🌱 解冻取回培育','🌱 Thaw & nurture')}</button>`:''}
     ${g.active&&g.stage<3?`<button class="btn btn-ghost btn-small" style="width:100%;margin-top:6px"
-      onclick="thawFromGarden(${gIdx});closeGardenPopup()">🌱 取回培育</button>`:''}
+      onclick="thawFromGarden(${gIdx});closeGardenPopup()">${t('🌱 取回培育','🌱 Back to nursery')}</button>`:''}
   `;
   popup.style.display='block';
   refreshSprites();
@@ -3788,7 +3808,7 @@ function renderCreatureDexTab(){
   let unlockedCount=0;
   CREATURES.forEach(cr=>{unlockedCount+=getUnlockedStages(cr.id);});
   let h=`<div style="font-size:13px;color:var(--muted);margin-bottom:12px">
-    已收集 ${unlockedCount} / ${totalStages} 个图鉴</div>
+    ${t(`已收集 ${unlockedCount} / ${totalStages} 个图鉴`,`Collected ${unlockedCount} / ${totalStages}`)}</div>
   <div class="dex-thumb-grid">`;
   for(const cr of CREATURES){
     const maxStage=getUnlockedStages(cr.id);
@@ -3816,13 +3836,13 @@ function renderCreatureDexTab(){
 
 function renderItemDexTab(){
   let h=`<div style="font-size:13px;color:var(--muted);margin-bottom:12px">
-    已获得 ${S.itemLog.length} / ${Object.keys(ITEMS).length} 种道具</div>
+    ${t(`已获得 ${S.itemLog.length} / ${Object.keys(ITEMS).length} 种道具`,`Collected ${S.itemLog.length} / ${Object.keys(ITEMS).length} items`)}</div>
   <div class="items-grid">`;
   for(const[id,it]of Object.entries(ITEMS)){
     const seen=S.itemLog.includes(id);
     let stat='';
     if(seen){
-      if(it.special) stat='🔑成就';
+      if(it.special) stat=t('🔑成就','🔑 Achievement');
       else if(it.exp&&it.attr) stat=`+${it.exp}EXP ${ATTR_EMOJI[it.attr]}+${it.attrVal}`;
       else if(it.exp) stat=`+${it.exp} EXP`;
       else if(it.attr) stat=`${ATTR_EMOJI[it.attr]} +${it.attrVal}`;
@@ -3866,18 +3886,18 @@ function showDexDetail(crId, stage){
   const alreadyPassed=maxStage>stage;
   let descHtml='';
   if(curEvolve){
-    descHtml+=`<div style="margin-top:10px;font-size:13px">进化需要 <b>${curEvolve.exp}</b> EXP</div>`;
+    descHtml+=`<div style="margin-top:10px;font-size:13px">${t('进化需要','Needs')} <b>${curEvolve.exp}</b> EXP</div>`;
     if(curEvolve.items){
       if(alreadyPassed){
         const itemNames=Object.entries(curEvolve.items)
           .map(([id,n])=>`${ITEMS[id]?.emoji||id}×${n}`).join(' ');
         descHtml+=`<div style="font-size:12px;color:var(--muted);margin-top:4px">+ ${itemNames}</div>`;
       }else{
-        descHtml+=`<div style="font-size:12px;color:var(--muted);margin-top:4px">+ 需要特殊材料???</div>`;
+        descHtml+=`<div style="font-size:12px;color:var(--muted);margin-top:4px">${t('+ 需要特殊材料???','+ special material ???')}</div>`;
       }
     }
   }else if(stage===3){
-    descHtml=`<div style="margin-top:10px;font-size:13px;color:var(--muted)">已达到最终形态 ✨</div>`;
+    descHtml=`<div style="margin-top:10px;font-size:13px;color:var(--muted)">${t('已达到最终形态 ✨','Final form reached ✨')}</div>`;
   }
   document.getElementById('dex-modal-desc').innerHTML=descHtml;
   document.getElementById('dex-modal').classList.remove('hidden');
@@ -3896,10 +3916,10 @@ function renderBagTab(){
   const items=Object.entries(S.inv||{}).filter(([,n])=>n>0).sort(itemDefSort);
   if(!items.length){
     return `<div class="empty-state"><div class="empty-icon">🎒</div>
-      <div>背包是空的</div>
-      <div style="margin-top:8px;font-size:13px">完成训练打卡获得道具！</div></div>`;
+      <div>${t('背包是空的','Your bag is empty')}</div>
+      <div style="margin-top:8px;font-size:13px">${t('完成训练打卡获得道具！','Finish workouts to earn items!')}</div></div>`;
   }
-  let h=`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">道具 (${items.length}种) · 点击神兽喂食</div>
+  let h=`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">${t(`道具 (${items.length}种) · 点击神兽喂食`,`Items (${items.length}) · tap a creature to feed`)}</div>
   <div class="items-grid" style="grid-template-columns:repeat(5,1fr);gap:6px">`;
   for(const[id,n]of items){
     const it=ITEMS[id];if(!it)continue;
@@ -3988,13 +4008,13 @@ function renderGarden(){
     ?`<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
         text-align:center;color:rgba(255,255,255,.8);text-shadow:0 1px 4px rgba(0,0,0,.6)">
         <div style="font-size:40px">🏡</div>
-        <div style="font-size:15px;margin-top:8px">庭院还是空的</div>
-        <div style="font-size:12px;margin-top:4px">神兽成年后会搬进来</div>
+        <div style="font-size:15px;margin-top:8px">${t('庭院还是空的','The garden is empty')}</div>
+        <div style="font-size:12px;margin-top:4px">${t('神兽成年后会搬进来','Adult creatures move in here')}</div>
       </div>`:'';
 
   const html=`<div class="garden-fs" id="garden-scene" onclick="closeGardenPopup()">
     <div class="garden-fs-header">
-      <div class="garden-fs-title">🏡 庭院</div>
+      <div class="garden-fs-title">${t('🏡 庭院','🏡 Garden')}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         ${frozenChips}
         ${uncollected?`<div style="background:rgba(77,204,120,.9);color:#fff;border-radius:20px;
@@ -4026,16 +4046,16 @@ function renderHistory(){
   const types=[...new Set(S.workouts.map(w=>w.type))].filter(Boolean).sort();
 
   let h=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-    <button class="btn btn-secondary btn-small" onclick="exportCSV()">📤 导出 CSV</button>
-    <button class="btn btn-secondary btn-small" onclick="document.getElementById('csv-input').click()">📥 导入 CSV</button>
-    <button class="btn btn-secondary btn-small" onclick="exportGame()">💾 导出存档</button>
-    <button class="btn btn-secondary btn-small" onclick="document.getElementById('game-import-input').click()">🔄 恢复存档</button>
+    <button class="btn btn-secondary btn-small" onclick="exportCSV()">${t('📤 导出 CSV','📤 Export CSV')}</button>
+    <button class="btn btn-secondary btn-small" onclick="document.getElementById('csv-input').click()">${t('📥 导入 CSV','📥 Import CSV')}</button>
+    <button class="btn btn-secondary btn-small" onclick="exportGame()">${t('💾 导出存档','💾 Export save')}</button>
+    <button class="btn btn-secondary btn-small" onclick="document.getElementById('game-import-input').click()">${t('🔄 恢复存档','🔄 Restore save')}</button>
   </div>`;
 
   if(!S.workouts.length){
     h+=`<div class="empty-state"><div class="empty-icon">📊</div>
-      <div>还没有记录</div>
-      <div style="margin-top:8px;font-size:13px">完成第一次训练或导入 CSV！</div></div>`;
+      <div>${t('还没有记录','No records yet')}</div>
+      <div style="margin-top:8px;font-size:13px">${t('完成第一次训练或导入 CSV！','Finish your first workout or import a CSV!')}</div></div>`;
     el.innerHTML=h;return;
   }
 
@@ -4044,17 +4064,17 @@ function renderHistory(){
     <select id="hist-month" onchange="histFilter.month=this.value;histPage=0;renderHistory()"
       style="flex:1;min-width:110px;background:var(--card);border:1px solid var(--border);
         border-radius:8px;padding:6px 10px;color:var(--text);font-size:13px">
-      <option value="">全部月份</option>
+      <option value="">${t('全部月份','All months')}</option>
       ${months.map(m=>`<option value="${m}" ${histFilter.month===m?'selected':''}>${m}</option>`).join('')}
     </select>
     <select id="hist-type" onchange="histFilter.type=this.value;histPage=0;renderHistory()"
       style="flex:1;min-width:100px;background:var(--card);border:1px solid var(--border);
         border-radius:8px;padding:6px 10px;color:var(--text);font-size:13px">
-      <option value="">全部部位</option>
+      <option value="">${t('全部部位','All groups')}</option>
       ${types.map(t=>`<option value="${t}" ${histFilter.type===t?'selected':''}>${partEmoji(t)} ${t}</option>`).join('')}
     </select>
     ${(histFilter.month||histFilter.type)?`<button class="btn btn-secondary btn-small"
-      onclick="histFilter={month:'',type:''};histPage=0;renderHistory()" style="white-space:nowrap">✕ 清除</button>`:''}
+      onclick="histFilter={month:'',type:''};histPage=0;renderHistory()" style="white-space:nowrap">${t('✕ 清除','✕ Clear')}</button>`:''}
   </div>`;
 
   // Apply filters
@@ -4067,14 +4087,14 @@ function renderHistory(){
   const page=filtered.slice(histPage*HIST_PAGE,(histPage+1)*HIST_PAGE);
 
   h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">
-    共 ${total} 条记录${histFilter.month||histFilter.type?' (已筛选)':''}</div>`;
+    ${t(`共 ${total} 条记录`,`${total} records`)}${histFilter.month||histFilter.type?t(' (已筛选)',' (filtered)'):''}</div>`;
 
   h+=`<table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="color:var(--muted);border-bottom:1px solid var(--border)">
-      <th style="text-align:left;padding:4px 6px;font-weight:600">日期</th>
-      <th style="text-align:left;padding:4px 6px;font-weight:600">部位</th>
-      <th style="text-align:left;padding:4px 6px;font-weight:600">动作</th>
-      <th style="text-align:left;padding:4px 6px;font-weight:600">重量×次</th>
+      <th style="text-align:left;padding:4px 6px;font-weight:600">${t('日期','Date')}</th>
+      <th style="text-align:left;padding:4px 6px;font-weight:600">${t('部位','Group')}</th>
+      <th style="text-align:left;padding:4px 6px;font-weight:600">${t('动作','Exercise')}</th>
+      <th style="text-align:left;padding:4px 6px;font-weight:600">${t('重量×次','Weight×reps')}</th>
     </tr></thead><tbody>`;
   for(const w of page){
     const col=partColor(w.type);
@@ -4088,13 +4108,13 @@ function renderHistory(){
         ${ei===0?`<td style="padding:4px 6px;color:var(--muted);white-space:nowrap;vertical-align:top" rowspan="${exs.length}">${w.date}
             <div style="margin-top:4px">
               <button onclick="showAddExerciseForm(${wIdx})" style="background:none;border:1px dashed var(--border);
-                border-radius:5px;color:var(--muted);font-size:10px;padding:2px 5px;cursor:pointer">+补录</button>
+                border-radius:5px;color:var(--muted);font-size:10px;padding:2px 5px;cursor:pointer">${t('+补录','+ Add')}</button>
             </div>
           </td>
           <td style="padding:4px 6px;vertical-align:top" rowspan="${exs.length}">
-            <span style="padding:1px 6px;border-radius:6px;font-weight:600;background:${col}22;color:${col}">${w.type}</span>
+            <span style="padding:1px 6px;border-radius:6px;font-weight:600;background:${col}22;color:${col}">${tPart(w.type)}</span>
           </td>`:''}
-        <td style="padding:4px 6px;color:var(--text)">${ex.name}${ex.note?` <span style="color:#FFB347">📝</span>`:''}</td>
+        <td style="padding:4px 6px;color:var(--text)">${tEx(ex.name)}${ex.note?` <span style="color:#FFB347">📝</span>`:''}</td>
         <td style="padding:4px 6px;color:var(--muted)">${setsStr}</td>
       </tr>`;
     });
@@ -4102,17 +4122,17 @@ function renderHistory(){
     h+=`<tr id="add-ex-row-${wIdx}" style="display:none;border-bottom:1px solid var(--border)">
       <td colspan="4" style="padding:8px 6px">
         <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
-          <input id="add-ex-name-${wIdx}" type="text" placeholder="动作名称"
+          <input id="add-ex-name-${wIdx}" type="text" placeholder="${t('动作名称','Exercise name')}"
             style="flex:2;min-width:90px;background:var(--bg);border:1px solid var(--border);
               border-radius:7px;padding:5px 9px;color:var(--text);font-size:13px">
-          <input id="add-ex-weight-${wIdx}" type="text" placeholder="重量"
+          <input id="add-ex-weight-${wIdx}" type="text" placeholder="${t('重量','Weight')}"
             style="flex:1;min-width:60px;background:var(--bg);border:1px solid var(--border);
               border-radius:7px;padding:5px 9px;color:var(--text);font-size:13px">
-          <input id="add-ex-reps-${wIdx}" type="text" placeholder="组x次"
+          <input id="add-ex-reps-${wIdx}" type="text" placeholder="${t('组x次','Sets×reps')}"
             style="flex:1;min-width:60px;background:var(--bg);border:1px solid var(--border);
               border-radius:7px;padding:5px 9px;color:var(--text);font-size:13px">
-          <button class="btn btn-primary btn-small" onclick="confirmAddExercise(${wIdx})">保存</button>
-          <button class="btn btn-ghost btn-small" onclick="document.getElementById('add-ex-row-${wIdx}').style.display='none'">取消</button>
+          <button class="btn btn-primary btn-small" onclick="confirmAddExercise(${wIdx})">${t('保存','Save')}</button>
+          <button class="btn btn-ghost btn-small" onclick="document.getElementById('add-ex-row-${wIdx}').style.display='none'">${t('取消','Cancel')}</button>
         </div>
       </td>
     </tr>`;
@@ -4123,10 +4143,10 @@ function renderHistory(){
   if(totalPages>1){
     h+=`<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:16px">
       <button class="btn btn-secondary btn-small" onclick="histPage--;renderHistory()"
-        ${histPage===0?'disabled':''}>◀ 上一页</button>
+        ${histPage===0?'disabled':''}>${t('◀ 上一页','◀ Prev')}</button>
       <span style="font-size:13px;color:var(--muted)">${histPage+1} / ${totalPages}</span>
       <button class="btn btn-secondary btn-small" onclick="histPage++;renderHistory()"
-        ${histPage>=totalPages-1?'disabled':''}>下一页 ▶</button>
+        ${histPage>=totalPages-1?'disabled':''}>${t('下一页 ▶','Next ▶')}</button>
     </div>`;
   }
 
@@ -4195,11 +4215,11 @@ function confirmAddExercise(wIdx){
   const name=(document.getElementById(`add-ex-name-${wIdx}`)?.value||'').trim();
   const weight=(document.getElementById(`add-ex-weight-${wIdx}`)?.value||'').trim();
   const reps=(document.getElementById(`add-ex-reps-${wIdx}`)?.value||'').trim();
-  if(!name){toast('请填写动作名称');return;}
+  if(!name){toast(t('请填写动作名称','Please enter an exercise name'));return;}
   if(!w.exercises)w.exercises=[];
   w.exercises.push({name,sets:[{weight:weight||'',reps:reps||'?',done:true}],note:''});
   save();
-  toast(`✅ 已补录：${name}`);
+  toast(t(`✅ 已补录：${name}`,`✅ Added: ${name}`));
   renderHistory();
 }
 
@@ -4226,7 +4246,7 @@ function exportCSV(){
     }
   }
   downloadBlob('﻿'+rows.join('\n'),'text/csv',`gymdex_workout_${todayISO()}.csv`);
-  toast('📤 训练记录导出成功！');
+  toast(t('📤 训练记录导出成功！','📤 Workout records exported!'));
 }
 
 function exportGame(){
@@ -4238,7 +4258,7 @@ function exportGame(){
     name:S.profile?.name||'',
   };
   downloadBlob(JSON.stringify(data,null,2),'application/json',`gymdex_save_${todayISO()}.json`);
-  toast('💾 游戏存档导出成功！');
+  toast(t('💾 游戏存档导出成功！','💾 Game save exported!'));
 }
 
 function downloadBlob(content,type,filename){
@@ -4261,7 +4281,7 @@ function inAppHandleCsv(e){
     S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
     S.total=S.workouts.length;
     save();renderHistory();renderWorkout();
-    toast(`📥 导入成功！新增 ${added} 条记录`);
+    toast(t(`📥 导入成功！新增 ${added} 条记录`,`📥 Imported! ${added} new records`));
   };
   reader.readAsText(file,'UTF-8');
   e.target.value='';
