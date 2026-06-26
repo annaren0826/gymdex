@@ -253,6 +253,7 @@ body{background:var(--bg);color:var(--text)}
 .dex-thumb:active{transform:scale(.92)}
 .dex-thumb.unlocked{border-color:rgba(255,107,157,.3)}
 .dex-thumb.locked{opacity:.45;cursor:default}
+.dex-thumb .px-sprite{margin:0 auto}
 .dex-thumb-emoji{font-size:36px;display:block;line-height:1.1}
 .dex-locked-q{font-size:38px;color:#e03;font-weight:900;display:block;line-height:1.1}
 .dex-thumb-name{font-size:11px;color:var(--muted);margin-top:5px;
@@ -2587,6 +2588,9 @@ function trainingDayRestCheckIn(){
 function finish(){
   if(!S.session)return;
   const ses=S.session;
+  const _today=todayISO();
+  // One drop per day: only the first real (non-休息) workout today grants rewards
+  const alreadyTrainedToday=S.workouts.some(w=>w.date===_today&&w.type!=='休息');
   S.workouts.push({
     date:ses.date,type:ses.type,
     exercises:ses.exercises
@@ -2596,7 +2600,19 @@ function finish(){
   S.total=(S.total||0)+1;
   S.streak=calcStreak();
   S.session=null;
-  const rewards=genRewards(true);
+  if(alreadyTrainedToday){
+    // Already dropped today — extra workouts give no additional rewards
+    save();renderWorkout();
+    toast(t('💪 又练完一组！今日奖励已领取，不额外掉落','💪 Another session done! Daily drop already claimed — no extra drops'));
+    sparkles();
+    return;
+  }
+  // If today's rest-day reward was already claimed, only drop the difference
+  const priorRest=(S.todayRewards?.date===_today&&S.todayRewards?.type==='休息')
+    ?S.todayRewards.rewards:null;
+  const restExp=priorRest
+    ?Object.entries(priorRest).reduce((s,[id,n])=>s+(ITEMS[id]?.exp||0)*n,0):0;
+  const rewards=genRewards(true,restExp);
   for(const[id,n]of Object.entries(rewards)){
     S.inv[id]=(S.inv[id]||0)+n;
     if(!S.itemLog.includes(id))S.itemLog.push(id);
@@ -2623,11 +2639,13 @@ function finish(){
 const DROP_WEIGHT={common:60,rare:25,epic:10};
 const DROP_COST  ={common:10,rare:30,epic:70};
 
-function genRewards(isWorkout=true){
+function genRewards(isWorkout=true, deductExp=0){
   // EXP budget: 75-125 for workout, 30-50 for rest day
-  const budget=isWorkout
+  let budget=isWorkout
     ?(75+Math.floor(Math.random()*51))
     :(30+Math.floor(Math.random()*21));
+  // Already claimed rest-day reward today → only grant the difference
+  budget=Math.max(0,budget-deductExp);
   const out=spendBudget(budget);
   // Attr items: separate 0-50 budget roll, workout only
   if(isWorkout){
@@ -2819,7 +2837,7 @@ function feedNurturing(idx,itemId){
   const it=ITEMS[itemId];
   if(!slot||!it||it.special)return;
   if(!(S.inv[itemId]>0))return;
-  if(todayFeedCount(slot)>=DAILY_FEED_LIMIT){toast('今天已喂食5次，明天再来！');return;}
+  if(todayFeedCount(slot)>=DAILY_FEED_LIMIT){toast('宝宝已经吃饱啦，明天再来吧～ 🥰');return;}
   S.inv[itemId]--;
   slot.exp+=(it.exp||0);
   if(it.attr&&it.attrVal)slot.attrs[it.attr]=(slot.attrs[it.attr]||0)+it.attrVal;
@@ -3106,6 +3124,14 @@ function renderWorkout(){
   // Check if already worked out today
   const today=todayISO();
   const todayWorkouts=S.workouts.filter(w=>w.date===today);
+  const realWorkouts=todayWorkouts.filter(w=>w.type!=='休息');
+
+  // A real workout logged today → show the done view, even on a rest day.
+  // Prevents re-claiming the rest reward or training again after training.
+  if(realWorkouts.length>0){
+    h+=buildTodayDoneView(realWorkouts,type);
+    el.innerHTML=h;return;
+  }
 
   if(isTodayRestDay()){
     const checkedIn=S.todayRewards?.date===today&&S.todayRewards?.type==='休息';
@@ -3522,9 +3548,10 @@ function renderNurturingTab(){
     const nextDef=cr?.stages[slot.stage]; // next stage def (has evolve on current)
     const evolCond=cr?.stages[slot.stage-1]?.evolve;
     const ready=canEvolve(i);
+    const full=todayFeedCount(slot)>=DAILY_FEED_LIMIT; // fed max times today
     const expPct=evolCond?Math.min(100,slot.exp/evolCond.exp*100):100;
     const rc=RARITY_COLOR[cr?.rarity]||'#aaa';
-    h+=`<div class="nurture-slot" style="border-color:${rc}44;cursor:pointer" onclick="openFeedModal(${i})">
+    h+=`<div class="nurture-slot" style="border-color:${rc}44">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <div style="font-size:52px;line-height:1;flex-shrink:0">${stageDef?.emoji||'🐣'}</div>
         <div style="flex:1">
@@ -3565,13 +3592,17 @@ function renderNurturingTab(){
         }
         h+=`</div>`;
       }
-      if(slot.stage<3){
-        h+=`<button class="btn ${ready?'btn-green':'btn-secondary'} btn-small" onclick="evolveNurturing(${i})" ${ready?'':'disabled'}>
-          ${ready?`✨ 进化！→ ${cr?.stages[slot.stage]?.name}`:'条件未满足'}
-        </button>`;
-      }
     }
-    h+=`<div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:right">点击喂食 →</div>
+    // Two action buttons: feed + evolve (evolve grayed/disabled until conditions met)
+    const nextName=cr?.stages[slot.stage]?.name;
+    h+=`<div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-small" style="flex:1;${full?'background:var(--card);color:var(--muted);border:1px solid var(--border)':'background:#FFA94D;color:#fff'}" ${full?'disabled':''} onclick="openFeedModal(${i})">
+        ${full?'🍖 已吃饱':'🍖 喂食'}
+      </button>
+      <button class="btn ${ready?'btn-green':'btn-secondary'} btn-small" style="flex:1" ${ready?'':'disabled'} onclick="evolveNurturing(${i})">
+        ${slot.stage>=3?'✨ 最终形态':(ready?`✨ 进化 → ${nextName}`:'🔒 进化（未满足）')}
+      </button>
+    </div>
     </div>`;
   }
 
@@ -3768,8 +3799,7 @@ function renderCreatureDexTab(){
         const sp=spriteCanvas(cr.id,s,56);
         h+=`<div class="dex-thumb unlocked" onclick="showDexDetail('${cr.id}',${s})">
           ${sp}
-          <div class="dex-thumb-name">${stgDef.name}</div>
-          <div style="font-size:9px;color:${RARITY_COLOR[cr.rarity]};margin-top:2px;font-weight:700">${RARITY_NAME[cr.rarity]}</div>
+          <div class="dex-thumb-name" style="color:${RARITY_COLOR[cr.rarity]};font-weight:700">${stgDef.name}</div>
         </div>`;
       }else{
         h+=`<div class="dex-thumb locked">
@@ -3830,16 +3860,16 @@ function showDexDetail(crId, stage){
     `<span style="font-weight:700;color:${RARITY_COLOR[cr.rarity]}">${RARITY_NAME[cr.rarity]}</span>`;
   document.getElementById('dex-modal-rarity').innerHTML='';
   document.getElementById('dex-modal-attrs').innerHTML='';
-  // Evolution requirements
-  const nextStgDef=cr.stages[stage]; // stage is 1-indexed; stages[stage] = next stage def
+  // Evolution requirements: the CURRENT stage's `evolve` describes how to reach the next stage
+  const curEvolve=cr.stages[stage-1]?.evolve;
   const maxStage=getUnlockedStages(cr.id);
   const alreadyPassed=maxStage>stage;
   let descHtml='';
-  if(nextStgDef?.evolve){
-    descHtml+=`<div style="margin-top:10px;font-size:13px">进化需要 <b>${nextStgDef.evolve.exp}</b> EXP</div>`;
-    if(nextStgDef.evolve.items){
+  if(curEvolve){
+    descHtml+=`<div style="margin-top:10px;font-size:13px">进化需要 <b>${curEvolve.exp}</b> EXP</div>`;
+    if(curEvolve.items){
       if(alreadyPassed){
-        const itemNames=Object.entries(nextStgDef.evolve.items)
+        const itemNames=Object.entries(curEvolve.items)
           .map(([id,n])=>`${ITEMS[id]?.emoji||id}×${n}`).join(' ');
         descHtml+=`<div style="font-size:12px;color:var(--muted);margin-top:4px">+ ${itemNames}</div>`;
       }else{
