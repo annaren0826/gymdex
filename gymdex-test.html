@@ -2356,7 +2356,7 @@ function showSettings(){
     h+=`</div>`;
 
     if(selParts.length){
-      h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:6px">当前顺序：</div>
+      h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:6px">${t('当前顺序：','Current order: ')}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">`;
       selParts.forEach((p,i)=>{
         h+=`<span style="padding:4px 10px;border-radius:10px;background:var(--accent)22;
@@ -2401,13 +2401,13 @@ function showSettings(){
     modal.innerHTML=`<div style="background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:480px;
       max-height:85vh;overflow-y:auto;padding:24px 20px 40px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-        <div style="font-size:18px;font-weight:800">⚙️ 训练设置</div>
+        <div style="font-size:18px;font-weight:800">${t('⚙️ 训练设置','⚙️ Workout Settings')}</div>
         <button onclick="document.getElementById('settings-modal').style.display='none'"
           style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">✕</button>
       </div>
       <div id="settings-modal-body"></div>
-      <button class="btn btn-primary" style="margin-top:8px" onclick="saveSettings()">保存</button>
-      <button class="btn btn-secondary" style="margin-top:8px;width:100%" onclick="location.reload()">🔄 刷新更新（不影响存档）</button>
+      <button class="btn btn-primary" style="margin-top:8px" onclick="saveSettings()">${t('保存','Save')}</button>
+      <button class="btn btn-secondary" style="margin-top:8px;width:100%" onclick="location.reload()">${t('🔄 刷新更新（不影响存档）','🔄 Refresh update (save kept)')}</button>
     </div>`;
     document.body.appendChild(modal);
   }
@@ -2500,7 +2500,7 @@ function startSession(type,selectedNames){
 }
 
 function cancelSession(){
-  if(confirm('放弃这次训练？'))S.session=null,save(),renderWorkout();
+  if(confirm(t('放弃这次训练？','Discard this workout?')))S.session=null,save(),renderWorkout();
 }
 
 function completeCurrentSet(){
@@ -2563,10 +2563,10 @@ function restDayCheckIn(){
 }
 function showRestDayReward(rewards){
   let h=`<div style="font-size:52px;margin-bottom:6px">🛌</div>
-    <div class="reward-title">休息打卡成功！</div>
-    <div style="color:var(--muted);font-size:13px;margin-bottom:4px">好好休息，明天更强！🌙</div>
+    <div class="reward-title">${t('休息打卡成功！','Rest-day check-in done!')}</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:4px">${t('好好休息，明天更强！🌙','Rest well — stronger tomorrow! 🌙')}</div>
     <hr>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">获得道具</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${t('获得道具','Items earned')}</div>
     <div class="reward-items">`;
   for(const[id,n]of Object.entries(rewards)){
     const it=ITEMS[id];if(!it)continue;
@@ -2579,7 +2579,7 @@ function showRestDayReward(rewards){
   h+=`</div>`;
   document.getElementById('reward-content').innerHTML=h;
   const btn=document.querySelector('#reward-modal .btn');
-  btn.textContent='收下啦 🎉';
+  btn.textContent=t('收下啦 🎉','Got it 🎉');
   btn.onclick=closeRestDayReward;
   document.getElementById('reward-modal').classList.add('on');
 }
@@ -2590,7 +2590,7 @@ function closeRestDayReward(){
 function trainingDayRestCheckIn(){
   const today=todayISO();
   if(S.workouts.find(w=>w.date===today)){toast(t('今天已打卡了！','Already checked in today!'));return;}
-  if(!confirm('今天就休息一下？会记录打卡，连击不断，但道具掉落比正常训练少哦~')) return;
+  if(!confirm(t('今天就休息一下？会记录打卡，连击不断，但道具掉落比正常训练少哦~','Take a rest day? It still counts for your streak, but drops are fewer than a real workout~'))) return;
   S.workouts.push({date:today,type:'休息',exercises:[]});
   S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
   const rewards=genRewards(false);
@@ -2815,13 +2815,13 @@ function manualHatch(){
   const isFull=S.hatchPending&&!petId;
   document.getElementById('reward-content').innerHTML=`
     <div style="text-align:center;padding:8px 0">
-      <div style="font-size:15px;color:var(--muted);margin-bottom:16px">✨ 恭喜！孵化出了</div>
+      <div style="font-size:15px;color:var(--muted);margin-bottom:16px">${t('✨ 恭喜！孵化出了','✨ Congrats! Hatched')}</div>
       <div style="display:flex;justify-content:center;margin-bottom:12px">${spriteHtml}</div>
       <div style="font-size:24px;font-weight:800;margin-bottom:6px">${stage.name}</div>
       <span class="badge badge-${cr.rarity}" style="font-size:13px">${RARITY_NAME[cr.rarity]}</span>
       <div style="font-size:13px;color:var(--muted);margin-top:14px">${cr.desc}</div>
-      ${isFull?`<div style="margin-top:12px;font-size:12px;color:#FFB347">⚠️ 培育槽已满，请先清理槽位</div>`
-               :`<div style="margin-top:12px;font-size:12px;color:#4DCC78">已加入培育槽 🌱</div>`}
+      ${isFull?`<div style="margin-top:12px;font-size:12px;color:#FFB347">${t('⚠️ 培育槽已满，请先清理槽位','⚠️ Nursery full — clear a slot first')}</div>`
+               :`<div style="margin-top:12px;font-size:12px;color:#4DCC78">${t('已加入培育槽 🌱','Added to nursery 🌱')}</div>`}
     </div>`;
   document.getElementById('reward-modal').style.display='flex';
   requestAnimationFrame(refreshSprites);
@@ -2890,7 +2890,7 @@ function openFeedModal(idx){
   const limitReached=remaining<=0;
   let itemsHtml='';
   if(!feedable.length){
-    itemsHtml=`<div style="text-align:center;color:var(--muted);padding:24px 0">背包里没有可喂食的道具</div>`;
+    itemsHtml=`<div style="text-align:center;color:var(--muted);padding:24px 0">${t('背包里没有可喂食的道具','No feedable items in your bag')}</div>`;
   } else {
     itemsHtml=`<div class="items-grid">`;
     for(const[id,n]of feedable){
@@ -2914,7 +2914,7 @@ function openFeedModal(idx){
         ${evolCond?`<div style="font-size:12px;color:var(--muted);margin-top:2px">EXP ${slot.exp} / ${evolCond.exp}</div>`:''}
       </div>
     </div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">选择道具喂食</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${t('选择道具喂食','Pick an item to feed')}</div>
     ${itemsHtml}`;
   document.getElementById('feed-modal').style.display='flex';
   requestAnimationFrame(refreshSprites);
@@ -3012,7 +3012,7 @@ let timerInterval=null,timerLeft=0,timerTotal=60;
 function startTimer(sec,hint){
   timerLeft=timerTotal=sec;
   document.getElementById('rest-overlay').classList.add('on');
-  document.getElementById('timer-hint').textContent=hint||'下一组加油！';
+  document.getElementById('timer-hint').textContent=hint||t('下一组加油！','Next set — you got this!');
   updateTimer();
   clearInterval(timerInterval);
   timerInterval=setInterval(()=>{
@@ -3043,10 +3043,10 @@ function skipTimer(){clearInterval(timerInterval);document.getElementById('rest-
 function showReward(type,rewards,newAchievements){
   let h=`
     <div style="font-size:52px;margin-bottom:6px">${partEmoji(type)}</div>
-    <div class="reward-title">训练完成！</div>
-    <div style="color:var(--muted);font-size:13px;margin-bottom:4px">今天的${type}练完啦，${S.profile?.name||'你'}超棒！🎉</div>
+    <div class="reward-title">${t('训练完成！','Workout complete!')}</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:4px">${t(`今天的${type}练完啦，${S.profile?.name||'你'}超棒！🎉`,`Crushed ${tPart(type)} today, ${S.profile?.name||'you'}! 🎉`)}</div>
     <hr>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">获得道具</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${t('获得道具','Items earned')}</div>
     <div class="reward-items">`;
   for(const[id,n]of Object.entries(rewards)){
     if(id.startsWith('_'))continue;
@@ -3063,24 +3063,24 @@ function showReward(type,rewards,newAchievements){
     h+=`<div style="margin:10px 0;padding:10px;background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.3);
       border-radius:12px;text-align:center">
       <div style="font-size:28px">${ed.emoji}</div>
-      <div style="font-weight:700;color:var(--gold)">获得了一颗${ed.name}！</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">${S.incubator?.eggRarity===rewards._egg?'已放入孵蛋器':'已加入孵蛋队列'}</div>
+      <div style="font-weight:700;color:var(--gold)">${t(`获得了一颗${ed.name}！`,`Got a ${ed.name}!`)}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">${S.incubator?.eggRarity===rewards._egg?t('已放入孵蛋器','Placed in incubator'):t('已加入孵蛋队列','Added to egg queue')}</div>
     </div>`;
   }
   if(rewards._hatched==='ready'){
     h+=`<div style="margin:10px 0;padding:12px;background:rgba(180,77,255,.1);border:1px solid rgba(180,77,255,.4);
       border-radius:12px;text-align:center">
       <div style="font-size:36px">🥚</div>
-      <div style="font-weight:700;color:#B44DFF;margin-top:4px">蛋孵化好了！</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px">去孵蛋器点击孵化 ✨</div>
+      <div style="font-weight:700;color:#B44DFF;margin-top:4px">${t('蛋孵化好了！','Egg has hatched!')}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">${t('去孵蛋器点击孵化 ✨','Tap the incubator to hatch ✨')}</div>
     </div>`;
   }
   if(newAchievements.length){
     for(const a of newAchievements){
       h+=`<div style="margin:8px 0;padding:10px;background:rgba(77,204,120,.1);border:1px solid rgba(77,204,120,.3);
         border-radius:12px;text-align:center">
-        <div style="font-size:13px;color:#4DCC78;font-weight:700">🏆 成就达成：${a.name}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">${ITEMS[a.reward].emoji} ${ITEMS[a.reward].name} 已加入背包</div>
+        <div style="font-size:13px;color:#4DCC78;font-weight:700">${t(`🏆 成就达成：${a.name}`,`🏆 Achievement: ${a.name}`)}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${ITEMS[a.reward].emoji} ${t(`${ITEMS[a.reward].name} 已加入背包`,`${ITEMS[a.reward].name} added to bag`)}</div>
       </div>`;
     }
   }
@@ -3089,15 +3089,15 @@ function showReward(type,rewards,newAchievements){
     <div style="display:flex;justify-content:space-around">
       <div style="text-align:center">
         <div style="font-size:22px;font-weight:800;color:var(--pink)">${S.total}</div>
-        <div style="font-size:11px;color:var(--muted)">总打卡</div>
+        <div style="font-size:11px;color:var(--muted)">${t('总打卡','Total')}</div>
       </div>
       <div style="text-align:center">
         <div style="font-size:22px;font-weight:800;color:var(--gold)">${S.streak}</div>
-        <div style="font-size:11px;color:var(--muted)">连续天数</div>
+        <div style="font-size:11px;color:var(--muted)">${t('连续天数','Streak')}</div>
       </div>
       <div style="text-align:center">
         <div style="font-size:22px;font-weight:800;color:#B44DFF">${inGarden+S.nurturing.length}</div>
-        <div style="font-size:11px;color:var(--muted)">神兽数量</div>
+        <div style="font-size:11px;color:var(--muted)">${t('神兽数量','Creatures')}</div>
       </div>
     </div>`;
   document.getElementById('reward-content').innerHTML=h;
@@ -4132,7 +4132,7 @@ function renderHistory(){
           <input id="add-ex-reps-${wIdx}" type="text" placeholder="组x次"
             style="flex:1;min-width:60px;background:var(--bg);border:1px solid var(--border);
               border-radius:7px;padding:5px 9px;color:var(--text);font-size:13px">
-          <button class="btn btn-primary btn-small" onclick="confirmAddExercise(${wIdx})">保存</button>
+          <button class="btn btn-primary btn-small" onclick="confirmAddExercise(${wIdx})">${t('保存','Save')}</button>
           <button class="btn btn-ghost btn-small" onclick="document.getElementById('add-ex-row-${wIdx}').style.display='none'">取消</button>
         </div>
       </td>
