@@ -869,6 +869,13 @@ select.ob-input{appearance:none;-webkit-appearance:none;
   </div>
 </div>
 
+<div id="feed-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);align-items:flex-end" onclick="closeFeedModal()">
+  <div style="background:var(--bg);border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-height:75vh;overflow-y:auto;box-sizing:border-box" onclick="event.stopPropagation()">
+    <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px"></div>
+    <div id="feed-modal-content"></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 <div class="dex-modal-overlay hidden" id="dex-modal" onclick="closeDexModal(event)">
   <div class="dex-modal-box">
@@ -2770,17 +2777,68 @@ function feedNurturing(idx,itemId){
   if(!slot||!it||it.special)return;
   if(!(S.inv[itemId]>0))return;
   S.inv[itemId]--;
-  const cr=CREATURES.find(c=>c.id===slot.petId);
-  // 1.5x exp if matching element
-  const bonus=(it.attr&&cr?.attr===it.attr)?1.5:1;
-  slot.exp+=Math.round((it.exp||0)*bonus);
+  slot.exp+=(it.exp||0);
   if(it.attr&&it.attrVal)slot.attrs[it.attr]=(slot.attrs[it.attr]||0)+it.attrVal;
   if(it.attr==='water')S.waterFeedTotal=(S.waterFeedTotal||0)+1;
-  save();renderPet();
+  save();
   const msg=it.attr
-    ?`${it.emoji} +${it.attrVal} ${ATTR_EMOJI[it.attr]}${it.exp?` +${Math.round(it.exp*bonus)} EXP`:''}`
-    :`${it.emoji} +${Math.round(it.exp*bonus)} EXP${bonus>1?' (属性加成!)':''}`;
+    ?`${it.emoji} +${it.attrVal} ${ATTR_EMOJI[it.attr]}${it.exp?` +${it.exp} EXP`:''}`
+    :`${it.emoji} +${it.exp} EXP`;
   toast(msg);
+  openFeedModal(idx); // refresh modal with updated counts
+}
+
+const RARITY_ORDER_FEED={common:0,rare:1,epic:2,legendary:3};
+
+function openFeedModal(idx){
+  const slot=S.nurturing[idx];
+  if(!slot)return;
+  const cr=CREATURES.find(c=>c.id===slot.petId);
+  const stageDef=cr?.stages[slot.stage-1];
+  const evolCond=cr?.stages[slot.stage-1]?.evolve;
+  const feedable=Object.entries(S.inv||{})
+    .filter(([k,v])=>v>0&&ITEMS[k]&&!ITEMS[k].special&&(ITEMS[k].exp>0||ITEMS[k].attrVal>0))
+    .sort(([aId],[bId])=>{
+      const a=ITEMS[aId],b=ITEMS[bId];
+      const rd=(RARITY_ORDER_FEED[a?.rarity]||0)-(RARITY_ORDER_FEED[b?.rarity]||0);
+      return rd!==0?rd:(a?.exp||0)-(b?.exp||0);
+    });
+  const spriteHtml=spriteCanvas(slot.petId,slot.stage,52);
+  let itemsHtml='';
+  if(!feedable.length){
+    itemsHtml=`<div style="text-align:center;color:var(--muted);padding:24px 0">背包里没有可喂食的道具</div>`;
+  } else {
+    itemsHtml=`<div class="items-grid">`;
+    for(const[id,n]of feedable){
+      const it=ITEMS[id];
+      const attrLabel=it.attr?`${ATTR_EMOJI[it.attr]} +${it.attrVal}`:'';
+      itemsHtml+=`<div class="item-cell" onclick="feedNurturing(${idx},'${id}')" style="cursor:pointer;-webkit-tap-highlight-color:transparent">
+        <span class="item-cnt">${n}</span>
+        <span class="item-emoji">${it.emoji}</span>
+        <div class="item-name">${it.name}</div>
+        <div style="font-size:10px;color:${RARITY_COLOR[it.rarity]||'#aaa'}">${RARITY_NAME[it.rarity]}</div>
+        <div style="font-size:10px;color:var(--muted)">${it.exp?`+${it.exp}EXP `:''}${attrLabel}</div>
+      </div>`;
+    }
+    itemsHtml+=`</div>`;
+  }
+  document.getElementById('feed-modal-content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:center">${spriteHtml}</div>
+      <div>
+        <div style="font-size:16px;font-weight:700">${stageDef?.name}</div>
+        ${evolCond?`<div style="font-size:12px;color:var(--muted);margin-top:2px">EXP ${slot.exp} / ${evolCond.exp}</div>`:''}
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">选择道具喂食</div>
+    ${itemsHtml}`;
+  document.getElementById('feed-modal').style.display='flex';
+  requestAnimationFrame(refreshSprites);
+}
+
+function closeFeedModal(){
+  document.getElementById('feed-modal').style.display='none';
+  renderPet();
 }
 
 function canEvolve(idx){
@@ -3418,7 +3476,7 @@ function renderNurturingTab(){
     const ready=canEvolve(i);
     const expPct=evolCond?Math.min(100,slot.exp/evolCond.exp*100):100;
     const rc=RARITY_COLOR[cr?.rarity]||'#aaa';
-    h+=`<div class="nurture-slot" style="border-color:${rc}44">
+    h+=`<div class="nurture-slot" style="border-color:${rc}44;cursor:pointer" onclick="openFeedModal(${i})">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <div style="font-size:52px;line-height:1;flex-shrink:0">${stageDef?.emoji||'🐣'}</div>
         <div style="flex:1">
@@ -3465,24 +3523,8 @@ function renderNurturingTab(){
         </button>`;
       }
     }
-    // Feed section
-    const feedable=Object.entries(S.inv||{}).filter(([k,v])=>v>0&&ITEMS[k]&&!ITEMS[k].special&&(ITEMS[k].exp>0||ITEMS[k].attrVal>0));
-    if(feedable.length){
-      h+=`<div style="margin-top:10px;font-size:11px;color:var(--muted);margin-bottom:6px">喂食</div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px">`;
-      for(const[id,n]of feedable){
-        const it=ITEMS[id];
-        const isMatch=it.attr&&cr?.attr===it.attr;
-        h+=`<button onclick="feedNurturing(${i},'${id}')"
-          style="padding:5px 10px;border-radius:8px;border:1px solid ${isMatch?ATTR_COLOR[it.attr]+'88':'var(--border)'};
-          background:${isMatch?ATTR_COLOR[it.attr]+'18':'var(--card)'};font-size:12px;cursor:pointer;color:var(--text)">
-          ${it.emoji}${n>1?`<span style="font-size:10px;color:var(--muted)">×${n}</span>`:''}
-          ${isMatch?'⚡':''}
-        </button>`;
-      }
-      h+=`</div>`;
-    }
-    h+=`</div>`;
+    h+=`<div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:right">点击喂食 →</div>
+    </div>`;
   }
 
   // ── Incubator section ──
