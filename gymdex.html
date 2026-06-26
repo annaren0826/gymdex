@@ -3665,85 +3665,7 @@ function renderIncubatorTab(){
   return h;
 }
 
-function renderGardenTab(){
-  const active=S.garden.filter(g=>g.active);
-  const frozen=S.garden.filter(g=>!g.active);
-  const today=todayISO();
-  let h='';
 
-  // ── Animated garden scene ──
-  // Stars
-  let stars='';
-  for(let i=0;i<18;i++){
-    const x=Math.random()*100,y=Math.random()*90,s=1+Math.random()*2;
-    stars+=`<div class="garden-star" style="left:${x}%;top:${y}%;width:${s}px;height:${s}px;
-      animation-delay:${(Math.random()*3).toFixed(1)}s;animation-duration:${(1.5+Math.random()*2).toFixed(1)}s"></div>`;
-  }
-  // Pixel decorations (CSS-drawn flowers & bushes)
-  const decos=[
-    {l:8, emoji:'🌷',sz:14},{l:18,emoji:'🌿',sz:12},{l:55,emoji:'🌸',sz:13},
-    {l:68,emoji:'🌾',sz:11},{l:82,emoji:'🌷',sz:13},{l:92,emoji:'🌿',sz:12},
-  ];
-  const decoHtml=decos.map(d=>`<div class="garden-deco" style="left:${d.l}%;font-size:${d.sz}px;bottom:0;line-height:1">${d.emoji}</div>`).join('');
-
-  // All garden pets (active walking, frozen bobbing)
-  let walkers='';
-  const walkDurs=[9,11,8,13,10];
-  const leftOffsets=[4,15,30,50,64];
-  let ai=0;
-  for(let i=0;i<S.garden.length;i++){
-    const g=S.garden[i];
-    const cr=CREATURES.find(c=>c.id===g.petId);
-    const stageDef=cr?.stages[g.stage-1];
-    const collected=g.lastCollect===today;
-    const canCollect=g.stage===3&&!collected;
-    const dur=walkDurs[ai%walkDurs.length];
-    const startL=leftOffsets[ai%leftOffsets.length];
-    const gsz=Math.round(40*(GARDEN_SCALE[g.petId]||1.0));
-    const spC=spriteCanvas(g.petId,g.stage,gsz);
-    if(g.active){
-      walkers+=`<div class="garden-pet walking" id="gp-${i}"
-        style="left:${startL}%;--walk-dur:${dur}s"
-        onclick="gardenPetClick(${i},event)">
-        <div class="garden-pet-inner" style="position:relative">
-          ${canCollect?'<div class="garden-collect-dot"></div>':''}
-          ${spC}
-        </div>
-        <div class="garden-pet-label">${stageDef?.name||''}</div>
-      </div>`;
-    } else {
-      walkers+=`<div class="garden-pet bobbing" id="gp-${i}"
-        style="left:${startL}%;opacity:0.65;--bob-dur:3.5s;--bob-delay:${(ai*0.5).toFixed(1)}s"
-        onclick="gardenPetClick(${i},event)">
-        <div class="garden-pet-inner" style="position:relative">
-          ${canCollect?'<div class="garden-collect-dot"></div>':''}
-          ${spC}
-          <div style="position:absolute;top:-8px;right:-4px;font-size:10px;line-height:1">❄️</div>
-        </div>
-        <div class="garden-pet-label">${stageDef?.name||''}</div>
-      </div>`;
-    }
-    ai++;
-  }
-
-  if(!S.garden.length){
-    h+=`<div class="empty-state"><div class="empty-icon">🏡</div>
-      <div>庭院还是空的</div>
-      <div style="font-size:13px;margin-top:6px">神兽成年或冻结后会搬进来</div></div>`;
-  } else {
-    h+=`<div class="garden-scene" id="garden-scene">
-      <div class="garden-sky">${stars}<div class="garden-moon"></div></div>
-      <div class="garden-ground">
-        <div class="garden-ground-line"></div>
-        ${decoHtml}
-        <div class="garden-walkers">${walkers}</div>
-      </div>
-      <div id="garden-popup" style="display:none" class="garden-popup"></div>
-    </div>`;
-  }
-
-  return h;
-}
 
 let _gardenClickOutside=null;
 function gardenPetClick(gIdx, e){
@@ -3828,18 +3750,20 @@ function renderCreatureDexTab(){
     for(let s=1;s<=3;s++){
       const unlocked=s<=maxStage;
       const stgDef=cr.stages[s-1];
-      const onclick=unlocked?`onclick="showDexDetail('${cr.id}',${s})"`:'' ;
-      const imgSrc=IMG_MAP[cr.id]?.[s];
-      const thumbMedia=unlocked
-        ?(imgSrc
-          ?`<img src="${imgSrc}" style="width:60px;height:60px;object-fit:contain;display:block;margin:0 auto">`
-          :`<span class="dex-thumb-emoji">${stgDef?.emoji||'✨'}</span>`)
-        :`<span class="dex-locked-q">?</span>`;
-      h+=`<div class="dex-thumb ${unlocked?'unlocked':'locked'}" ${onclick}>
-        ${thumbMedia}
-        <div class="dex-thumb-name">${unlocked?stgDef.name:'???'}</div>
-        <div style="font-size:9px;color:${unlocked?RARITY_COLOR[cr.rarity]:'transparent'};margin-top:2px;font-weight:700">${RARITY_NAME[cr.rarity]}</div>
-      </div>`;
+      if(unlocked){
+        const sp=spriteCanvas(cr.id,s,56);
+        h+=`<div class="dex-thumb unlocked" onclick="showDexDetail('${cr.id}',${s})">
+          ${sp}
+          <div class="dex-thumb-name">${stgDef.name}</div>
+          <div style="font-size:9px;color:${RARITY_COLOR[cr.rarity]};margin-top:2px;font-weight:700">${RARITY_NAME[cr.rarity]}</div>
+        </div>`;
+      }else{
+        h+=`<div class="dex-thumb locked">
+          <span class="dex-locked-q">?</span>
+          <div class="dex-thumb-name">???</div>
+          <div style="font-size:9px;margin-top:2px"> </div>
+        </div>`;
+      }
     }
   }
   h+=`</div>`;
