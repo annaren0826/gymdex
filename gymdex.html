@@ -3816,40 +3816,27 @@ function renderCreatureDexTab(){
 
 function renderItemDexTab(){
   let h=`<div style="font-size:13px;color:var(--muted);margin-bottom:12px">
-    已获得 ${S.itemLog.length} / ${Object.keys(ITEMS).length} 种道具</div>`;
+    已获得 ${S.itemLog.length} / ${Object.keys(ITEMS).length} 种道具</div>
+  <div class="items-grid">`;
   for(const[id,it]of Object.entries(ITEMS)){
     const seen=S.itemLog.includes(id);
-    if(!seen){
-      h+=`<div class="item-dex-row" style="opacity:.45">
-        <div class="item-dex-emoji">❓</div>
-        <div class="item-dex-info">
-          <div style="font-size:13px;color:var(--muted)">未发现</div>
-        </div>
-      </div>`;
-      continue;
-    }
-    let stats='';
-    if(it.special){
-      stats=`🔑 成就道具${it.how?` · ${it.how}`:''}`;
-    } else {
-      const parts=[];
-      if(it.exp) parts.push(`+${it.exp} EXP`);
-      if(it.attr&&it.attrVal) parts.push(`${ATTR_EMOJI[it.attr]} +${it.attrVal} ${ATTR_COLOR[it.attr]?it.attr:''}`);
-      stats=parts.join('　');
-    }
     const inBag=S.inv[id]||0;
-    h+=`<div class="item-dex-row">
-      <div class="item-dex-emoji">${it.emoji}</div>
-      <div class="item-dex-info">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:14px;font-weight:600">${it.name}</span>
-          <span style="font-size:11px;font-weight:700;color:${RARITY_COLOR[it.rarity]||'#aaa'}">${RARITY_NAME[it.rarity]}</span>
-          ${inBag?`<span style="font-size:11px;color:var(--pink);margin-left:auto">×${inBag}</span>`:''}
-        </div>
-        <div class="item-dex-stat">${stats}</div>
-      </div>
+    let stat='';
+    if(seen){
+      if(it.special) stat='🔑成就';
+      else if(it.exp&&it.attr) stat=`+${it.exp}EXP ${ATTR_EMOJI[it.attr]}+${it.attrVal}`;
+      else if(it.exp) stat=`+${it.exp} EXP`;
+      else if(it.attr) stat=`${ATTR_EMOJI[it.attr]} +${it.attrVal}`;
+    }
+    h+=`<div class="item-cell ${seen?'':'locked'}">
+      ${inBag?`<span class="item-cnt">${inBag}</span>`:''}
+      <span class="item-emoji">${seen?it.emoji:'❓'}</span>
+      <div class="item-name">${seen?it.name:'???'}</div>
+      <div style="font-size:10px;color:${RARITY_COLOR[it.rarity]||'#aaa'};margin-top:2px">${seen?RARITY_NAME[it.rarity]:''}</div>
+      ${seen?`<div style="font-size:10px;color:var(--muted);margin-top:1px">${stat}</div>`:''}
     </div>`;
   }
+  h+=`</div>`;
   return h;
 }
 
