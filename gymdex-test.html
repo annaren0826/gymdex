@@ -2842,7 +2842,7 @@ function feedNurturing(idx,itemId){
   const it=ITEMS[itemId];
   if(!slot||!it||it.special)return;
   if(!(S.inv[itemId]>0))return;
-  if(todayFeedCount(slot)>=DAILY_FEED_LIMIT){toast('宝宝已经吃饱啦，明天再来喂我吧～ 🥰');return;}
+  if(todayFeedCount(slot)>=DAILY_FEED_LIMIT){toast('宝宝已经吃饱啦，明天再来吧～ 🥰');return;}
   S.inv[itemId]--;
   slot.exp+=(it.exp||0);
   if(it.attr&&it.attrVal)slot.attrs[it.attr]=(slot.attrs[it.attr]||0)+it.attrVal;
@@ -3553,6 +3553,7 @@ function renderNurturingTab(){
     const nextDef=cr?.stages[slot.stage]; // next stage def (has evolve on current)
     const evolCond=cr?.stages[slot.stage-1]?.evolve;
     const ready=canEvolve(i);
+    const full=todayFeedCount(slot)>=DAILY_FEED_LIMIT; // fed max times today
     const expPct=evolCond?Math.min(100,slot.exp/evolCond.exp*100):100;
     const rc=RARITY_COLOR[cr?.rarity]||'#aaa';
     h+=`<div class="nurture-slot" style="border-color:${rc}44">
@@ -3600,7 +3601,9 @@ function renderNurturingTab(){
     // Two action buttons: feed + evolve (evolve grayed/disabled until conditions met)
     const nextName=cr?.stages[slot.stage]?.name;
     h+=`<div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn btn-secondary btn-small" style="flex:1" onclick="openFeedModal(${i})">🍖 喂食</button>
+      <button class="btn btn-small" style="flex:1;${full?'background:var(--card);color:var(--muted);border:1px solid var(--border)':'background:#FFA94D;color:#fff'}" ${full?'disabled':''} onclick="openFeedModal(${i})">
+        ${full?'🍖 已吃饱':'🍖 喂食'}
+      </button>
       <button class="btn ${ready?'btn-green':'btn-secondary'} btn-small" style="flex:1" ${ready?'':'disabled'} onclick="evolveNurturing(${i})">
         ${slot.stage>=3?'✨ 最终形态':(ready?`✨ 进化 → ${nextName}`:'🔒 进化（未满足）')}
       </button>
