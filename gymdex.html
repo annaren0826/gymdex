@@ -1897,6 +1897,9 @@ function load(){
   // Ensure all v2 fields exist
   if(!S.nurturing)S.nurturing=[];
   if(!S.garden)S.garden=[];
+  // Clean up any phantom/corrupt entries (must have a valid petId)
+  S.nurturing=S.nurturing.filter(s=>s&&s.petId);
+  S.garden=S.garden.filter(g=>g&&g.petId);
   if(!S.achievements)S.achievements=[];
   if(!S.itemLog)S.itemLog=[];
   if(!S.hatchQueue)S.hatchQueue=[];
@@ -2906,6 +2909,7 @@ function evolveNurturing(idx){
 
 function graduateToGarden(idx){
   const slot=S.nurturing.splice(idx,1)[0];
+  if(!slot){save();renderPet();return;}
   S.garden.push({...slot,active:true,lastCollect:null});
   save();renderPet();
   const cr=CREATURES.find(c=>c.id===slot.petId);
@@ -2915,6 +2919,7 @@ function graduateToGarden(idx){
 
 function freezeToGarden(idx){
   const slot=S.nurturing.splice(idx,1)[0];
+  if(!slot){save();renderPet();return;}
   S.garden.push({...slot,active:false,lastCollect:null});
   save();renderPet();
   const cr=CREATURES.find(c=>c.id===slot.petId);
@@ -2925,6 +2930,7 @@ function freezeToGarden(idx){
 function thawFromGarden(gIdx){
   if(S.nurturing.length>=3){toast('培育槽已满！');return;}
   const entry=S.garden.splice(gIdx,1)[0];
+  if(!entry){save();renderPet();return;}
   S.nurturing.push(entry);
   save();renderPet();
   const cr=CREATURES.find(c=>c.id===entry.petId);
@@ -3731,7 +3737,7 @@ function closeGardenPopup(){
 
 function getUnlockedStages(crId){
   // Returns max stage reached for this creature (0 = never seen)
-  const all=[...S.nurturing,...S.garden];
+  const all=[...S.nurturing,...S.garden].filter(Boolean);
   const match=all.filter(s=>s.petId===crId);
   if(!match.length&&S.hatchPending!==crId)return 0;
   // hatchPending means stage 1 just hatched
