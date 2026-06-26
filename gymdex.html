@@ -2933,7 +2933,7 @@ function thawFromGarden(gIdx){
 
 function collectGarden(gIdx){
   const g=S.garden[gIdx];
-  if(!g?.active)return;
+  if(!g||g.stage!==3)return;
   const today=todayISO();
   if(g.lastCollect===today){toast('今天已经收集过啦！明天再来～');return;}
   g.lastCollect=today;
@@ -3687,29 +3687,43 @@ function renderGardenTab(){
   ];
   const decoHtml=decos.map(d=>`<div class="garden-deco" style="left:${d.l}%;font-size:${d.sz}px;bottom:0;line-height:1">${d.emoji}</div>`).join('');
 
-  // Active walking pets
+  // All garden pets (active walking, frozen bobbing)
   let walkers='';
   const walkDurs=[9,11,8,13,10];
   const leftOffsets=[4,15,30,50,64];
   let ai=0;
   for(let i=0;i<S.garden.length;i++){
-    const g=S.garden[i];if(!g.active)continue;
+    const g=S.garden[i];
     const cr=CREATURES.find(c=>c.id===g.petId);
     const stageDef=cr?.stages[g.stage-1];
     const collected=g.lastCollect===today;
+    const canCollect=g.stage===3&&!collected;
     const dur=walkDurs[ai%walkDurs.length];
     const startL=leftOffsets[ai%leftOffsets.length];
     const gsz=Math.round(40*(GARDEN_SCALE[g.petId]||1.0));
     const spC=spriteCanvas(g.petId,g.stage,gsz);
-    walkers+=`<div class="garden-pet walking" id="gp-${i}"
-      style="left:${startL}%;--walk-dur:${dur}s"
-      onclick="gardenPetClick(${i},event)">
-      <div class="garden-pet-inner" style="position:relative">
-        ${collected?'':'<div class="garden-collect-dot"></div>'}
-        ${spC}
-      </div>
-      <div class="garden-pet-label">${stageDef?.name||''}</div>
-    </div>`;
+    if(g.active){
+      walkers+=`<div class="garden-pet walking" id="gp-${i}"
+        style="left:${startL}%;--walk-dur:${dur}s"
+        onclick="gardenPetClick(${i},event)">
+        <div class="garden-pet-inner" style="position:relative">
+          ${canCollect?'<div class="garden-collect-dot"></div>':''}
+          ${spC}
+        </div>
+        <div class="garden-pet-label">${stageDef?.name||''}</div>
+      </div>`;
+    } else {
+      walkers+=`<div class="garden-pet bobbing" id="gp-${i}"
+        style="left:${startL}%;opacity:0.65;--bob-dur:3.5s;--bob-delay:${(ai*0.5).toFixed(1)}s"
+        onclick="gardenPetClick(${i},event)">
+        <div class="garden-pet-inner" style="position:relative">
+          ${canCollect?'<div class="garden-collect-dot"></div>':''}
+          ${spC}
+          <div style="position:absolute;top:-8px;right:-4px;font-size:10px;line-height:1">❄️</div>
+        </div>
+        <div class="garden-pet-label">${stageDef?.name||''}</div>
+      </div>`;
+    }
     ai++;
   }
 
@@ -3729,29 +3743,6 @@ function renderGardenTab(){
     </div>`;
   }
 
-  // Frozen section
-  if(frozen.length){
-    h+=`<div class="garden-storage">
-      <div class="garden-storage-header">❄️ 冻结中 (${frozen.length})</div>`;
-    for(let i=0;i<S.garden.length;i++){
-      const g=S.garden[i];if(g.active)continue;
-      const cr=CREATURES.find(c=>c.id===g.petId);
-      const stageDef=cr?.stages[g.stage-1];
-      h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
-        background:var(--card);border:1px solid var(--border);border-radius:10px;
-        margin-bottom:6px;opacity:.65">
-        <canvas class="px-sprite" width="16" height="16" style="width:32px;height:32px"
-          data-pet="${g.petId}" data-stage="${g.stage}"></canvas>
-        <div style="flex:1">
-          <div style="font-size:13px">${stageDef?.name}</div>
-          <div style="font-size:11px;color:var(--muted)">第${g.stage}阶段 · 已冻结</div>
-        </div>
-        <button class="btn btn-ghost btn-small" onclick="thawFromGarden(${i})"
-          ${S.nurturing.length<3?'':'disabled'}>解冻</button>
-      </div>`;
-    }
-    h+=`</div>`;
-  }
   return h;
 }
 
@@ -3759,10 +3750,11 @@ let _gardenClickOutside=null;
 function gardenPetClick(gIdx, e){
   e.stopPropagation();
   const today=todayISO();
-  const g=S.garden[gIdx];if(!g||!g.active)return;
+  const g=S.garden[gIdx];if(!g)return;
   const cr=CREATURES.find(c=>c.id===g.petId);
   const stageDef=cr?.stages[g.stage-1];
   const collected=g.lastCollect===today;
+  const canCollect=g.stage===3&&!collected;
   const popup=document.getElementById('garden-popup');
   if(!popup)return;
 
@@ -3790,13 +3782,15 @@ function gardenPetClick(gIdx, e){
       <button onclick="closeGardenPopup()" style="margin-left:auto;background:none;border:none;
         color:var(--muted);font-size:16px;cursor:pointer;padding:0">✕</button>
     </div>
-    ${collected
-      ?`<div style="font-size:12px;color:var(--muted);text-align:center;padding:4px 0">✓ 今日已收获～</div>`
-      :`<button class="btn btn-green btn-small" style="width:100%" onclick="collectGarden(${gIdx});closeGardenPopup()">
-          🎁 收获今日道具
-        </button>`
+    ${g.stage===3
+      ?(canCollect
+        ?`<button class="btn btn-green btn-small" style="width:100%" onclick="collectGarden(${gIdx});closeGardenPopup()">🎁 收获今日道具</button>`
+        :`<div style="font-size:12px;color:var(--muted);text-align:center;padding:4px 0">✓ 今日已收获～</div>`)
+      :`<div style="font-size:12px;color:var(--muted);text-align:center;padding:4px 0">成年后才能产出道具</div>`
     }
-    ${g.stage<3?`<button class="btn btn-ghost btn-small" style="width:100%;margin-top:6px"
+    ${!g.active?`<button class="btn btn-ghost btn-small" style="width:100%;margin-top:6px"
+      onclick="thawFromGarden(${gIdx});closeGardenPopup()" ${S.nurturing.length<3?'':'disabled'}>🌱 解冻取回培育</button>`:''}
+    ${g.active&&g.stage<3?`<button class="btn btn-ghost btn-small" style="width:100%;margin-top:6px"
       onclick="thawFromGarden(${gIdx});closeGardenPopup()">🌱 取回培育</button>`:''}
   `;
   popup.style.display='block';
