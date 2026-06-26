@@ -3799,15 +3799,9 @@ function renderCreatureDexTab(){
       const stgDef=cr.stages[s-1];
       if(unlocked){
         const sp=spriteCanvas(cr.id,s,56);
-        const evo=cr.stages[s-1]?.evolve; // current stage's evolve = cost to next stage
-        const expLine=evo
-          ?`<div style="font-size:9px;color:var(--muted);margin-top:1px">⬆️ ${evo.exp} EXP</div>`
-          :`<div style="font-size:9px;color:var(--muted);margin-top:1px">最终形态</div>`;
         h+=`<div class="dex-thumb unlocked" onclick="showDexDetail('${cr.id}',${s})">
           ${sp}
-          <div class="dex-thumb-name">${stgDef.name}</div>
-          <div style="font-size:9px;color:${RARITY_COLOR[cr.rarity]};margin-top:2px;font-weight:700">${RARITY_NAME[cr.rarity]}</div>
-          ${expLine}
+          <div class="dex-thumb-name" style="color:${RARITY_COLOR[cr.rarity]};font-weight:700">${stgDef.name}</div>
         </div>`;
       }else{
         h+=`<div class="dex-thumb locked">
