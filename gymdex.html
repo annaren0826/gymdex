@@ -277,7 +277,7 @@ body{background:var(--bg);color:var(--text)}
   padding:4px 10px;font-size:12px;font-weight:600}
 
 /* BAG */
-.items-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.items-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .item-cell{background:var(--card);border:1px solid var(--border);border-radius:10px;
   padding:8px 4px;text-align:center;cursor:pointer;transition:transform .1s;position:relative}
 .item-cell:active{transform:scale(.95)}
@@ -3921,7 +3921,7 @@ function renderBagTab(){
       <div style="margin-top:8px;font-size:13px">完成训练打卡获得道具！</div></div>`;
   }
   let h=`<div style="font-size:12px;color:var(--muted);margin-bottom:12px">道具 (${items.length}种) · 点击神兽喂食</div>
-  <div class="items-grid">`;
+  <div class="items-grid" style="grid-template-columns:repeat(5,1fr);gap:6px">`;
   for(const[id,n]of items){
     const it=ITEMS[id];if(!it)continue;
     const attrLabel=it.attr?`${ATTR_EMOJI[it.attr]} +${it.attrVal}`:'';
