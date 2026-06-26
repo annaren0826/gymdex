@@ -2788,7 +2788,8 @@ function feedNurturing(idx,itemId){
   openFeedModal(idx); // refresh modal with updated counts
 }
 
-const RARITY_ORDER_FEED={common:0,rare:1,epic:2,legendary:3};
+const ITEM_DEF_ORDER=Object.fromEntries(Object.keys(ITEMS).map((k,i)=>[k,i]));
+function itemDefSort([aId],[bId]){return (ITEM_DEF_ORDER[aId]??999)-(ITEM_DEF_ORDER[bId]??999);}
 
 function openFeedModal(idx){
   const slot=S.nurturing[idx];
@@ -2798,11 +2799,7 @@ function openFeedModal(idx){
   const evolCond=cr?.stages[slot.stage-1]?.evolve;
   const feedable=Object.entries(S.inv||{})
     .filter(([k,v])=>v>0&&ITEMS[k]&&!ITEMS[k].special&&(ITEMS[k].exp>0||ITEMS[k].attrVal>0))
-    .sort(([aId],[bId])=>{
-      const a=ITEMS[aId],b=ITEMS[bId];
-      const rd=(RARITY_ORDER_FEED[a?.rarity]||0)-(RARITY_ORDER_FEED[b?.rarity]||0);
-      return rd!==0?rd:(a?.exp||0)-(b?.exp||0);
-    });
+    .sort(itemDefSort);
   const spriteHtml=spriteCanvas(slot.petId,slot.stage,52);
   let itemsHtml='';
   if(!feedable.length){
@@ -3889,13 +3886,7 @@ function closeDexModal(e){
 // ══════════════════════════════════════════
 
 function renderBagTab(){
-  const RARITY_ORDER={common:0,rare:1,epic:2,legendary:3};
-  const items=Object.entries(S.inv||{}).filter(([,n])=>n>0)
-    .sort(([aId],[bId])=>{
-      const a=ITEMS[aId],b=ITEMS[bId];
-      const rd=(RARITY_ORDER[a?.rarity]||0)-(RARITY_ORDER[b?.rarity]||0);
-      return rd!==0?rd:(a?.exp||0)-(b?.exp||0);
-    });
+  const items=Object.entries(S.inv||{}).filter(([,n])=>n>0).sort(itemDefSort);
   if(!items.length){
     return `<div class="empty-state"><div class="empty-icon">🎒</div>
       <div>背包是空的</div>
