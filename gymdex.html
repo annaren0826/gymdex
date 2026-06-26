@@ -1646,13 +1646,6 @@ const ITEMS = {
   honor_medal:    {emoji:'🎖️',name:'荣耀勋章', rarity:'legendary',exp:0,  attr:null,   attrVal:0,  special:true, how:'集齐全部5只普通神宠'},
 };
 
-const REWARD_POOL = {
-  '臀A':[['peach',.8],['protein',.5],['honey_jar',.6],['fire_seed',.18],['earth_crystal',.15],['lava_fruit',.07]],
-  '臀B':[['peach',.8],['honey_jar',.5],['sprout_leaf',.4],['earth_crystal',.2],['sacred_nut',.12],['ancient_wood',.05]],
-  '背': [['protein',.8],['stardust',.2],['earth_crystal',.18],['rainbow_gem',.07],['ocean_pearl',.08],['sacred_nut',.1]],
-  '肩': [['protein',.7],['stardust',.18],['wind_feather',.25],['fire_seed',.12],['chase_stone',.1]],
-  _default:[['peach',.7],['protein',.5],['stardust',.12],['fire_seed',.08],['dewdrop',.08],['sprout_leaf',.1]],
-};
 
 const RARITY_COLOR={common:'#aaa',rare:'#7AB0FF',epic:'#C87AFF',legendary:'#FFD700'};
 const RARITY_NAME ={common:'普通',rare:'稀有',epic:'史诗',legendary:'传说'};
@@ -2625,13 +2618,19 @@ function genRewards(isWorkout=true){
   const budget=isWorkout
     ?(75+Math.floor(Math.random()*51))
     :(30+Math.floor(Math.random()*21));
-  return spendBudget(budget);
+  const out=spendBudget(budget);
+  // Attr item: separate 0-50 roll, workout only
+  if(isWorkout){
+    const attrId=rollAttrDrop();
+    if(attrId)out[attrId]=(out[attrId]||0)+1;
+  }
+  return out;
 }
 
 function spendBudget(budget){
-  // Build droppable item pool (no special items)
+  // EXP items only — attr items handled separately by rollAttrDrop
   const pool=Object.entries(ITEMS)
-    .filter(([,it])=>!it.special&&DROP_WEIGHT[it.rarity])
+    .filter(([,it])=>!it.special&&it.exp>0&&DROP_WEIGHT[it.rarity])
     .map(([id,it])=>({id,weight:DROP_WEIGHT[it.rarity],cost:DROP_COST[it.rarity]}));
   const totalW=pool.reduce((s,p)=>s+p.weight,0);
   const out={};
@@ -2650,6 +2649,15 @@ function spendBudget(budget){
   }
   if(!Object.keys(out).length)out['peach']=1;
   return out;
+}
+
+// Roll 0-50 attr points; drop one eligible attr item if roll >= its attrVal
+function rollAttrDrop(){
+  const roll=Math.floor(Math.random()*51);
+  const eligible=Object.entries(ITEMS)
+    .filter(([,it])=>!it.special&&it.attr&&it.attrVal>0&&it.attrVal<=roll);
+  if(!eligible.length)return null;
+  return eligible[Math.floor(Math.random()*eligible.length)][0];
 }
 
 function checkAchievements(){
