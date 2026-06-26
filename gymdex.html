@@ -3847,7 +3847,13 @@ function closeDexModal(e){
 // ══════════════════════════════════════════
 
 function renderBagTab(){
-  const items=Object.entries(S.inv||{}).filter(([,n])=>n>0);
+  const RARITY_ORDER={common:0,rare:1,epic:2,legendary:3};
+  const items=Object.entries(S.inv||{}).filter(([,n])=>n>0)
+    .sort(([aId],[bId])=>{
+      const a=ITEMS[aId],b=ITEMS[bId];
+      const rd=(RARITY_ORDER[a?.rarity]||0)-(RARITY_ORDER[b?.rarity]||0);
+      return rd!==0?rd:(a?.exp||0)-(b?.exp||0);
+    });
   if(!items.length){
     return `<div class="empty-state"><div class="empty-icon">🎒</div>
       <div>背包是空的</div>
