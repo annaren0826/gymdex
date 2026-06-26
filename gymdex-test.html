@@ -3799,10 +3799,15 @@ function renderCreatureDexTab(){
       const stgDef=cr.stages[s-1];
       if(unlocked){
         const sp=spriteCanvas(cr.id,s,56);
+        const evo=cr.stages[s-1]?.evolve; // current stage's evolve = cost to next stage
+        const expLine=evo
+          ?`<div style="font-size:9px;color:var(--muted);margin-top:1px">⬆️ ${evo.exp} EXP</div>`
+          :`<div style="font-size:9px;color:var(--muted);margin-top:1px">最终形态</div>`;
         h+=`<div class="dex-thumb unlocked" onclick="showDexDetail('${cr.id}',${s})">
           ${sp}
           <div class="dex-thumb-name">${stgDef.name}</div>
           <div style="font-size:9px;color:${RARITY_COLOR[cr.rarity]};margin-top:2px;font-weight:700">${RARITY_NAME[cr.rarity]}</div>
+          ${expLine}
         </div>`;
       }else{
         h+=`<div class="dex-thumb locked">
@@ -3863,16 +3868,17 @@ function showDexDetail(crId, stage){
     `<span style="font-weight:700;color:${RARITY_COLOR[cr.rarity]}">${RARITY_NAME[cr.rarity]}</span>`;
   document.getElementById('dex-modal-rarity').innerHTML='';
   document.getElementById('dex-modal-attrs').innerHTML='';
-  // Evolution requirements
-  const nextStgDef=cr.stages[stage]; // stage is 1-indexed; stages[stage] = next stage def
+  // Evolution requirements: the CURRENT stage's `evolve` describes how to reach the next stage
+  const curEvolve=cr.stages[stage-1]?.evolve;
+  const nextName=cr.stages[stage]?.name;
   const maxStage=getUnlockedStages(cr.id);
   const alreadyPassed=maxStage>stage;
   let descHtml='';
-  if(nextStgDef?.evolve){
-    descHtml+=`<div style="margin-top:10px;font-size:13px">进化需要 <b>${nextStgDef.evolve.exp}</b> EXP</div>`;
-    if(nextStgDef.evolve.items){
+  if(curEvolve){
+    descHtml+=`<div style="margin-top:10px;font-size:13px">进化需要 <b>${curEvolve.exp}</b> EXP${nextName?` → ${nextName}`:''}</div>`;
+    if(curEvolve.items){
       if(alreadyPassed){
-        const itemNames=Object.entries(nextStgDef.evolve.items)
+        const itemNames=Object.entries(curEvolve.items)
           .map(([id,n])=>`${ITEMS[id]?.emoji||id}×${n}`).join(' ');
         descHtml+=`<div style="font-size:12px;color:var(--muted);margin-top:4px">+ ${itemNames}</div>`;
       }else{
