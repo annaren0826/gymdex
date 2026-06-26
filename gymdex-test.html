@@ -1911,8 +1911,9 @@ function load(){
   if(S.hatchPending===undefined)S.hatchPending=null;
   if(!S.waterFeedTotal)S.waterFeedTotal=0;
   if(!S.prBroken)S.prBroken=false;
-  // Give first egg to brand-new players
-  if(!S.incubator&&!S.nurturing.length&&!S.garden.length&&!S.hatchPending)
+  // Give first egg only to brand-new players who never completed onboarding
+  // (so importing a save — even an empty one — never re-grants the starter egg)
+  if(!S.onboarded&&!S.incubator&&!S.nurturing.length&&!S.garden.length&&!S.hatchPending)
     S.incubator={eggRarity:'common',trainCount:0,needed:1,firstEgg:true};
   // Fix first egg needed count if old save had wrong value
   if(S.incubator?.firstEgg&&S.incubator.needed!==1)S.incubator.needed=1;
@@ -2091,14 +2092,17 @@ function handleGameImport(e){
   reader.onload=ev=>{
     try{
       const d=JSON.parse(ev.target.result);
-      if(d.nurturing)S.nurturing=d.nurturing;
-      if(d.garden)S.garden=d.garden;
-      if(d.incubator)S.incubator=d.incubator;
-      if(d.hatchQueue)S.hatchQueue=d.hatchQueue;
-      if(d.achievements)S.achievements=d.achievements;
-      if(d.itemLog)S.itemLog=d.itemLog;
-      if(d.inv)S.inv=d.inv;
-      if(d.total)S.total=d.total;
+      // Full restore: replace state entirely (empty fields must overwrite,
+      // otherwise the brand-new-player first egg leaks into an imported save)
+      S.nurturing=d.nurturing||[];
+      S.garden=d.garden||[];
+      S.incubator=d.incubator||null;
+      S.hatchQueue=d.hatchQueue||[];
+      S.hatchPending=d.hatchPending||null;
+      S.achievements=d.achievements||[];
+      S.itemLog=d.itemLog||[];
+      S.inv=d.inv||{};
+      S.total=d.total||0;
       OB.gameImported=true;
       const total=(S.nurturing?.length||0)+(S.garden?.length||0);
       document.getElementById('game-status').innerHTML=
@@ -2157,7 +2161,10 @@ function finishOnboarding(){
   save();
   launchApp();
   sparkles();
-  setTimeout(()=>toast(`欢迎，${name}！你的第一只神兽在等你 🥚`),500);
+  const welcomeMsg=OB.gameImported
+    ?`欢迎回来，${name}！存档已恢复 💾`
+    :`欢迎，${name}！你的第一只神兽在等你 🥚`;
+  setTimeout(()=>toast(welcomeMsg),500);
 }
 
 function launchApp(){
@@ -4286,10 +4293,10 @@ function prefillAnnaDefaults(){
     }
   });
 
-  // 预选训练日：周一到周五
+  // 预选训练日：周二、四、六、日
   document.querySelectorAll('.day-btn').forEach(btn=>{
     const day=btn.getAttribute('onclick').match(/'(\d)'/)?.[1];
-    if(['1','2','3','4','5'].includes(day)){
+    if(['2','4','6','0'].includes(day)){
       btn.classList.add('on');
       if(!OB.selectedDays.includes(day))OB.selectedDays.push(day);
     }
