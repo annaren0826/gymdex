@@ -3982,19 +3982,27 @@ function renderGarden(){
     const bobDur=(1.8+rng(i*3+2)*1.5).toFixed(1);
     const bobDelay=(rng(i*7)*2).toFixed(1);
     const sp=spriteCanvas(g.petId,g.stage,size);
-    const frozenOverlay=!g.active
-      ?`<div style="position:absolute;top:-8px;right:-4px;font-size:10px;line-height:1">❄️</div>`:'';
-    pets+=`<div class="garden-pet bobbing" id="gp-${i}"
-      style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;z-index:${zIdx};
-             --bob-dur:${bobDur}s;--bob-delay:${bobDelay}s${!g.active?';opacity:0.65':''}"
-      onclick="gardenPetClick(${i},event)">
-      <div class="garden-pet-inner" style="position:relative">
-        ${canCollect?'<div class="garden-collect-dot"></div>':''}
-        ${frozenOverlay}
-        ${sp}
-      </div>
-      <div class="garden-pet-label" style="font-size:${Math.round(7+(size-32)/44*4)}px">${stageDef?.name||''}</div>
-    </div>`;
+    if(g.active){
+      pets+=`<div class="garden-pet bobbing" id="gp-${i}"
+        style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;z-index:${zIdx};
+               --bob-dur:${bobDur}s;--bob-delay:${bobDelay}s"
+        onclick="gardenPetClick(${i},event)">
+        <div class="garden-pet-inner">
+          ${canCollect?'<div class="garden-collect-dot"></div>':''}
+          ${sp}
+        </div>
+        <div class="garden-pet-label" style="font-size:${Math.round(7+(size-32)/44*4)}px">${stageDef?.name||''}</div>
+      </div>`;
+    } else {
+      pets+=`<div class="garden-pet bobbing"
+        style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;z-index:${zIdx};
+               --bob-dur:${bobDur}s;--bob-delay:${bobDelay}s">
+        <div class="garden-pet-inner" style="position:relative">
+          <div style="position:absolute;top:-6px;right:-6px;font-size:12px;line-height:1">❄️</div>
+          ${sp}
+        </div>
+      </div>`;
+    }
     ai++;
   }
 
