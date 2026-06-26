@@ -3930,6 +3930,18 @@ function renderGarden(){
     ai++;
   }
 
+  const frozen=S.garden.filter(g=>!g.active);
+  const frozenChips=frozen.map(g=>{
+    const idx=S.garden.indexOf(g);
+    const cr=CREATURES.find(c=>c.id===g.petId);
+    const stageDef=cr?.stages[g.stage-1];
+    return `<span style="background:rgba(0,0,0,.5);color:#fff;border-radius:20px;
+      padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap"
+      onclick="event.stopPropagation();thawFromGarden(${idx})">
+      ❄️ ${stageDef?.name||g.petId}
+    </span>`;
+  }).join('');
+
   const emptyMsg=!S.garden.length
     ?`<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
         text-align:center;color:rgba(255,255,255,.8);text-shadow:0 1px 4px rgba(0,0,0,.6)">
@@ -3941,8 +3953,11 @@ function renderGarden(){
   const html=`<div class="garden-fs" id="garden-scene" onclick="closeGardenPopup()">
     <div class="garden-fs-header">
       <div class="garden-fs-title">🏡 庭院</div>
-      ${uncollected?`<div style="background:rgba(77,204,120,.9);color:#fff;border-radius:20px;
-        padding:4px 10px;font-size:12px;font-weight:700">🎁 ×${uncollected}</div>`:''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        ${frozenChips}
+        ${uncollected?`<div style="background:rgba(77,204,120,.9);color:#fff;border-radius:20px;
+          padding:4px 10px;font-size:12px;font-weight:700">🎁 ×${uncollected}</div>`:''}
+      </div>
     </div>
     ${pets}
     ${emptyMsg}
