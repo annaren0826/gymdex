@@ -3864,12 +3864,11 @@ function showDexDetail(crId, stage){
   document.getElementById('dex-modal-attrs').innerHTML='';
   // Evolution requirements: the CURRENT stage's `evolve` describes how to reach the next stage
   const curEvolve=cr.stages[stage-1]?.evolve;
-  const nextName=cr.stages[stage]?.name;
   const maxStage=getUnlockedStages(cr.id);
   const alreadyPassed=maxStage>stage;
   let descHtml='';
   if(curEvolve){
-    descHtml+=`<div style="margin-top:10px;font-size:13px">进化需要 <b>${curEvolve.exp}</b> EXP${nextName?` → ${nextName}`:''}</div>`;
+    descHtml+=`<div style="margin-top:10px;font-size:13px">进化需要 <b>${curEvolve.exp}</b> EXP</div>`;
     if(curEvolve.items){
       if(alreadyPassed){
         const itemNames=Object.entries(curEvolve.items)
