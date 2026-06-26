@@ -2593,7 +2593,7 @@ function finish(){
     S.inv[id]=(S.inv[id]||0)+n;
     if(!S.itemLog.includes(id))S.itemLog.push(id);
   }
-  // Egg drop (30%) — always goes to egg inventory
+  // Egg drop (50%) — always goes to egg inventory
   const eggDrop=dropEgg();
   if(eggDrop){
     S.hatchQueue.push(eggDrop);
@@ -2695,7 +2695,7 @@ function randomNeeded(rarity){
 }
 
 function dropEgg(){
-  if(Math.random()>0.3)return null;
+  if(Math.random()>0.5)return null;
   const r=Math.random();
   return r<0.60?'common':r<0.85?'silver':r<0.95?'gold':'rainbow';
 }
@@ -3578,7 +3578,7 @@ function renderNurturingTab(){
     }
   } else {
     h+=`<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">
-      没有蛋 · 完成训练有30%概率掉落 🥚</div>`;
+      没有蛋 · 完成训练有50%概率掉落 🥚</div>`;
   }
   return h;
 }
@@ -3609,7 +3609,7 @@ function renderIncubatorTab(){
   } else {
     h+=`<div class="empty-state"><div class="empty-icon">🥚</div>
       <div>孵蛋器空着</div>
-      <div style="font-size:13px;margin-top:6px">完成训练有30%概率获得蛋</div></div>`;
+      <div style="font-size:13px;margin-top:6px">完成训练有50%概率获得蛋</div></div>`;
   }
   if(S.hatchQueue.length){
     h+=`<div style="font-size:13px;font-weight:700;margin:12px 0 8px">等待孵化 (${S.hatchQueue.length})</div>`;
