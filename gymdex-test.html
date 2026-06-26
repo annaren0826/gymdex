@@ -814,7 +814,7 @@ select.ob-input{appearance:none;-webkit-appearance:none;
 
     <div class="screen" id="screen-bag">
       <div class="screen-header">
-        <div class="screen-title">背包 🎒</div>
+        <div class="screen-title" id="screen-title-bag">背包 🎒</div>
       </div>
       <div id="bag-content"></div>
     </div>
@@ -850,7 +850,7 @@ select.ob-input{appearance:none;-webkit-appearance:none;
 
 <!-- REST TIMER -->
 <div id="rest-overlay">
-  <div class="timer-label">💤 组间休息</div>
+  <div class="timer-label" id="timer-label">💤 组间休息</div>
   <div id="timer-wrap">
     <svg id="timer-svg" viewBox="0 0 200 200">
       <defs>
@@ -866,8 +866,8 @@ select.ob-input{appearance:none;-webkit-appearance:none;
   </div>
   <div class="timer-hint" id="timer-hint">下一组加油！</div>
   <div class="timer-btns">
-    <button class="btn btn-ghost btn-small" onclick="addTime(30)">+30秒</button>
-    <button class="btn btn-secondary btn-small" onclick="skipTimer()">跳过休息</button>
+    <button class="btn btn-ghost btn-small" id="timer-add-btn" onclick="addTime(30)">+30秒</button>
+    <button class="btn btn-secondary btn-small" id="timer-skip-btn" onclick="skipTimer()">跳过休息</button>
   </div>
 </div>
 
@@ -875,7 +875,7 @@ select.ob-input{appearance:none;-webkit-appearance:none;
 <div id="reward-modal">
   <div class="reward-box">
     <div id="reward-content"></div>
-    <button class="btn btn-primary" onclick="closeReward()" style="margin-top:18px">收下啦 🎉</button>
+    <button class="btn btn-primary" id="reward-close-btn" onclick="closeReward()" style="margin-top:18px">收下啦 🎉</button>
   </div>
 </div>
 
@@ -2205,15 +2205,19 @@ const EX_EN={
 function tEx(name){return S.lang==='en'?(EX_EN[name]||name):name}
 function updateNavLabels(){
   const isEn=S.lang==='en';
-  const labels={workout:isEn?'':'训练',pet:isEn?'':'神兽',garden:isEn?'':'庭院',history:isEn?'':'记录'};
+  const labels={workout:isEn?'Train':'训练',pet:isEn?'Creatures':'神兽',garden:isEn?'Garden':'庭院',history:isEn?'Log':'记录'};
   for(const[k,v]of Object.entries(labels)){
     const el=document.getElementById('nav-label-'+k);
     if(el)el.textContent=v;
   }
-  const petTitle=document.getElementById('screen-title-pet');
-  if(petTitle)petTitle.textContent=isEn?'Bestiary ✨':'神兽图鉴 ✨';
-  const histTitle=document.getElementById('screen-title-history');
-  if(histTitle)histTitle.textContent=isEn?'Workout Log 📊':'训练记录 📊';
+  const set=(id,zh,en)=>{const el=document.getElementById(id);if(el)el.textContent=isEn?en:zh;};
+  set('screen-title-pet','神兽图鉴 ✨','Bestiary ✨');
+  set('screen-title-history','训练记录 📊','Workout Log 📊');
+  set('screen-title-bag','背包 🎒','Bag 🎒');
+  set('timer-label','💤 组间休息','💤 Rest between sets');
+  set('timer-add-btn','+30秒','+30s');
+  set('timer-skip-btn','跳过休息','Skip rest');
+  set('reward-close-btn','收下啦 🎉','Got it 🎉');
 }
 
 function rotation(){return S.profile?.parts?.length?S.profile.parts:DEFAULT_ROTATION}
