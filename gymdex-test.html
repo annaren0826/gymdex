@@ -1956,14 +1956,14 @@ function obNext(){
   // Validate current step
   if(OB.step===1){
     const name=document.getElementById('ob-name').value.trim();
-    if(!name){toast('输入你的名字先！');return}
+    if(!name){toast(t('输入你的名字先！','Enter your name first!'));return}
     OB.selectedGoals=[];
     document.querySelectorAll('#goal-chips .chip.on').forEach(c=>{
       OB.selectedGoals.push(c.dataset.val||c.textContent.trim().replace(/^[^一-龥a-zA-Z]*/,''));
     });
   }
   if(OB.step===2&&OB.selectedParts.length===0){
-    toast('至少选一个训练部位！');return;
+    toast(t('至少选一个训练部位！','Pick at least one muscle group!'));return;
   }
   if(OB.step===TOTAL_OB_STEPS-1){
     buildDoneScreen();
@@ -1980,7 +1980,7 @@ function obSkipIfExisting(){
   if(S.onboarded){
     launchApp();
   }else{
-    toast('还没有设置过，请先完成设置 😊');
+    toast(t('还没有设置过，请先完成设置 😊','Not set up yet — please finish setup first 😊'));
   }
 }
 
@@ -2011,7 +2011,7 @@ function addCustomPart(){
   const inp=document.getElementById('part-custom');
   const val=inp.value.trim();
   if(!val)return;
-  if(OB.selectedParts.includes(val)){toast('已经加过了！');return}
+  if(OB.selectedParts.includes(val)){toast(t('已经加过了！','Already added!'));return}
   OB.selectedParts.push(val);
   // Add as chip
   const chip=document.createElement('div');
@@ -2081,7 +2081,7 @@ function handleCsvImport(e){
     OB.csvImported=true;
     document.getElementById('csv-status').innerHTML=
       `✅ 成功导入 <strong>${rows.length}</strong> 条记录`;
-    toast(`📥 已导入 ${rows.length} 条训练记录`);
+    toast(t(`📥 已导入 ${rows.length} 条训练记录`,`📥 Imported ${rows.length} records`));
   };
   reader.readAsText(file,'UTF-8');
   e.target.value='';
@@ -2108,7 +2108,7 @@ function handleGameImport(e){
       const total=(S.nurturing?.length||0)+(S.garden?.length||0);
       document.getElementById('game-status').innerHTML=
         `✅ 存档恢复成功！${total} 只神兽，背包 ${Object.values(S.inv).reduce((a,b)=>a+b,0)} 件道具`;
-      toast('💾 游戏存档恢复成功！');
+      toast(t('💾 游戏存档恢复成功！','💾 Save restored!'));
     }catch(err){
       document.getElementById('game-status').textContent='❌ 文件格式错误，请选择正确的 JSON 存档';
     }
@@ -2378,8 +2378,8 @@ function showSettings(){
     render();
   };
   window.saveSettings=function(){
-    if(!selDays.size){toast('至少选一个训练日');return;}
-    if(!selParts.length){toast('至少选一个训练部位');return;}
+    if(!selDays.size){toast(t('至少选一个训练日','Pick at least one training day'));return;}
+    if(!selParts.length){toast(t('至少选一个训练部位','Pick at least one muscle group'));return;}
     S.profile.days=[...selDays];
     S.profile.parts=[...selParts];
     const langSel=document.querySelector('input[name="lang-sel"]:checked');
@@ -2545,7 +2545,7 @@ function skipToExercise(idx){
 function restDayCheckIn(){
   // Pre-scheduled rest day: also write a record so streak counts
   const today=todayISO();
-  if(S.todayRewards?.date===today&&S.todayRewards?.type==='休息'){toast('今天已经打卡啦！明天再来～');return;}
+  if(S.todayRewards?.date===today&&S.todayRewards?.type==='休息'){toast(t('今天已经打卡啦！明天再来～','Already checked in today! Come back tomorrow~'));return;}
   if(!S.workouts.find(w=>w.date===today)){
     S.workouts.push({date:today,type:'休息',exercises:[]});
     S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
@@ -2589,7 +2589,7 @@ function closeRestDayReward(){
 
 function trainingDayRestCheckIn(){
   const today=todayISO();
-  if(S.workouts.find(w=>w.date===today)){toast('今天已打卡了！');return;}
+  if(S.workouts.find(w=>w.date===today)){toast(t('今天已打卡了！','Already checked in today!'));return;}
   if(!confirm('今天就休息一下？会记录打卡，连击不断，但道具掉落比正常训练少哦~')) return;
   S.workouts.push({date:today,type:'休息',exercises:[]});
   S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
@@ -2603,7 +2603,7 @@ function trainingDayRestCheckIn(){
   save();
   renderWorkout();
   const items=Object.entries(rewards).map(([id,n])=>`${ITEMS[id]?.emoji||''}×${n}`).join(' ');
-  toast(`🛌 休息打卡！连击继续！获得：${items}`);
+  toast(t(`🛌 休息打卡！连击继续！获得：${items}`,`🛌 Rest-day check-in! Streak continues! Got: ${items}`));
 }
 
 function finish(){
@@ -2828,13 +2828,13 @@ function manualHatch(){
 }
 
 function placeEggInIncubator(idx){
-  if(S.incubator){toast('孵蛋器里已经有蛋了！');return;}
+  if(S.incubator){toast(t('孵蛋器里已经有蛋了！','There is already an egg in the incubator!'));return;}
   const rarity=S.hatchQueue[idx];
   if(!rarity)return;
   S.hatchQueue.splice(idx,1);
   S.incubator={eggRarity:rarity,trainCount:0,needed:randomNeeded(rarity)};
   save();renderPet();
-  toast('🥚 已放入孵蛋器！');
+  toast(t('🥚 已放入孵蛋器！','🥚 Egg placed in the incubator!'));
 }
 
 function claimHatched(){
@@ -2946,7 +2946,7 @@ function evolveNurturing(idx){
   slot.stage++;slot.exp=0;
   const stageDef=cr.stages[slot.stage-1];
   save();sparkles();renderPet();
-  toast(`🎉 ${stageDef.name} 进化成功！`);
+  toast(t(`🎉 ${stageDef.name} 进化成功！`,`🎉 ${stageDef.name} evolved!`));
   if(slot.stage===3){
     // Move to garden automatically
     setTimeout(()=>graduateToGarden(idx),1200);
@@ -2959,7 +2959,7 @@ function graduateToGarden(idx){
   S.garden.push({...slot,active:true,lastCollect:null});
   save();renderPet();
   const cr=CREATURES.find(c=>c.id===slot.petId);
-  toast(`🏡 ${cr?.stages[2].name} 搬进庭院了！`);
+  toast(t(`🏡 ${cr?.stages[2].name} 搬进庭院了！`,`🏡 ${cr?.stages[2].name} moved into the garden!`));
   if(S.hatchPending&&S.nurturing.length<3)claimHatched();
 }
 
@@ -2969,25 +2969,25 @@ function freezeToGarden(idx){
   S.garden.push({...slot,active:false,lastCollect:null});
   save();renderPet();
   const cr=CREATURES.find(c=>c.id===slot.petId);
-  toast(`❄️ ${cr?.stages[slot.stage-1].name} 已冻结移至庭院`);
+  toast(t(`❄️ ${cr?.stages[slot.stage-1].name} 已冻结移至庭院`,`❄️ ${cr?.stages[slot.stage-1].name} frozen and moved to the garden`));
   if(S.hatchPending&&S.nurturing.length<3)claimHatched();
 }
 
 function thawFromGarden(gIdx){
-  if(S.nurturing.length>=3){toast('培育槽已满！');return;}
+  if(S.nurturing.length>=3){toast(t('培育槽已满！','Nursery is full!'));return;}
   const entry=S.garden.splice(gIdx,1)[0];
   if(!entry){save();renderPet();renderGarden();return;}
   S.nurturing.push(entry);
   save();renderPet();renderGarden();
   const cr=CREATURES.find(c=>c.id===entry.petId);
-  toast(`🌱 ${cr?.stages[entry.stage-1].name} 回到培育槽`);
+  toast(t(`🌱 ${cr?.stages[entry.stage-1].name} 回到培育槽`,`🌱 ${cr?.stages[entry.stage-1].name} back in the nursery`));
 }
 
 function collectGarden(gIdx){
   const g=S.garden[gIdx];
   if(!g||g.stage!==3)return;
   const today=todayISO();
-  if(g.lastCollect===today){toast('今天已经收集过啦！明天再来～');return;}
+  if(g.lastCollect===today){toast(t('今天已经收集过啦！明天再来～','Already collected today! Come back tomorrow~'));return;}
   g.lastCollect=today;
   // Drop 1-2 random common items
   const pool=['peach','protein','honey_jar','fire_seed','dewdrop','earth_crystal','wind_grass','sprout_leaf','conch_shell','chili_flame'];
@@ -3000,7 +3000,7 @@ function collectGarden(gIdx){
     if(!S.itemLog.includes(id))S.itemLog.push(id);
   }
   save();renderPet();
-  toast('🏡 收获：'+Object.entries(drops).map(([id,n])=>`${ITEMS[id].emoji}×${n}`).join(' '));
+  toast(t('🏡 收获：','🏡 Harvest: ')+Object.entries(drops).map(([id,n])=>`${ITEMS[id].emoji}×${n}`).join(' '));
 }
 
 // ══════════════════════════════════════════
@@ -3021,7 +3021,7 @@ function startTimer(sec,hint){
       clearInterval(timerInterval);timerLeft=0;
       updateTimer();
       setTimeout(()=>document.getElementById('rest-overlay').classList.remove('on'),400);
-      toast('⏰ 休息结束，开始！');
+      toast(t('⏰ 休息结束，开始！','⏰ Rest over — go!'));
     }else updateTimer();
   },1000);
 }
@@ -3033,7 +3033,7 @@ function updateTimer(){
   arc.style.strokeDashoffset=CIRC*(1-timerLeft/timerTotal);
 }
 
-function addTime(n){timerLeft+=n;toast(`+${n}秒 😴`)}
+function addTime(n){timerLeft+=n;toast(t(`+${n}秒 😴`,`+${n}s 😴`))}
 function skipTimer(){clearInterval(timerInterval);document.getElementById('rest-overlay').classList.remove('on')}
 
 // ══════════════════════════════════════════
@@ -3384,13 +3384,13 @@ function buildExerciseSelection(type,color,last){
 function addCustomExercise(){
   const inp=document.getElementById('custom-ex-input');
   const name=(inp?.value||'').trim();
-  if(!name){toast('请输入动作名称');return;}
+  if(!name){toast(t('请输入动作名称','Enter an exercise name'));return;}
   inp.value='';
   const list=document.getElementById('custom-ex-list');
   if(!list)return;
   // check not duplicate
   if(document.querySelector(`.ex-select-box[data-name="${CSS.escape(name)}"]`)){
-    toast('已有这个动作了');return;
+    toast(t('已有这个动作了','That exercise is already added'));return;
   }
   const row=document.createElement('label');
   row.className='ex-select-row';
@@ -3408,7 +3408,7 @@ function showExerciseSelection(type){
 function confirmStartSession(type){
   const boxes=document.querySelectorAll('.ex-select-box:checked');
   const selected=[...boxes].map(b=>b.dataset.name);
-  if(!selected.length){toast('至少选一个动作！');return;}
+  if(!selected.length){toast(t('至少选一个动作！','Pick at least one exercise!'));return;}
   startSession(type,selected);
 }
 
@@ -4216,11 +4216,11 @@ function confirmAddExercise(wIdx){
   const name=(document.getElementById(`add-ex-name-${wIdx}`)?.value||'').trim();
   const weight=(document.getElementById(`add-ex-weight-${wIdx}`)?.value||'').trim();
   const reps=(document.getElementById(`add-ex-reps-${wIdx}`)?.value||'').trim();
-  if(!name){toast('请填写动作名称');return;}
+  if(!name){toast(t('请填写动作名称','Please enter an exercise name'));return;}
   if(!w.exercises)w.exercises=[];
   w.exercises.push({name,sets:[{weight:weight||'',reps:reps||'?',done:true}],note:''});
   save();
-  toast(`✅ 已补录：${name}`);
+  toast(t(`✅ 已补录：${name}`,`✅ Added: ${name}`));
   renderHistory();
 }
 
@@ -4247,7 +4247,7 @@ function exportCSV(){
     }
   }
   downloadBlob('﻿'+rows.join('\n'),'text/csv',`gymdex_workout_${todayISO()}.csv`);
-  toast('📤 训练记录导出成功！');
+  toast(t('📤 训练记录导出成功！','📤 Workout records exported!'));
 }
 
 function exportGame(){
@@ -4259,7 +4259,7 @@ function exportGame(){
     name:S.profile?.name||'',
   };
   downloadBlob(JSON.stringify(data,null,2),'application/json',`gymdex_save_${todayISO()}.json`);
-  toast('💾 游戏存档导出成功！');
+  toast(t('💾 游戏存档导出成功！','💾 Game save exported!'));
 }
 
 function downloadBlob(content,type,filename){
@@ -4282,7 +4282,7 @@ function inAppHandleCsv(e){
     S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
     S.total=S.workouts.length;
     save();renderHistory();renderWorkout();
-    toast(`📥 导入成功！新增 ${added} 条记录`);
+    toast(t(`📥 导入成功！新增 ${added} 条记录`,`📥 Imported! ${added} new records`));
   };
   reader.readAsText(file,'UTF-8');
   e.target.value='';
