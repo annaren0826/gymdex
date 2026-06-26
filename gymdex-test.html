@@ -2187,6 +2187,22 @@ const PART_EN={'臀A':'Glutes A','臀B':'Glutes B','背':'Back','肩':'Shoulders
   '胸':'Chest','腿':'Legs','腹':'Core','手臂':'Arms','全身':'Full Body',
   '休息':'Rest','背+臀B':'Back+Glutes B','肩+臀B':'Shoulders+Glutes B'};
 function tPart(p){return S.lang==='en'?(PART_EN[p]||p):p}
+// Exercise-name English map. `name` stays Chinese (it's the data key / CSV match);
+// tEx() only swaps the displayed label when language is English.
+const EX_EN={
+  '臀推':'Hip Thrust','哑铃RDL':'Dumbbell RDL','保加利亚分腿蹲':'Bulgarian Split Squat',
+  '髋外展':'Hip Abduction','绳索后踢':'Cable Glute Kickback','绳索侧踢':'Cable Side Kick',
+  '山羊挺身':'Back Extension','坐姿早安':'Seated Good Morning','辅助引体向上':'Assisted Pull-up',
+  '高位宽距下拉':'Wide-Grip Lat Pulldown','中距下拉':'Mid-Grip Lat Pulldown','坐姿划船':'Seated Cable Row',
+  '杠铃划船':'Barbell Row','直臂下压':'Straight-Arm Pulldown','面拉':'Face Pull',
+  '肩推':'Shoulder Press','侧平举':'Lateral Raise','绳索侧平举':'Cable Lateral Raise',
+  '蝴蝶机肩后束':'Reverse Pec Deck','俯身飞鸟':'Bent-Over Reverse Fly','卧推':'Bench Press',
+  '上斜哑铃推':'Incline Dumbbell Press','蝴蝶机夹胸':'Pec Deck Fly','深蹲':'Squat',
+  '腿举':'Leg Press','腿弯举':'Leg Curl','小腿提踵':'Calf Raise','卷腹':'Crunch',
+  '平板支撑':'Plank','二头弯举':'Bicep Curl','锤式弯举':'Hammer Curl','三头下压':'Tricep Pushdown',
+  '硬拉':'Deadlift','哑铃推举':'Dumbbell Press','划船':'Row',
+};
+function tEx(name){return S.lang==='en'?(EX_EN[name]||name):name}
 function updateNavLabels(){
   const isEn=S.lang==='en';
   const labels={workout:isEn?'':'训练',pet:isEn?'':'神兽',garden:isEn?'':'庭院',history:isEn?'':'记录'};
@@ -2497,7 +2513,7 @@ function completeCurrentSet(){
   if(w)ex.lastW=w;
   if(r)ex.lastR=r;
   save();
-  startTimer(60,`${ex.name} 第${ex.sets.length}组完成！休息一下 💪`);
+  startTimer(60,t(`${ex.name} 第${ex.sets.length}组完成！休息一下 💪`,`${tEx(ex.name)} set ${ex.sets.length} done! Take a rest 💪`));
   renderWorkout();
 }
 
@@ -3171,7 +3187,7 @@ function renderWorkout(){
 
 function buildTodayDoneView(todayWorkouts,nextT){
   const name=S.profile?.name||'你';
-  const typesDone=todayWorkouts.map(w=>w.type).join(' + ');
+  const typesDone=todayWorkouts.map(w=>tPart(w.type)).join(' + ');
   const tr=S.todayRewards?.date===todayISO()?S.todayRewards:null;
   let h='';
 
@@ -3262,7 +3278,7 @@ function buildExerciseLibrary(){
       <div style="display:flex;flex-wrap:wrap;gap:5px">`;
     for(const ex of exs){
       h+=`<span style="background:rgba(255,255,255,.07);border-radius:6px;
-        padding:3px 8px;font-size:12px;color:var(--text)">${ex.name}</span>`;
+        padding:3px 8px;font-size:12px;color:var(--text)">${tEx(ex.name)}</span>`;
     }
     h+=`</div></div>`;
   }
@@ -3315,7 +3331,7 @@ function buildExerciseSelection(type,color,last){
       h+=`<label class="ex-select-row">
         <input type="checkbox" class="ex-select-box" data-name="${ex.name}" checked>
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:600">${ex.name}</div>
+          <div style="font-size:14px;font-weight:600">${tEx(ex.name)}</div>
           ${lw?`<div style="font-size:12px;color:var(--muted)">${t('上次','Last')} ${lw}${ex.unit?' '+ex.unit:'lbs'}${lr?` × ${lr}${t('次','reps')}`:''}</div>`:''}
         </div>
       </label>`;
@@ -3329,7 +3345,7 @@ function buildExerciseSelection(type,color,last){
       h+=`<label class="ex-select-row">
         <input type="checkbox" class="ex-select-box" data-name="${ex.name}">
         <div style="flex:1">
-          <div style="font-size:14px">${ex.name}</div>
+          <div style="font-size:14px">${tEx(ex.name)}</div>
           ${lw?`<div style="font-size:12px;color:var(--muted)">${t('上次','Last')} ${lw}${ex.unit?' '+ex.unit:'lbs'}${lr?` × ${lr}${t('次','reps')}`:''}</div>`:''}
         </div>
       </label>`;
@@ -3341,7 +3357,7 @@ function buildExerciseSelection(type,color,last){
     for(const ex of getExercises(type)){
       h+=`<label class="ex-select-row">
         <input type="checkbox" class="ex-select-box" data-name="${ex.name}" checked>
-        <div style="flex:1"><div style="font-size:14px">${ex.name}</div></div>
+        <div style="flex:1"><div style="font-size:14px">${tEx(ex.name)}</div></div>
       </label>`;
     }
   }
@@ -3422,46 +3438,46 @@ function renderActiveSession(el){
   if(activeEx){
     const setNum=activeEx.sets.length+1;
     h+=`<div class="active-ex-card" style="border-color:${color}">
-      <div style="font-size:11px;color:${color};font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">当前动作</div>
-      <div style="font-size:22px;font-weight:800;margin-bottom:4px">${activeEx.name}</div>
-      ${activeEx.lastW?`<div style="font-size:12px;color:var(--muted);margin-bottom:14px">上次: ${activeEx.lastW} ${activeEx.unit||'lbs'}${activeEx.lastR?' × '+activeEx.lastR+'次':''}</div>`:'<div style="margin-bottom:14px"></div>'}`;
+      <div style="font-size:11px;color:${color};font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${t('当前动作','Current exercise')}</div>
+      <div style="font-size:22px;font-weight:800;margin-bottom:4px">${tEx(activeEx.name)}</div>
+      ${activeEx.lastW?`<div style="font-size:12px;color:var(--muted);margin-bottom:14px">${t('上次','Last')}: ${activeEx.lastW} ${activeEx.unit||'lbs'}${activeEx.lastR?' × '+activeEx.lastR+t('次','reps'):''}</div>`:'<div style="margin-bottom:14px"></div>'}`;
 
     if(activeEx.sets.length){
       h+=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">`;
       for(let i=0;i<activeEx.sets.length;i++){
         const s=activeEx.sets[i];
         h+=`<div style="background:${color}22;border:1px solid ${color}44;border-radius:8px;
-          padding:5px 10px;font-size:12px">第${i+1}组 ${s.weight||'BW'}×${s.reps||'?'}</div>`;
+          padding:5px 10px;font-size:12px">${t(`第${i+1}组`,`Set ${i+1}`)} ${s.weight||'BW'}×${s.reps||'?'}</div>`;
       }
       h+=`</div>`;
     }
 
-    h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--muted)">第 ${setNum} 组</div>
+    h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--muted)">${t(`第 ${setNum} 组`,`Set ${setNum}`)}</div>
       <div style="display:flex;gap:12px;margin-bottom:16px">
         <div style="flex:1">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:5px">重量 (${activeEx.unit||'lbs'})</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:5px">${t('重量','Weight')} (${activeEx.unit||'lbs'})</div>
           <input id="cur-weight" class="set-input" type="number" inputmode="decimal"
-            placeholder="${activeEx.lastW||'重量'}" value="${activeEx.lastW||''}"
+            placeholder="${activeEx.lastW||t('重量','Weight')}" value="${activeEx.lastW||''}"
             style="width:100%;font-size:20px;padding:10px;text-align:center;border-radius:10px">
         </div>
         <div style="flex:1">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:5px">次数</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:5px">${t('次数','Reps')}</div>
           <input id="cur-reps" class="set-input" type="number" inputmode="numeric"
-            placeholder="次数" value="${activeEx.lastR||''}"
+            placeholder="${t('次数','Reps')}" value="${activeEx.lastR||''}"
             style="width:100%;font-size:20px;padding:10px;text-align:center;border-radius:10px">
         </div>
       </div>
       <button class="btn btn-primary" style="margin-bottom:10px" onclick="completeCurrentSet()">
-        ✅ 完成第 ${setNum} 组 → 休息60秒
+        ${t(`✅ 完成第 ${setNum} 组 → 休息60秒`,`✅ Complete set ${setNum} → rest 60s`)}
       </button>
       <button class="btn btn-ghost" onclick="endCurrentExercise()">
-        ⏭ 结束「${activeEx.name}」进入下一个
+        ${t(`⏭ 结束「${activeEx.name}」进入下一个`,`⏭ Finish "${tEx(activeEx.name)}" — next`)}
       </button>
       <div style="margin-top:14px">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:5px">备注（可选）</div>
-        ${activeEx.lastN?`<div style="font-size:11px;color:#FFB347;margin-bottom:5px">📝 上次备注：${activeEx.lastN}</div>`:''}
+        <div style="font-size:11px;color:var(--muted);margin-bottom:5px">${t('备注（可选）','Note (optional)')}</div>
+        ${activeEx.lastN?`<div style="font-size:11px;color:#FFB347;margin-bottom:5px">📝 ${t('上次备注','Last note')}：${activeEx.lastN}</div>`:''}
         <input id="ex-note" class="set-input" type="text" inputmode="text"
-          placeholder="例：膝盖有点抖、带了绑带..."
+          placeholder="${t('例：膝盖有点抖、带了绑带...','e.g. knees shaky, used straps...')}"
           value="${activeEx.note||''}"
           oninput="S.session.exercises[S.session.activeExIdx].note=this.value;save()"
           style="width:100%;font-size:13px;padding:9px;text-align:left;border-radius:10px">
@@ -3476,7 +3492,7 @@ function renderActiveSession(el){
   }
 
   // Exercise list overview
-  h+=`<div style="margin-top:20px;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px">训练列表</div>`;
+  h+=`<div style="margin-top:20px;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px">${t('训练列表','Exercise list')}</div>`;
   for(let i=0;i<ses.exercises.length;i++){
     const ex=ses.exercises[i];
     const isActive=ex.status==='active',isDone=ex.status==='done';
@@ -3486,10 +3502,10 @@ function renderActiveSession(el){
         ${isDone?'✓':isActive?'▶':(i+1)}
       </div>
       <div style="flex:1">
-        <div style="font-size:14px;font-weight:${isActive?700:400};color:${isDone?'var(--muted)':'var(--text)'}">${ex.name}</div>
-        ${ex.sets.length?`<div style="font-size:12px;color:var(--muted)">${ex.sets.length}组已完成</div>`:''}
+        <div style="font-size:14px;font-weight:${isActive?700:400};color:${isDone?'var(--muted)':'var(--text)'}">${tEx(ex.name)}</div>
+        ${ex.sets.length?`<div style="font-size:12px;color:var(--muted)">${t(`${ex.sets.length}组已完成`,`${ex.sets.length} sets done`)}</div>`:''}
       </div>
-      ${!isDone&&!isActive?`<span style="font-size:12px;color:var(--muted)">点击跳转</span>`:''}
+      ${!isDone&&!isActive?`<span style="font-size:12px;color:var(--muted)">${t('点击跳转','Tap to jump')}</span>`:''}
     </div>`;
   }
 
@@ -4097,9 +4113,9 @@ function renderHistory(){
             </div>
           </td>
           <td style="padding:4px 6px;vertical-align:top" rowspan="${exs.length}">
-            <span style="padding:1px 6px;border-radius:6px;font-weight:600;background:${col}22;color:${col}">${w.type}</span>
+            <span style="padding:1px 6px;border-radius:6px;font-weight:600;background:${col}22;color:${col}">${tPart(w.type)}</span>
           </td>`:''}
-        <td style="padding:4px 6px;color:var(--text)">${ex.name}${ex.note?` <span style="color:#FFB347">📝</span>`:''}</td>
+        <td style="padding:4px 6px;color:var(--text)">${tEx(ex.name)}${ex.note?` <span style="color:#FFB347">📝</span>`:''}</td>
         <td style="padding:4px 6px;color:var(--muted)">${setsStr}</td>
       </tr>`;
     });
