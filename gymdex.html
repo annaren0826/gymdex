@@ -3820,7 +3820,6 @@ function renderItemDexTab(){
   <div class="items-grid">`;
   for(const[id,it]of Object.entries(ITEMS)){
     const seen=S.itemLog.includes(id);
-    const inBag=S.inv[id]||0;
     let stat='';
     if(seen){
       if(it.special) stat='🔑成就';
@@ -3829,7 +3828,6 @@ function renderItemDexTab(){
       else if(it.attr) stat=`${ATTR_EMOJI[it.attr]} +${it.attrVal}`;
     }
     h+=`<div class="item-cell ${seen?'':'locked'}">
-      ${inBag?`<span class="item-cnt">${inBag}</span>`:''}
       <span class="item-emoji">${seen?it.emoji:'❓'}</span>
       <div class="item-name">${seen?it.name:'???'}</div>
       <div style="font-size:10px;color:${RARITY_COLOR[it.rarity]||'#aaa'};margin-top:2px">${seen?RARITY_NAME[it.rarity]:''}</div>
