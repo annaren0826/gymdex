@@ -2818,9 +2818,7 @@ function openFeedModal(idx){
   const remaining=DAILY_FEED_LIMIT-fedToday;
   const limitReached=remaining<=0;
   let itemsHtml='';
-  if(limitReached){
-    itemsHtml=`<div style="text-align:center;color:var(--muted);padding:24px 0">今天已喂食5次 🌙<br><span style="font-size:12px">明天再来吧！</span></div>`;
-  } else if(!feedable.length){
+  if(!feedable.length){
     itemsHtml=`<div style="text-align:center;color:var(--muted);padding:24px 0">背包里没有可喂食的道具</div>`;
   } else {
     itemsHtml=`<div class="items-grid">`;
@@ -2845,10 +2843,7 @@ function openFeedModal(idx){
         ${evolCond?`<div style="font-size:12px;color:var(--muted);margin-top:2px">EXP ${slot.exp} / ${evolCond.exp}</div>`:''}
       </div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:12px;color:var(--muted)">选择道具喂食</div>
-      <div style="font-size:12px;color:${limitReached?'#FF6B6B':'var(--muted)'}">今日还可喂 ${remaining} 次</div>
-    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">选择道具喂食</div>
     ${itemsHtml}`;
   document.getElementById('feed-modal').style.display='flex';
   requestAnimationFrame(refreshSprites);
