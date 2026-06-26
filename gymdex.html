@@ -246,18 +246,17 @@ body{background:var(--bg);color:var(--text)}
 .cre-cell.unlocked .cre-name{color:var(--text)}
 
 /* DEX THUMB GRID */
-.dex-thumb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
-.dex-thumb{background:var(--card);border:1px solid var(--border);border-radius:10px;
-  padding:10px 4px 7px;text-align:center;cursor:pointer;transition:transform .1s,border-color .2s;
+.dex-thumb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.dex-thumb{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px 6px 10px;text-align:center;cursor:pointer;transition:transform .1s,border-color .2s;
   position:relative}
 .dex-thumb:active{transform:scale(.92)}
 .dex-thumb.unlocked{border-color:rgba(255,107,157,.3)}
-.dex-thumb.locked{opacity:.35;filter:grayscale(1);cursor:default}
-.dex-thumb-emoji{font-size:30px;display:block;line-height:1.1}
-.dex-thumb-stage{position:absolute;top:4px;right:5px;font-size:9px;
-  color:var(--muted);font-weight:700;line-height:1}
-.dex-thumb-name{font-size:10px;color:var(--muted);margin-top:4px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dex-thumb.locked{cursor:default}
+.dex-thumb-emoji{font-size:36px;display:block;line-height:1.1}
+.dex-locked-q{font-size:38px;color:#e03;font-weight:900;display:block;line-height:1.1}
+.dex-thumb-name{font-size:11px;color:var(--muted);margin-top:5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
 .dex-thumb.unlocked .dex-thumb-name{color:var(--text)}
 
 /* DEX DETAIL MODAL */
@@ -3830,10 +3829,16 @@ function renderCreatureDexTab(){
       const unlocked=s<=maxStage;
       const stgDef=cr.stages[s-1];
       const onclick=unlocked?`onclick="showDexDetail('${cr.id}',${s})"`:'' ;
+      const imgSrc=IMG_MAP[cr.id]?.[s];
+      const thumbMedia=unlocked
+        ?(imgSrc
+          ?`<img src="${imgSrc}" style="width:60px;height:60px;object-fit:contain;display:block;margin:0 auto">`
+          :`<span class="dex-thumb-emoji">${stgDef?.emoji||'✨'}</span>`)
+        :`<span class="dex-locked-q">?</span>`;
       h+=`<div class="dex-thumb ${unlocked?'unlocked':'locked'}" ${onclick}>
-        <span class="dex-thumb-stage">S${s}</span>
-        <span class="dex-thumb-emoji">${unlocked?stgDef?.emoji||'✨':'❓'}</span>
+        ${thumbMedia}
         <div class="dex-thumb-name">${unlocked?stgDef.name:'???'}</div>
+        <div style="font-size:9px;color:${unlocked?RARITY_COLOR[cr.rarity]:'transparent'};margin-top:2px;font-weight:700">${RARITY_NAME[cr.rarity]}</div>
       </div>`;
     }
   }
@@ -3881,37 +3886,32 @@ function showDexDetail(crId, stage){
     mediaEl.innerHTML='';
     mediaEl.textContent=stgDef.emoji||'✨';
   }
-  document.getElementById('dex-modal-title').textContent=cr.name;
-  document.getElementById('dex-modal-stage-name').textContent=`第${stage}阶段 · ${stgDef.name}`;
-  document.getElementById('dex-modal-rarity').innerHTML=
-    `<span style="font-size:12px;font-weight:700;color:${RARITY_COLOR[cr.rarity]}">${RARITY_NAME[cr.rarity]}</span>`;
-  // Attributes
-  const ATTR_LABEL={fire:'🔥火',water:'💧水',wood:'🌿木',wind:'🌀风'};
-  let attrsHtml='';
-  if(cr.attr){
-    attrsHtml+=`<span class="dex-attr-chip">${ATTR_LABEL[cr.attr]||cr.attr} 系</span>`;
-  }
-  if(pet?.attrs){
-    const a=pet.attrs;
-    ['fire','water','wood','wind'].forEach(k=>{
-      if(a[k]>0)attrsHtml+=`<span class="dex-attr-chip">${ATTR_EMOJI[k]} ${a[k]}</span>`;
-    });
-  }
-  document.getElementById('dex-modal-attrs').innerHTML=attrsHtml||'<span style="color:var(--muted);font-size:12px">属性未知</span>';
-  // Evolve hint
-  const nextStgDef=cr.stages[stage];
-  let desc='';
+  // Title = stage name only (no species name like 仓鼠/兔子)
+  document.getElementById('dex-modal-title').textContent=stgDef.name;
+  document.getElementById('dex-modal-stage-name').innerHTML=
+    `<span style="font-weight:700;color:${RARITY_COLOR[cr.rarity]}">${RARITY_NAME[cr.rarity]}</span>`;
+  document.getElementById('dex-modal-rarity').innerHTML='';
+  document.getElementById('dex-modal-attrs').innerHTML='';
+  // Evolution requirements
+  const nextStgDef=cr.stages[stage]; // stage is 1-indexed; stages[stage] = next stage def
+  const maxStage=getUnlockedStages(cr.id);
+  const alreadyPassed=maxStage>stage;
+  let descHtml='';
   if(nextStgDef?.evolve){
-    desc=`进化至第${stage+1}阶段需要 ${nextStgDef.evolve.exp} EXP`;
+    descHtml+=`<div style="margin-top:10px;font-size:13px">进化需要 <b>${nextStgDef.evolve.exp}</b> EXP</div>`;
     if(nextStgDef.evolve.items){
-      const itemNames=Object.entries(nextStgDef.evolve.items)
-        .map(([id,n])=>`${ITEMS[id]?.emoji||id}×${n}`).join(' ');
-      desc+=` + ${itemNames}`;
+      if(alreadyPassed){
+        const itemNames=Object.entries(nextStgDef.evolve.items)
+          .map(([id,n])=>`${ITEMS[id]?.emoji||id}×${n}`).join(' ');
+        descHtml+=`<div style="font-size:12px;color:var(--muted);margin-top:4px">+ ${itemNames}</div>`;
+      }else{
+        descHtml+=`<div style="font-size:12px;color:var(--muted);margin-top:4px">+ 需要特殊材料???</div>`;
+      }
     }
   }else if(stage===3){
-    desc='已达到最终形态 ✨';
+    descHtml=`<div style="margin-top:10px;font-size:13px;color:var(--muted)">已达到最终形态 ✨</div>`;
   }
-  document.getElementById('dex-modal-desc').textContent=desc;
+  document.getElementById('dex-modal-desc').innerHTML=descHtml;
   document.getElementById('dex-modal').classList.remove('hidden');
 }
 
