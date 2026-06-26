@@ -277,14 +277,19 @@ body{background:var(--bg);color:var(--text)}
   padding:4px 10px;font-size:12px;font-weight:600}
 
 /* BAG */
-.items-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.item-cell{background:var(--card);border:1px solid var(--border);border-radius:12px;
-  padding:12px 6px;text-align:center;cursor:pointer;transition:transform .1s;position:relative}
+.items-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.item-cell{background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:8px 4px;text-align:center;cursor:pointer;transition:transform .1s;position:relative}
 .item-cell:active{transform:scale(.95)}
-.item-emoji{font-size:30px;display:block;margin-bottom:4px}
-.item-name{font-size:11px;color:var(--muted)}
-.item-cnt{position:absolute;top:5px;right:5px;background:var(--pink);color:white;
-  font-size:10px;font-weight:700;border-radius:8px;padding:1px 5px;min-width:18px;text-align:center}
+.item-emoji{font-size:26px;display:block;margin-bottom:2px}
+.item-name{font-size:10px;color:var(--muted)}
+.item-cnt{position:absolute;top:3px;right:3px;background:var(--pink);color:white;
+  font-size:9px;font-weight:700;border-radius:6px;padding:1px 4px;min-width:16px;text-align:center}
+.item-dex-row{display:flex;align-items:center;gap:12px;padding:10px 12px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:6px}
+.item-dex-emoji{font-size:28px;flex-shrink:0;width:36px;text-align:center}
+.item-dex-info{flex:1;min-width:0}
+.item-dex-stat{font-size:11px;color:var(--muted);margin-top:2px}
 
 /* HISTORY */
 .hist-entry{background:var(--card);border:1px solid var(--border);border-radius:12px;
@@ -3811,18 +3816,40 @@ function renderCreatureDexTab(){
 
 function renderItemDexTab(){
   let h=`<div style="font-size:13px;color:var(--muted);margin-bottom:12px">
-    已获得 ${S.itemLog.length} / ${Object.keys(ITEMS).length} 种道具</div>
-  <div class="items-grid">`;
+    已获得 ${S.itemLog.length} / ${Object.keys(ITEMS).length} 种道具</div>`;
   for(const[id,it]of Object.entries(ITEMS)){
     const seen=S.itemLog.includes(id);
-    h+=`<div class="item-cell ${seen?'':'locked'}" title="${seen?(it.special?'🔑 '+it.how:''):'???'}">
-      <span class="item-emoji">${seen?it.emoji:'❓'}</span>
-      <div class="item-name">${seen?it.name:'???'}</div>
-      <div style="font-size:10px;color:${RARITY_COLOR[it.rarity]||'#aaa'};margin-top:2px">${seen?RARITY_NAME[it.rarity]:''}</div>
-      ${seen&&it.special?`<div style="font-size:9px;color:var(--muted);margin-top:2px">🔑成就道具</div>`:''}
+    if(!seen){
+      h+=`<div class="item-dex-row" style="opacity:.45">
+        <div class="item-dex-emoji">❓</div>
+        <div class="item-dex-info">
+          <div style="font-size:13px;color:var(--muted)">未发现</div>
+        </div>
+      </div>`;
+      continue;
+    }
+    let stats='';
+    if(it.special){
+      stats=`🔑 成就道具${it.how?` · ${it.how}`:''}`;
+    } else {
+      const parts=[];
+      if(it.exp) parts.push(`+${it.exp} EXP`);
+      if(it.attr&&it.attrVal) parts.push(`${ATTR_EMOJI[it.attr]} +${it.attrVal} ${ATTR_COLOR[it.attr]?it.attr:''}`);
+      stats=parts.join('　');
+    }
+    const inBag=S.inv[id]||0;
+    h+=`<div class="item-dex-row">
+      <div class="item-dex-emoji">${it.emoji}</div>
+      <div class="item-dex-info">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:14px;font-weight:600">${it.name}</span>
+          <span style="font-size:11px;font-weight:700;color:${RARITY_COLOR[it.rarity]||'#aaa'}">${RARITY_NAME[it.rarity]}</span>
+          ${inBag?`<span style="font-size:11px;color:var(--pink);margin-left:auto">×${inBag}</span>`:''}
+        </div>
+        <div class="item-dex-stat">${stats}</div>
+      </div>
     </div>`;
   }
-  h+=`</div>`;
   return h;
 }
 
@@ -3901,10 +3928,6 @@ function renderBagTab(){
       <span class="item-cnt">${n}</span>
       <span class="item-emoji">${it.emoji}</span>
       <div class="item-name">${it.name}</div>
-      <div style="font-size:10px;color:${RARITY_COLOR[it.rarity]||'#aaa'};margin-top:2px">${RARITY_NAME[it.rarity]}</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:1px">
-        ${it.exp?`+${it.exp}EXP `:''}${attrLabel}${it.special?'🔑进化材料':''}
-      </div>
     </div>`;
   }
   h+=`</div>`;
