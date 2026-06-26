@@ -2601,7 +2601,13 @@ function finish(){
   S.total=(S.total||0)+1;
   S.streak=calcStreak();
   S.session=null;
-  const rewards=genRewards(true);
+  // If today's rest-day reward was already claimed, only drop the difference
+  const _today=todayISO();
+  const priorRest=(S.todayRewards?.date===_today&&S.todayRewards?.type==='休息')
+    ?S.todayRewards.rewards:null;
+  const restExp=priorRest
+    ?Object.entries(priorRest).reduce((s,[id,n])=>s+(ITEMS[id]?.exp||0)*n,0):0;
+  const rewards=genRewards(true,restExp);
   for(const[id,n]of Object.entries(rewards)){
     S.inv[id]=(S.inv[id]||0)+n;
     if(!S.itemLog.includes(id))S.itemLog.push(id);
@@ -2628,11 +2634,13 @@ function finish(){
 const DROP_WEIGHT={common:60,rare:25,epic:10};
 const DROP_COST  ={common:10,rare:30,epic:70};
 
-function genRewards(isWorkout=true){
+function genRewards(isWorkout=true, deductExp=0){
   // EXP budget: 75-125 for workout, 30-50 for rest day
-  const budget=isWorkout
+  let budget=isWorkout
     ?(75+Math.floor(Math.random()*51))
     :(30+Math.floor(Math.random()*21));
+  // Already claimed rest-day reward today → only grant the difference
+  budget=Math.max(0,budget-deductExp);
   const out=spendBudget(budget);
   // Attr items: separate 0-50 budget roll, workout only
   if(isWorkout){
