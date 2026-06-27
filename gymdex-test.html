@@ -2947,7 +2947,8 @@ function evolveNurturing(idx){
   const cond=cr.stages[slot.stage-1].evolve;
   // Consume items
   if(cond.items)for(const[id,n]of Object.entries(cond.items))S.inv[id]-=n;
-  slot.stage++;slot.exp=0;
+  // Carry over excess EXP into the next stage instead of resetting to 0
+  slot.exp=Math.max(0,slot.exp-cond.exp);slot.stage++;
   const stageDef=cr.stages[slot.stage-1];
   save();sparkles();renderPet();
   toast(t(`🎉 ${stageDef.name} 进化成功！`,`🎉 ${stageDef.name} evolved!`));
