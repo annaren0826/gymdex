@@ -208,8 +208,8 @@ body{background:var(--bg);color:var(--text)}
   margin-bottom:6px;transition:all .15s}
 .ex-overview-row.ex-ov-active{border-color:var(--pink);background:rgba(255,107,157,.08)}
 .ex-overview-row.ex-ov-done{opacity:.55}
-.ex-overview-row:not(.ex-ov-active):not(.ex-ov-done){cursor:pointer}
-.ex-overview-row:not(.ex-ov-active):not(.ex-ov-done):active{opacity:.7}
+.ex-overview-row:not(.ex-ov-active){cursor:pointer}
+.ex-overview-row:not(.ex-ov-active):active{opacity:.7}
 
 /* REST TIMER */
 #rest-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(13,13,26,.93);
@@ -3549,7 +3549,7 @@ function renderActiveSession(el){
     const ex=ses.exercises[i];
     const isActive=ex.status==='active',isDone=ex.status==='done';
     h+=`<div class="ex-overview-row${isActive?' ex-ov-active':isDone?' ex-ov-done':''}"
-      onclick="${!isDone&&!isActive?`skipToExercise(${i})`:''}">
+      onclick="${!isActive?`skipToExercise(${i})`:''}">
       <div class="exercise-status${isDone?' done':isActive?' active':''}">
         ${isDone?'✓':isActive?'▶':(i+1)}
       </div>
@@ -3557,7 +3557,7 @@ function renderActiveSession(el){
         <div style="font-size:14px;font-weight:${isActive?700:400};color:${isDone?'var(--muted)':'var(--text)'}">${tEx(ex.name)}</div>
         ${ex.sets.length?`<div style="font-size:12px;color:var(--muted)">${t(`${ex.sets.length}组已完成`,`${ex.sets.length} sets done`)}</div>`:''}
       </div>
-      ${!isDone&&!isActive?`<span style="font-size:12px;color:var(--muted)">${t('点击跳转','Tap to jump')}</span>`:''}
+      ${!isActive?`<span style="font-size:12px;color:var(--muted)">${isDone?t('点击继续','Tap to resume'):t('点击跳转','Tap to jump')}</span>`:''}
     </div>`;
   }
 
