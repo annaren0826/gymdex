@@ -1492,7 +1492,7 @@ const IMG_MAP = {
   fox:     {1:'assets/fox_1.png',      2:'assets/fox_2.png',      3:'assets/fox_3.png'},
   hamster: {1:'assets/fluffball.png', 2:'assets/hamster_2.png', 3:'assets/hamster_3.png'},
   bunny:   {1:'assets/fluffball.png', 2:'assets/bunny_2.png', 3:'assets/bunny_3.png'},
-  dog:     {1:'assets/fluffball.png'},
+  dog:     {1:'assets/fluffball.png', 2:'assets/dog_2.png', 3:'assets/dog_3.png'},
   chicken: {1:'assets/fluffball.png', 2:'assets/chicken_2.png', 3:'assets/chicken_3.png'},
   duck:    {1:'assets/fluffball.png', 2:'assets/duck_2.png', 3:'assets/duck_3.png'},
 };
@@ -2942,7 +2942,8 @@ function evolveNurturing(idx){
   const cond=cr.stages[slot.stage-1].evolve;
   // Consume items
   if(cond.items)for(const[id,n]of Object.entries(cond.items))S.inv[id]-=n;
-  slot.stage++;slot.exp=0;
+  // Carry over excess EXP into the next stage instead of resetting to 0
+  slot.exp=Math.max(0,slot.exp-cond.exp);slot.stage++;
   const stageDef=cr.stages[slot.stage-1];
   save();sparkles();renderPet();
   toast(t(`🎉 ${stageDef.name} 进化成功！`,`🎉 ${stageDef.name} evolved!`));
