@@ -301,6 +301,14 @@ body{background:var(--bg);color:var(--text)}
 #reward-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(13,13,26,.92);
   z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
 #reward-modal.on{display:flex}
+#evolve-modal{position:fixed;inset:0;background:rgba(13,13,26,.92);z-index:320;
+  display:none;align-items:center;justify-content:center;padding:20px}
+#evolve-modal.on{display:flex}
+.evo-card{animation:evoPop .5s cubic-bezier(.34,1.6,.5,1)}
+@keyframes evoPop{0%{transform:scale(.2);opacity:0}60%{opacity:1}100%{transform:scale(1);opacity:1}}
+#evolve-flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:321}
+#evolve-flash.go{animation:evoFlash 1s ease-out}
+@keyframes evoFlash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
 .reward-box{background:linear-gradient(135deg,rgba(255,107,157,.12),rgba(180,77,255,.12));
   border:1px solid rgba(255,107,157,.3);border-radius:24px;padding:28px 22px;text-align:center;
   width:100%;max-width:340px;animation:pop .4s cubic-bezier(.34,1.56,.64,1)}
@@ -878,6 +886,12 @@ select.ob-input{appearance:none;-webkit-appearance:none;
     <button class="btn btn-primary" id="reward-close-btn" onclick="closeReward()" style="margin-top:18px">收下啦 🎉</button>
   </div>
 </div>
+
+<!-- EVOLUTION REVEAL MODAL -->
+<div id="evolve-modal">
+  <div class="reward-box evo-card" id="evolve-card"></div>
+</div>
+<div id="evolve-flash"></div>
 
 <div id="feed-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);align-items:flex-end" onclick="closeFeedModal()">
   <div style="background:var(--bg);border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-height:75vh;overflow-y:auto;box-sizing:border-box" onclick="event.stopPropagation()">
@@ -2949,13 +2963,36 @@ function evolveNurturing(idx){
   if(cond.items)for(const[id,n]of Object.entries(cond.items))S.inv[id]-=n;
   // Carry over excess EXP into the next stage instead of resetting to 0
   slot.exp=Math.max(0,slot.exp-cond.exp);slot.stage++;
+  save();
+  showEvolveReveal(idx);
+}
+
+// Flash + card reveal of what the pet evolved into
+function showEvolveReveal(idx){
+  const slot=S.nurturing[idx];if(!slot)return;
+  const cr=CREATURES.find(c=>c.id===slot.petId);
   const stageDef=cr.stages[slot.stage-1];
-  save();sparkles();renderPet();
-  toast(t(`🎉 ${stageDef.name} 进化成功！`,`🎉 ${stageDef.name} evolved!`));
-  if(slot.stage===3){
-    // Move to garden automatically
-    setTimeout(()=>graduateToGarden(idx),1200);
-  }
+  const isFinal=slot.stage>=3;
+  const sp=spriteCanvas(slot.petId,slot.stage,120);
+  document.getElementById('evolve-card').innerHTML=`
+    <div style="font-size:13px;color:var(--gold);font-weight:800;letter-spacing:2px;margin-bottom:10px">${t('✨ 进化成功 ✨','✨ EVOLVED ✨')}</div>
+    <div style="display:flex;justify-content:center;margin:4px 0 12px">${sp}</div>
+    <div style="font-size:24px;font-weight:800">${stageDef.name}</div>
+    <div style="font-size:13px;color:${RARITY_COLOR[cr.rarity]};font-weight:700;margin-top:3px">${RARITY_NAME[cr.rarity]}</div>
+    <button class="btn btn-primary" style="margin-top:20px;width:100%" onclick="closeEvolveReveal(${idx},${isFinal})">
+      ${isFinal?t('🏡 移到庭院','🏡 Move to garden'):t('确认','OK')}
+    </button>`;
+  document.getElementById('evolve-modal').classList.add('on');
+  const flash=document.getElementById('evolve-flash');
+  flash.classList.remove('go');void flash.offsetWidth;flash.classList.add('go');
+  sparkles();
+  requestAnimationFrame(refreshSprites);
+}
+
+function closeEvolveReveal(idx,isFinal){
+  document.getElementById('evolve-modal').classList.remove('on');
+  if(isFinal)graduateToGarden(idx);
+  else renderPet();
 }
 
 function graduateToGarden(idx){
@@ -3626,7 +3663,7 @@ function renderNurturingTab(){
         ${full?'🍖 已吃饱':'🍖 喂食'}
       </button>
       <button class="btn ${ready?'btn-green':'btn-secondary'} btn-small" style="flex:1" ${ready?'':'disabled'} onclick="evolveNurturing(${i})">
-        ${slot.stage>=3?t('✨ 最终形态','✨ Final form'):(ready?`✨ ${t('进化','Evolve')} → ${nextName}`:t('🔒 进化（未满足）','🔒 Evolve (locked)'))}
+        ${slot.stage>=3?t('✨ 最终形态','✨ Final form'):(ready?`✨ ${t('进化','Evolve')}`:t('🔒 进化（未满足）','🔒 Evolve (locked)'))}
       </button>
     </div>
     </div>`;
