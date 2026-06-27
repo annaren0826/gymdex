@@ -4141,7 +4141,7 @@ function renderHistory(){
     </tr></thead><tbody>`;
   for(const w of page){
     const col=partColor(w.type);
-    const wIdx=S.workouts.findIndex(x=>x.date===w.date&&x.type===w.type);
+    const wIdx=S.workouts.indexOf(w); // unique index (date+type can repeat)
     const exs=(w.exercises||[]).filter(ex=>(ex.sets||[]).some(s=>s.weight||s.reps));
     if(!exs.length)continue;
     exs.forEach((ex,ei)=>{
