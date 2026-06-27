@@ -2630,12 +2630,22 @@ function finish(){
   const _today=todayISO();
   // One drop per day: only the first real (non-休息) workout today grants rewards
   const alreadyTrainedToday=S.workouts.some(w=>w.date===_today&&w.type!=='休息');
-  S.workouts.push({
-    date:ses.date,type:ses.type,
-    exercises:ses.exercises
-      .map(e=>({name:e.name,sets:e.sets.filter(s=>s.weight||s.reps)}))
-      .filter(e=>e.sets.length)
-  });
+  const newExercises=ses.exercises
+    .map(e=>({name:e.name,sets:e.sets.filter(s=>s.weight||s.reps)}))
+    .filter(e=>e.sets.length);
+  // One entry per day+part: merge into today's existing record for the same part.
+  // Same exercise name → combine sets; new exercise → add as another row.
+  const existing=S.workouts.find(w=>w.date===ses.date&&w.type===ses.type);
+  if(existing){
+    if(!existing.exercises)existing.exercises=[];
+    for(const ne of newExercises){
+      const same=existing.exercises.find(e=>e.name===ne.name);
+      if(same)same.sets=(same.sets||[]).concat(ne.sets);
+      else existing.exercises.push(ne);
+    }
+  }else{
+    S.workouts.push({date:ses.date,type:ses.type,exercises:newExercises});
+  }
   S.total=(S.total||0)+1;
   S.streak=calcStreak();
   S.session=null;
