@@ -2527,6 +2527,7 @@ function completeCurrentSet(){
   if(!ex)return;
   const w=(document.getElementById('cur-weight')?.value||'').trim();
   const r=(document.getElementById('cur-reps')?.value||'').trim();
+  if(!r||Number(r)===0){toast(t('请先输入次数！','Enter your reps first!'));return;}
   ex.sets.push({weight:w,reps:r,done:true});
   if(w)ex.lastW=w;
   if(r)ex.lastR=r;
