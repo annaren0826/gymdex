@@ -4145,6 +4145,7 @@ function renderHistory(){
     const exs=(w.exercises||[]).filter(ex=>(ex.sets||[]).some(s=>s.weight||s.reps));
     if(!exs.length)continue;
     exs.forEach((ex,ei)=>{
+      const exIdx=(w.exercises||[]).indexOf(ex);
       const sets=(ex.sets||[]).filter(s=>s.weight||s.reps);
       const setsStr=sets.map(s=>`${s.weight||'BW'}×${s.reps||'?'}`).join(' ');
       h+=`<tr style="border-bottom:1px solid rgba(255,255,255,.04);${ei===exs.length-1?'border-bottom:1px solid var(--border)':''}">
@@ -4158,7 +4159,8 @@ function renderHistory(){
             <span style="padding:1px 6px;border-radius:6px;font-weight:600;background:${col}22;color:${col}">${tPart(w.type)}</span>
           </td>`:''}
         <td style="padding:4px 6px;color:var(--text)">${tEx(ex.name)}${ex.note?` <span style="color:#FFB347">📝</span>`:''}</td>
-        <td style="padding:4px 6px;color:var(--muted)">${setsStr}</td>
+        <td style="padding:4px 6px;color:var(--muted)">${setsStr}
+          <span onclick="editExerciseSets(${wIdx},${exIdx})" title="${t('修改','Edit')}" style="cursor:pointer;margin-left:5px;opacity:.55">✏️</span></td>
       </tr>`;
     });
     // inline add-exercise form (hidden by default)
@@ -4264,6 +4266,25 @@ function confirmAddExercise(wIdx){
   save();
   toast(t(`✅ 已补录：${name}`,`✅ Added: ${name}`));
   renderHistory();
+}
+
+// Edit the sets of an already-recorded exercise (e.g. forgot to enter a weight)
+function editExerciseSets(wIdx,exIdx){
+  const w=S.workouts[wIdx];if(!w)return;
+  const ex=w.exercises?.[exIdx];if(!ex)return;
+  const cur=(ex.sets||[]).map(s=>`${s.weight||''}×${s.reps||''}`).join(' ');
+  const msg=t(`编辑「${ex.name}」组数\n格式：重量×次数，空格分隔（如 35×12 35×10）。留空可删除该动作。`,
+              `Edit sets for "${tEx(ex.name)}"\nFormat: weight×reps, space-separated (e.g. 35×12 35×10). Leave empty to remove.`);
+  const input=prompt(msg,cur);
+  if(input===null)return; // cancelled
+  const sets=input.trim().split(/\s+/).filter(Boolean).map(tok=>{
+    const parts=tok.split(/[×xX*]/);
+    return {weight:(parts[0]||'').trim(),reps:(parts[1]||'').trim()||'?',done:true};
+  });
+  ex.sets=sets;
+  save();
+  renderHistory();
+  toast(sets.length?t('✅ 已修改','✅ Updated'):t('🗑️ 已删除该动作','🗑️ Exercise removed'));
 }
 
 function csvEscape(v){
