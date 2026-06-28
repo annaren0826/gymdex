@@ -2699,9 +2699,9 @@ function finish(){
     S.hatchQueue.push(eggDrop);
     rewards._egg=eggDrop;
   }
-  // Tick incubator
+  // Tick incubator — if it just became ready, remember which egg (rarity) for display
   const hatched=tickIncubator();
-  if(hatched)rewards._hatched=hatched;
+  if(hatched)rewards._hatched=S.incubator?.eggRarity||'common';
   // Check achievements
   const newAchievements=checkAchievements();
   // Store today's rewards for post-workout display
@@ -3222,14 +3222,15 @@ function showReward(type,rewards,newAchievements){
       border-radius:12px;text-align:center">
       <div style="font-size:28px">${ed.emoji}</div>
       <div style="font-weight:700;color:var(--gold)">${t(`获得了一颗${ed.name}！`,`Got a ${ed.name}!`)}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">${S.incubator?.eggRarity===rewards._egg?t('已放入孵蛋器','Placed in incubator'):t('已加入孵蛋队列','Added to egg queue')}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">${t('已放入蛋背包','Added to egg bag')}</div>
     </div>`;
   }
-  if(rewards._hatched==='ready'){
+  if(rewards._hatched){
+    const he=EGG_DATA[rewards._hatched]||EGG_DATA.common;
     h+=`<div style="margin:10px 0;padding:12px;background:rgba(180,77,255,.1);border:1px solid rgba(180,77,255,.4);
       border-radius:12px;text-align:center">
-      <div style="font-size:36px">🥚</div>
-      <div style="font-weight:700;color:#B44DFF;margin-top:4px">${t('蛋孵化好了！','Egg has hatched!')}</div>
+      <div style="font-size:36px">${he.emoji}</div>
+      <div style="font-weight:700;color:#B44DFF;margin-top:4px">${t(`${he.name}孵化好了！`,`${he.name} is ready to hatch!`)}</div>
       <div style="font-size:12px;color:var(--muted);margin-top:4px">${t('去孵蛋器点击孵化 ✨','Tap the incubator to hatch ✨')}</div>
     </div>`;
   }
@@ -3394,16 +3395,16 @@ function buildTodayDoneView(todayWorkouts,nextT){
           border-radius:10px;display:flex;align-items:center;gap:10px;margin-bottom:8px">
           <span style="font-size:28px">${ed.emoji}</span>
           <div><div style="font-weight:700;color:var(--gold)">${ed.name}</div>
-          <div style="font-size:12px;color:var(--muted)">${t('已放入孵蛋器','Added to incubator')}</div></div>
+          <div style="font-size:12px;color:var(--muted)">${t('已放入蛋背包','Added to egg bag')}</div></div>
         </div>`;
       }
       if(rewards._hatched){
-        const cr=CREATURES.find(c=>c.id===rewards._hatched);
+        const he=EGG_DATA[rewards._hatched]||EGG_DATA.common;
         h+=`<div style="padding:10px;background:rgba(180,77,255,.08);border:1px solid rgba(180,77,255,.3);
           border-radius:10px;display:flex;align-items:center;gap:10px">
-          <span style="font-size:28px">${cr?.stages[0].emoji||'🐣'}</span>
-          <div><div style="font-weight:700;color:#B44DFF">${cr?.stages[0].name} ${t('孵化了！','hatched!')}</div>
-          <div style="font-size:12px;color:var(--muted)">${t('已加入培育槽','Added to nursery')}</div></div>
+          <span style="font-size:28px">${he.emoji}</span>
+          <div><div style="font-weight:700;color:#B44DFF">${t(`${he.name}孵化好了！`,`${he.name} is ready!`)}</div>
+          <div style="font-size:12px;color:var(--muted)">${t('去孵蛋器孵化','Hatch it in the incubator')}</div></div>
         </div>`;
       }
       h+=`</div>`;
