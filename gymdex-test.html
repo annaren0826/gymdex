@@ -2918,26 +2918,14 @@ function hatchEgg(){
 function manualHatch(){
   if(!S.incubator?.ready)return;
   const petId=hatchEgg();
-  const resolvedId=petId||S.hatchPending;
-  const cr=CREATURES.find(c=>c.id===resolvedId);
-  if(!cr)return;
-  save();renderPet();sparkles();
-  // Show hatch celebration modal
-  const stage=cr.stages[0];
-  const spriteHtml=spriteCanvas(resolvedId,1,96);
-  const isFull=S.hatchPending&&!petId;
-  document.getElementById('reward-content').innerHTML=`
-    <div style="text-align:center;padding:8px 0">
-      <div style="font-size:15px;color:var(--muted);margin-bottom:16px">${t('✨ 恭喜！孵化出了','✨ Congrats! Hatched')}</div>
-      <div style="display:flex;justify-content:center;margin-bottom:12px">${spriteHtml}</div>
-      <div style="font-size:24px;font-weight:800;margin-bottom:6px">${stage.name}</div>
-      <span class="badge badge-${cr.rarity}" style="font-size:13px">${RARITY_NAME[cr.rarity]}</span>
-      <div style="font-size:13px;color:var(--muted);margin-top:14px">${cr.desc}</div>
-      ${isFull?`<div style="margin-top:12px;font-size:12px;color:#FFB347">${t('⚠️ 培育槽已满，请先清理槽位','⚠️ Nursery full — clear a slot first')}</div>`
-               :`<div style="margin-top:12px;font-size:12px;color:#4DCC78">${t('已加入培育槽 🌱','Added to nursery 🌱')}</div>`}
-    </div>`;
-  document.getElementById('reward-modal').style.display='flex';
-  requestAnimationFrame(refreshSprites);
+  save();renderPet();
+  if(petId){
+    showHatchReveal(petId); // added to nursery → animated reveal
+  }else if(S.hatchPending){
+    // Nursery full — egg waits to be claimed manually once a slot frees up
+    const cr=CREATURES.find(c=>c.id===S.hatchPending);
+    toast(t(`✨ ${cr?.stages[0].name||''} 孵化好了！培育槽已满，腾出空位后可领取`,`✨ ${cr?.stages[0].name||''} hatched! Nursery full — claim it after freeing a slot`));
+  }
 }
 
 function placeEggInIncubator(idx){
@@ -2952,10 +2940,12 @@ function placeEggInIncubator(idx){
 
 function claimHatched(){
   if(!S.hatchPending||S.nurturing.length>=3)return;
-  S.nurturing.push({petId:S.hatchPending,stage:1,exp:0,attrs:{fire:0,water:0,wood:0,wind:0}});
+  const petId=S.hatchPending;
+  S.nurturing.push({petId,stage:1,exp:0,attrs:{fire:0,water:0,wood:0,wind:0}});
   S.hatchPending=null;
   S.incubator=null; // clear incubator after claiming
   save();renderPet();
+  showHatchReveal(petId); // animated hatch celebration
 }
 
 // ── Nurturing ──────────────────────────────
@@ -3088,6 +3078,28 @@ function closeEvolveReveal(idx,isFinal){
   document.getElementById('evolve-modal').classList.remove('on');
   if(isFinal)graduateToGarden(idx);
   else renderPet();
+}
+
+// Flash + card reveal of a newly hatched creature (reuses the evolve-modal animation)
+function showHatchReveal(petId){
+  const cr=CREATURES.find(c=>c.id===petId);if(!cr)return;
+  const sp=spriteCanvas(petId,1,120);
+  document.getElementById('evolve-card').innerHTML=`
+    <div style="font-size:13px;color:var(--gold);font-weight:800;letter-spacing:2px;margin-bottom:10px">${t('✨ 孵化成功 ✨','✨ HATCHED ✨')}</div>
+    <div style="display:flex;justify-content:center;margin:4px 0 12px">${sp}</div>
+    <div style="font-size:24px;font-weight:800">${cr.stages[0].name}</div>
+    <div style="font-size:13px;color:${RARITY_COLOR[cr.rarity]};font-weight:700;margin-top:3px">${RARITY_NAME[cr.rarity]}</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:10px">${cr.desc}</div>
+    <button class="btn btn-primary" style="margin-top:18px;width:100%" onclick="closeHatchReveal()">${t('确认','OK')}</button>`;
+  document.getElementById('evolve-modal').classList.add('on');
+  const flash=document.getElementById('evolve-flash');
+  flash.classList.remove('go');void flash.offsetWidth;flash.classList.add('go');
+  sparkles();
+  requestAnimationFrame(refreshSprites);
+}
+function closeHatchReveal(){
+  document.getElementById('evolve-modal').classList.remove('on');
+  renderPet();
 }
 
 function graduateToGarden(idx){
@@ -3679,12 +3691,7 @@ function sanitizePets(){
 }
 
 function renderPet(){
-  sanitizePets();
-  // A hatched egg waiting on a free slot → claim it now that there's room
-  if(S.hatchPending&&S.nurturing.length<3){
-    S.nurturing.push({petId:S.hatchPending,stage:1,exp:0,attrs:{fire:0,water:0,wood:0,wind:0}});
-    S.hatchPending=null;S.incubator=null;save();
-  }
+  sanitizePets(); // keep slot counts correct, but let the player claim manually
   const el=document.getElementById('pet-content');
   const bagCount=Object.values(S.inv||{}).filter(n=>n>0).length;
   const hatchBadge=S.incubator?'🥚':S.hatchQueue.length?S.hatchQueue.length:'';
