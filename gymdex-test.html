@@ -2565,6 +2565,7 @@ function restDayCheckIn(){
   // Pre-scheduled rest day: also write a record so streak counts
   const today=todayISO();
   if(todayLog().tiers.rest){toast(t('今天已经休息打卡啦～','Already rested today~'));return;}
+  if(todayLog().tiers.yard){toast(t('今天已经园艺打卡了，不算休息哦～','You did yard work today — not a rest day~'));return;}
   if(!S.workouts.find(w=>w.date===today)){
     S.workouts.push({date:today,type:'休息',exercises:[]});
     S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
@@ -2633,6 +2634,7 @@ function closeRestDayReward(){
 function trainingDayRestCheckIn(){
   const today=todayISO();
   if(todayLog().tiers.rest){toast(t('今天已经休息打卡啦～','Already rested today~'));return;}
+  if(todayLog().tiers.yard){toast(t('今天已经园艺打卡了，不算休息哦～','You did yard work today — not a rest day~'));return;}
   if(!confirm(t('今天就休息一下？会记录打卡，连击不断，但道具掉落比正常训练少哦~','Take a rest day? It still counts for your streak, but drops are fewer than a real workout~'))) return;
   if(!S.workouts.find(w=>w.date===today&&w.type==='休息')){
     S.workouts.push({date:today,type:'休息',exercises:[]});
@@ -3312,9 +3314,10 @@ function renderWorkout(){
   if(isTodayRestDay()){
     const restDone=todayLog().tiers.rest;
     const yardDone=todayLog().tiers.yard;
-    const checkinBtn=restDone
+    // Yard work means it's no longer a rest day → no rest check-in (like after a workout)
+    const checkinBtn=yardDone?'':(restDone
       ?`<button class="btn btn-secondary" style="margin-bottom:10px;opacity:.4;cursor:not-allowed" disabled>✅ ${t('今日已休息打卡','Rest done')}</button>`
-      :`<button class="btn btn-secondary" style="margin-bottom:10px" onclick="restDayCheckIn()">🎁 ${t('休息打卡领奖励','Rest Day Check-in')}</button>`;
+      :`<button class="btn btn-secondary" style="margin-bottom:10px" onclick="restDayCheckIn()">🎁 ${t('休息打卡领奖励','Rest Day Check-in')}</button>`);
     const yardBtn=yardDone
       ?`<button class="btn btn-secondary" style="margin-bottom:10px;opacity:.4;cursor:not-allowed" disabled>✅ ${t('今日已园艺','Yard work done')}</button>`
       :`<button class="btn btn-secondary" style="margin-bottom:10px" onclick="yardWork()">🌿 ${t('园艺打卡（体力活动）','Log Yard Work')}</button>`;
@@ -3542,8 +3545,8 @@ function buildExerciseSelection(type,color,last){
     ${todayLog().tiers.yard
       ?`<span style="font-size:13px;color:var(--muted)">✅ ${t('今日已园艺','Yard work done')}</span>`
       :`<button class="btn btn-ghost" onclick="yardWork()" style="font-size:13px;color:var(--muted)">🌿 ${t('园艺打卡','Yard Work')}</button>`}
-    <button class="btn btn-ghost" onclick="trainingDayRestCheckIn()"
-      style="font-size:13px;color:var(--muted)">🛌 ${t('今天休息（连击不断）','Rest Day (keep streak)')}</button>
+    ${todayLog().tiers.yard?'':`<button class="btn btn-ghost" onclick="trainingDayRestCheckIn()"
+      style="font-size:13px;color:var(--muted)">🛌 ${t('今天休息（连击不断）','Rest Day (keep streak)')}</button>`}
   </div>`;
   return h;
 }
