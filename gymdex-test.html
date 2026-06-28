@@ -3036,9 +3036,16 @@ function thawFromGarden(gIdx){
   toast(t(`🌱 ${cr?.stages[entry.stage-1].name} 回到培育槽`,`🌱 ${cr?.stages[entry.stage-1].name} back in the nursery`));
 }
 
+// A garden pet produces items only at final stage AND if rarer than common
+function gardenProduces(g){
+  if(!g||g.stage!==3)return false;
+  const cr=CREATURES.find(c=>c.id===g.petId);
+  return !!cr&&cr.rarity!=='common';
+}
+
 function collectGarden(gIdx){
   const g=S.garden[gIdx];
-  if(!g||g.stage!==3)return;
+  if(!gardenProduces(g))return; // not final stage, or common rarity → no drop
   const today=todayISO();
   if(g.lastCollect===today){toast(t('今天已经收集过啦！明天再来～','Already collected today! Come back tomorrow~'));return;}
   g.lastCollect=today;
@@ -3052,7 +3059,7 @@ function collectGarden(gIdx){
     S.inv[id]=(S.inv[id]||0)+1;
     if(!S.itemLog.includes(id))S.itemLog.push(id);
   }
-  save();renderPet();
+  save();renderPet();renderGarden();
   toast(t('🏡 收获：','🏡 Harvest: ')+Object.entries(drops).map(([id,n])=>`${ITEMS[id].emoji}×${n}`).join(' '));
 }
 
@@ -3996,7 +4003,7 @@ function renderGarden(){
   const active=S.garden.filter(g=>g.active);
   const frozen=S.garden.filter(g=>!g.active);
   const today=todayISO();
-  const uncollected=S.garden.filter(g=>g.stage===3&&g.lastCollect!==today).length;
+  const uncollected=S.garden.filter(g=>gardenProduces(g)&&g.lastCollect!==today).length;
   const hour=new Date().getHours();
   const isNight=hour<6||hour>=18;
   const bgImg=isNight?"url('assets/garden_bg_night.jpg')":"url('assets/garden_bg.jpg')";
@@ -4012,7 +4019,7 @@ function renderGarden(){
     const cr=CREATURES.find(c=>c.id===g.petId);
     const stageDef=cr?.stages[g.stage-1];
     const collected=g.lastCollect===today;
-    const canCollect=g.stage===3&&!collected;
+    const canCollect=gardenProduces(g)&&!collected;
     // Divide x into equal slots per total pet count to avoid clustering
     const slotW=80/(totalPets||1);
     const x=8+ai*slotW+rng(i*3)*slotW*0.5;
@@ -4028,7 +4035,7 @@ function renderGarden(){
       pets+=`<div class="garden-pet bobbing" id="gp-${i}"
         style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;z-index:${zIdx};
                --bob-dur:${bobDur}s;--bob-delay:${bobDelay}s"
-        onclick="gardenPetClick(${i},event)">
+        onclick="event.stopPropagation();collectGarden(${i})">
         <div class="garden-pet-inner">
           ${canCollect?'<div class="garden-collect-dot"></div>':''}
           ${sp}
