@@ -2569,7 +2569,7 @@ function restDayCheckIn(){
     S.workouts.push({date:today,type:'休息',exercises:[]});
     S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
   }
-  const rewards=genRewards(false);
+  const rewards=genRewards('rest');
   for(const[id,n]of Object.entries(rewards)){
     S.inv[id]=(S.inv[id]||0)+n;
     if(!S.itemLog.includes(id))S.itemLog.push(id);
@@ -2577,15 +2577,35 @@ function restDayCheckIn(){
   S.todayRewards={date:today,rewards,type:'休息'};
   S.streak=calcStreak();
   save();
-  showRestDayReward(rewards);
+  showCheckinReward(rewards,'🛌',t('休息打卡成功！','Rest-day check-in done!'),t('好好休息，明天更强！🌙','Rest well — stronger tomorrow! 🌙'));
   renderWorkout();
 }
-function showRestDayReward(rewards){
-  let h=`<div style="font-size:52px;margin-bottom:6px">🛌</div>
-    <div class="reward-title">${t('休息打卡成功！','Rest-day check-in done!')}</div>
-    <div style="color:var(--muted);font-size:13px;margin-bottom:4px">${t('好好休息，明天更强！🌙','Rest well — stronger tomorrow! 🌙')}</div>
+
+// Yard work: a middle tier between rest and a real workout (no attribute materials)
+function yardWork(){
+  const today=todayISO();
+  if(S.workouts.some(w=>w.date===today&&w.type==='园艺')){toast(t('今天已经园艺打卡啦～','Already logged yard work today~'));return;}
+  S.workouts.push({date:today,type:'园艺',exercises:[]});
+  S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
+  const rewards=genRewards('yard');
+  for(const[id,n]of Object.entries(rewards)){
+    S.inv[id]=(S.inv[id]||0)+n;
+    if(!S.itemLog.includes(id))S.itemLog.push(id);
+  }
+  S.todayRewards={date:today,rewards,type:'园艺'};
+  S.streak=calcStreak();
+  save();
+  showCheckinReward(rewards,'🌿',t('园艺打卡成功！','Yard work logged!'),t('体力活动也算努力，加油！🌱','Activity counts too — nice work! 🌱'));
+  renderWorkout();
+}
+
+function showCheckinReward(rewards,emoji,title,subtitle){
+  const empty=!Object.keys(rewards).length;
+  let h=`<div style="font-size:52px;margin-bottom:6px">${emoji}</div>
+    <div class="reward-title">${title}</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:4px">${subtitle}</div>
     <hr>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${t('获得道具','Items earned')}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${empty?t('今日奖励已领满 ✓','Daily reward already maxed ✓'):t('获得道具','Items earned')}</div>
     <div class="reward-items">`;
   for(const[id,n]of Object.entries(rewards)){
     const it=ITEMS[id];if(!it)continue;
@@ -2612,7 +2632,7 @@ function trainingDayRestCheckIn(){
   if(!confirm(t('今天就休息一下？会记录打卡，连击不断，但道具掉落比正常训练少哦~','Take a rest day? It still counts for your streak, but drops are fewer than a real workout~'))) return;
   S.workouts.push({date:today,type:'休息',exercises:[]});
   S.workouts.sort((a,b)=>a.date.localeCompare(b.date));
-  const rewards=genRewards(false);
+  const rewards=genRewards('rest');
   for(const[id,n]of Object.entries(rewards)){
     S.inv[id]=(S.inv[id]||0)+n;
     if(!S.itemLog.includes(id))S.itemLog.push(id);
@@ -2629,8 +2649,8 @@ function finish(){
   if(!S.session)return;
   const ses=S.session;
   const _today=todayISO();
-  // One drop per day: only the first real (non-休息) workout today grants rewards
-  const alreadyTrainedToday=S.workouts.some(w=>w.date===_today&&w.type!=='休息');
+  // One drop per day: only the first real workout grants rewards (rest/yard don't count as a workout)
+  const alreadyTrainedToday=S.workouts.some(w=>w.date===_today&&w.type!=='休息'&&w.type!=='园艺');
   const newExercises=ses.exercises
     .map(e=>({name:e.name,sets:e.sets.filter(s=>s.weight||s.reps)}))
     .filter(e=>e.sets.length);
@@ -2657,12 +2677,8 @@ function finish(){
     sparkles();
     return;
   }
-  // If today's rest-day reward was already claimed, only drop the difference
-  const priorRest=(S.todayRewards?.date===_today&&S.todayRewards?.type==='休息')
-    ?S.todayRewards.rewards:null;
-  const restExp=priorRest
-    ?Object.entries(priorRest).reduce((s,[id,n])=>s+(ITEMS[id]?.exp||0)*n,0):0;
-  const rewards=genRewards(true,restExp);
+  // Rewards: workout tier minus whatever rest/yard already granted today (cumulative cap)
+  const rewards=genRewards('workout');
   for(const[id,n]of Object.entries(rewards)){
     S.inv[id]=(S.inv[id]||0)+n;
     if(!S.itemLog.includes(id))S.itemLog.push(id);
@@ -2689,16 +2705,20 @@ function finish(){
 const DROP_WEIGHT={common:60,rare:25,epic:10};
 const DROP_COST  ={common:10,rare:30,epic:70};
 
-function genRewards(isWorkout=true, deductExp=0){
-  // EXP budget: 75-125 for workout, 30-50 for rest day
-  let budget=isWorkout
-    ?(75+Math.floor(Math.random()*51))
-    :(30+Math.floor(Math.random()*21));
-  // Already claimed rest-day reward today → only grant the difference
-  budget=Math.max(0,budget-deductExp);
-  const out=spendBudget(budget);
-  // Attr items: separate 0-50 budget roll, workout only
-  if(isWorkout){
+// Reward tiers (EXP budget): rest < yard work < workout.
+// Cumulative cap per day: each tier only grants the budget beyond what was
+// already granted today, so any order (rest→yard→workout) just pays the difference.
+const REWARD_TIERS={rest:[30,21], yard:[50,26], workout:[75,51]}; // [min, span]
+function genRewards(kind='workout'){
+  const today=todayISO();
+  const [min,span]=REWARD_TIERS[kind]||REWARD_TIERS.workout;
+  const budget=min+Math.floor(Math.random()*span);
+  const used=(S.todayExpBudget?.date===today)?S.todayExpBudget.used:0;
+  const grant=Math.max(0,budget-used);
+  S.todayExpBudget={date:today,used:used+grant};
+  const out=grant>=10?spendBudget(grant):{};
+  // Attribute materials drop on workout days only (not rest / yard)
+  if(kind==='workout'){
     for(const[id,n]of Object.entries(rollAttrDrop()))
       out[id]=(out[id]||0)+n;
   }
@@ -3205,7 +3225,7 @@ function renderWorkout(){
   // Check if already worked out today
   const today=todayISO();
   const todayWorkouts=S.workouts.filter(w=>w.date===today);
-  const realWorkouts=todayWorkouts.filter(w=>w.type!=='休息');
+  const realWorkouts=todayWorkouts.filter(w=>w.type!=='休息'&&w.type!=='园艺');
 
   // A real workout logged today → show the done view, even on a rest day.
   // Prevents re-claiming the rest reward or training again after training.
@@ -3224,19 +3244,25 @@ function renderWorkout(){
     }else{
       checkinBtn=`<button class="btn btn-secondary" style="margin-bottom:10px" onclick="restDayCheckIn()">🎁 ${t('休息打卡领奖励','Rest Day Check-in')}</button>`;
     }
+    const yardDone=todayWorkouts.some(w=>w.type==='园艺');
+    const yardBtn=yardDone
+      ?`<button class="btn btn-secondary" style="margin-bottom:10px;opacity:.4;cursor:not-allowed" disabled>✅ ${t('今日已园艺','Yard work done')}</button>`
+      :`<button class="btn btn-secondary" style="margin-bottom:10px" onclick="yardWork()">🌿 ${t('园艺打卡（体力活动）','Log Yard Work')}</button>`;
     h+=`<div class="card" style="text-align:center;padding:28px 16px;margin-bottom:14px">
       <div style="font-size:44px;margin-bottom:8px">🛌</div>
       <div style="font-size:20px;font-weight:800;margin-bottom:6px">${t('今天是休息日','Rest Day')}</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:${checkedIn?'10px':'18px'}">${t('好好恢复，明天更强！','Recover well, come back stronger!')}</div>
-      ${rewardLine}${checkinBtn}
+      ${rewardLine}${checkinBtn}${yardBtn}
       <button class="btn btn-ghost" onclick="showExerciseSelection('${type}')">${t('今天也要练！💪','Train anyway! 💪')}</button>
     </div>`;
     h+=buildExerciseLibrary();
     el.innerHTML=h;return;
   }
 
-  if(todayWorkouts.length>0){
-    h+=buildTodayDoneView(todayWorkouts,type);
+  // Only a rest check-in ends the day; yard work does not (you can still train for the difference)
+  const restToday=todayWorkouts.filter(w=>w.type==='休息');
+  if(restToday.length>0){
+    h+=buildTodayDoneView(restToday,type);
     el.innerHTML=h;return;
   }
 
@@ -3434,7 +3460,10 @@ function buildExerciseSelection(type,color,last){
   <button class="btn btn-primary" style="margin-top:18px" onclick="confirmStartSession('${type}')">
     ${t('开始训练','Start Workout')} ${partEmoji(type)}
   </button>
-  <div style="text-align:center;margin-top:10px">
+  <div style="text-align:center;margin-top:10px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+    ${S.workouts.some(w=>w.date===todayISO()&&w.type==='园艺')
+      ?`<span style="font-size:13px;color:var(--muted)">✅ ${t('今日已园艺','Yard work done')}</span>`
+      :`<button class="btn btn-ghost" onclick="yardWork()" style="font-size:13px;color:var(--muted)">🌿 ${t('园艺打卡','Yard Work')}</button>`}
     <button class="btn btn-ghost" onclick="trainingDayRestCheckIn()"
       style="font-size:13px;color:var(--muted)">🛌 ${t('今天休息（连击不断）','Rest Day (keep streak)')}</button>
   </div>`;
