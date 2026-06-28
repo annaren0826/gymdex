@@ -2426,6 +2426,7 @@ function showSettings(){
       <div id="settings-modal-body"></div>
       <button class="btn btn-primary" style="margin-top:8px" onclick="saveSettings()">${t('保存','Save')}</button>
       <button class="btn btn-secondary" style="margin-top:8px;width:100%" onclick="location.reload()">${t('🔄 刷新更新（不影响存档）','🔄 Refresh update (save kept)')}</button>
+      ${document.title.includes('测试')?`<button class="btn btn-ghost" style="margin-top:8px;width:100%;color:#ff8c00" onclick="devResetToday()">🧪 重置今日打卡（仅测试）</button>`:''}
     </div>`;
     document.body.appendChild(modal);
   }
@@ -2704,6 +2705,20 @@ function finish(){
 // Drop weight & cost by rarity (special items excluded)
 const DROP_WEIGHT={common:60,rare:25,epic:10};
 const DROP_COST  ={common:10,rare:30,epic:70};
+
+// Test-only: wipe today's check-ins so the daily flow can be re-tested
+function devResetToday(){
+  const today=todayISO();
+  const before=S.workouts.length;
+  S.workouts=S.workouts.filter(w=>w.date!==today);
+  if(S.todayRewards?.date===today)S.todayRewards=null;
+  if(S.todayExpBudget?.date===today)S.todayExpBudget=null;
+  S.session=null;
+  save();
+  const sm=document.getElementById('settings-modal');if(sm)sm.style.display='none';
+  renderWorkout();
+  toast(`🧪 已重置今天的 ${before-S.workouts.length} 条打卡，可重新测试`);
+}
 
 // Reward tiers (EXP budget): rest < yard work < workout.
 // Cumulative cap per day: each tier only grants the budget beyond what was
