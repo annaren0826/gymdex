@@ -1918,8 +1918,7 @@ function load(){
   if(!S.nurturing)S.nurturing=[];
   if(!S.garden)S.garden=[];
   // Clean up any phantom/corrupt entries (must have a valid petId)
-  S.nurturing=S.nurturing.filter(s=>s&&s.petId);
-  S.garden=S.garden.filter(g=>g&&g.petId);
+  sanitizePets();
   if(!S.achievements)S.achievements=[];
   if(!S.itemLog)S.itemLog=[];
   if(!S.hatchQueue)S.hatchQueue=[];
@@ -3656,7 +3655,19 @@ function renderActiveSession(el){
 // RENDER: PET
 // ══════════════════════════════════════════
 
+// Drop any phantom/invalid entries so slot counts stay correct (self-heals mid-session)
+function sanitizePets(){
+  S.nurturing=(S.nurturing||[]).filter(s=>s&&s.petId&&CREATURES.some(c=>c.id===s.petId));
+  S.garden=(S.garden||[]).filter(g=>g&&g.petId&&CREATURES.some(c=>c.id===g.petId));
+}
+
 function renderPet(){
+  sanitizePets();
+  // A hatched egg waiting on a free slot → claim it now that there's room
+  if(S.hatchPending&&S.nurturing.length<3){
+    S.nurturing.push({petId:S.hatchPending,stage:1,exp:0,attrs:{fire:0,water:0,wood:0,wind:0}});
+    S.hatchPending=null;S.incubator=null;save();
+  }
   const el=document.getElementById('pet-content');
   const bagCount=Object.values(S.inv||{}).filter(n=>n>0).length;
   const hatchBadge=S.incubator?'🥚':S.hatchQueue.length?S.hatchQueue.length:'';
