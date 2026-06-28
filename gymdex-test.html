@@ -2742,6 +2742,17 @@ function recordCheckin(tier,rewards){
     tl.gains[id]=(tl.gains[id]||0)+n;
   }
 }
+// Encouraging "yard work done" card (workout-style, not rest-style)
+function buildYardDoneCard(){
+  if(!todayLog().tiers.yard)return '';
+  const name=S.profile?.name||t('你','you');
+  return `<div class="card" style="text-align:center;padding:24px 16px;margin-bottom:14px">
+    <div style="font-size:44px;margin-bottom:8px">🌿</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:6px">${t('园艺完成！','Yard work done!')}</div>
+    <div style="font-size:13px;color:var(--muted)">${t(`${name}今天也动起来啦，超棒！💪`,`${name} got moving today — awesome! 💪`)}</div>
+  </div>`;
+}
+
 // Card showing everything earned today (rest + yard + workout combined)
 function buildTodayGains(){
   if(S.todayLog?.date!==todayISO())return '';
@@ -3296,10 +3307,15 @@ function renderWorkout(){
     const yardBtn=yardDone
       ?`<button class="btn btn-secondary" style="margin-bottom:10px;opacity:.4;cursor:not-allowed" disabled>✅ ${t('今日已园艺','Yard work done')}</button>`
       :`<button class="btn btn-secondary" style="margin-bottom:10px" onclick="yardWork()">🌿 ${t('园艺打卡（体力活动）','Log Yard Work')}</button>`;
+    const cardEmoji=yardDone?'🌿':'🛌';
+    const cardTitle=yardDone?t('园艺完成！','Yard work done!'):t('今天是休息日','Rest Day');
+    const cardSub=yardDone
+      ?t(`${name}今天也动起来啦，超棒！💪`,`${name} got moving today — awesome! 💪`)
+      :t('好好恢复，明天更强！','Recover well, come back stronger!');
     h+=`<div class="card" style="text-align:center;padding:28px 16px;margin-bottom:14px">
-      <div style="font-size:44px;margin-bottom:8px">🛌</div>
-      <div style="font-size:20px;font-weight:800;margin-bottom:6px">${t('今天是休息日','Rest Day')}</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:18px">${t('好好恢复，明天更强！','Recover well, come back stronger!')}</div>
+      <div style="font-size:44px;margin-bottom:8px">${cardEmoji}</div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:6px">${cardTitle}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:18px">${cardSub}</div>
       ${checkinBtn}${yardBtn}
       <button class="btn btn-ghost" onclick="showExerciseSelection('${type}')">${t('今天也要练！💪','Train anyway! 💪')}</button>
     </div>`;
@@ -3315,6 +3331,7 @@ function renderWorkout(){
     el.innerHTML=h;return;
   }
 
+  h+=buildYardDoneCard();
   h+=buildTodayGains();
   h+=buildExerciseSelection(type,color,last);
   h+=buildExerciseLibrary();
