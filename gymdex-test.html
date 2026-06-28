@@ -2708,7 +2708,7 @@ const DROP_COST  ={common:10,rare:30,epic:70};
 // Reward tiers (EXP budget): rest < yard work < workout.
 // Cumulative cap per day: each tier only grants the budget beyond what was
 // already granted today, so any order (rest→yard→workout) just pays the difference.
-const REWARD_TIERS={rest:[30,21], yard:[50,26], workout:[75,51]}; // [min, span]
+const REWARD_TIERS={rest:[20,11], yard:[40,21], workout:[75,51]}; // [min, span] → rest 20-30, yard 40-60, workout 75-125
 function genRewards(kind='workout'){
   const today=todayISO();
   const [min,span]=REWARD_TIERS[kind]||REWARD_TIERS.workout;
