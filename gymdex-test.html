@@ -2502,9 +2502,8 @@ function startSession(type,selectedNames){
   const all=[...required,...optional,...fresh];
   let exDefs;
   if(selectedNames&&selectedNames.length){
-    exDefs=all.filter(e=>selectedNames.includes(e.name));
-    for(const n of selectedNames)
-      if(!exDefs.find(e=>e.name===n))exDefs.push({name:n,sets:3,reps:'10',unit:'lbs'});
+    // Preserve the user's tap order, not the preset (required-first) order
+    exDefs=selectedNames.map(n=>all.find(e=>e.name===n)||{name:n,sets:3,reps:'10',unit:'lbs'});
   }else{
     exDefs=all.length?all:[{name:'自由训练',sets:3,reps:'10',unit:'lbs'}];
   }
