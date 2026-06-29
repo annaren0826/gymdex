@@ -3509,8 +3509,23 @@ function buildExerciseSelection(type,color,last){
     }
   }
 
+  if(!required.length&&!optional.length){
+    // First time — show all presets pre-checked
+    for(const ex of getExercises(type)){
+      h+=`<label class="ex-select-row">
+        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" checked>
+        <div style="flex:1"><div style="font-size:14px">${tEx(ex.name)}</div></div>
+      </label>`;
+    }
+  }
+
+  // Start button — right under today's exercises, above the optional list
+  h+=`<button class="btn btn-primary" style="margin-top:14px" onclick="confirmStartSession('${type}')">
+    ${t('开始训练','Start Workout')} ${partEmoji(type)}
+  </button>`;
+
   if(optional.length){
-    h+=`<div class="ex-category-label" style="margin-top:12px">🔄 ${t('可选动作','Optional')}</div>`;
+    h+=`<div class="ex-category-label" style="margin-top:16px">🔄 ${t('可选动作','Optional')}</div>`;
     for(const ex of optional){
       const lw=lastWeight(ex.name),lr=lastReps(ex.name);
       h+=`<label class="ex-select-row">
@@ -3519,16 +3534,6 @@ function buildExerciseSelection(type,color,last){
           <div style="font-size:14px">${tEx(ex.name)}</div>
           ${lw?`<div style="font-size:12px;color:var(--muted)">${t('上次','Last')} ${lw}${ex.unit?' '+ex.unit:'lbs'}${lr?` × ${lr}${t('次','reps')}`:''}</div>`:''}
         </div>
-      </label>`;
-    }
-  }
-
-  if(!required.length&&!optional.length){
-    // First time — show all presets pre-checked
-    for(const ex of getExercises(type)){
-      h+=`<label class="ex-select-row">
-        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" checked>
-        <div style="flex:1"><div style="font-size:14px">${tEx(ex.name)}</div></div>
       </label>`;
     }
   }
@@ -3542,10 +3547,7 @@ function buildExerciseSelection(type,color,last){
     <button class="btn btn-secondary" onclick="addCustomExercise()" style="white-space:nowrap">+ ${t('添加','Add')}</button>
   </div>
   <div id="custom-ex-list"></div>
-  <button class="btn btn-primary" style="margin-top:18px" onclick="confirmStartSession('${type}')">
-    ${t('开始训练','Start Workout')} ${partEmoji(type)}
-  </button>
-  <div style="text-align:center;margin-top:10px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+  <div style="text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
     ${todayLog().tiers.yard
       ?`<span style="font-size:13px;color:var(--muted)">✅ ${t('今日已园艺','Yard work done')}</span>`
       :`<button class="btn btn-ghost" onclick="yardWork()" style="font-size:13px;color:var(--muted)">🌿 ${t('园艺打卡','Yard Work')}</button>`}
