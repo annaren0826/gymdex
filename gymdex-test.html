@@ -196,6 +196,9 @@ body{background:var(--bg);color:var(--text)}
 .ex-select-row:has(input:checked){border-color:var(--pink)}
 .ex-select-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--pink);
   flex-shrink:0;cursor:pointer}
+.ex-order-badge{min-width:22px;height:22px;border-radius:50%;background:var(--pink);color:#fff;
+  font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ex-order-badge:empty{display:none}
 
 /* ACTIVE EXERCISE CARD */
 .active-ex-card{background:var(--card);border:2px solid var(--pink);border-radius:16px;
@@ -3493,28 +3496,32 @@ function buildExerciseSelection(type,color,last){
   }
 
   // Exercise selection
-  h+=`<div style="font-size:14px;font-weight:700;margin-bottom:10px">${t('选择今天的动作',"Select today's exercises")}</div>`;
+  window._exSeq=0; // reset selection-order counter for this render
+  h+=`<div style="font-size:14px;font-weight:700;margin-bottom:2px">${t('选择今天的动作',"Select today's exercises")}</div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:10px">${t('按顺序点选，点选顺序就是训练顺序','Tap in order — selection order = workout order')}</div>`;
 
   if(required.length){
-    h+=`<div class="ex-category-label">✅ ${t('必做动作','Required')}</div>`;
+    h+=`<div class="ex-category-label">⭐ ${t('常用动作','Usual')}</div>`;
     for(const ex of required){
       const lw=lastWeight(ex.name),lr=lastReps(ex.name);
       h+=`<label class="ex-select-row">
-        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" checked>
+        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" onchange="onExSelect(this)">
         <div style="flex:1">
           <div style="font-size:14px;font-weight:600">${tEx(ex.name)}</div>
           ${lw?`<div style="font-size:12px;color:var(--muted)">${t('上次','Last')} ${lw}${ex.unit?' '+ex.unit:'lbs'}${lr?` × ${lr}${t('次','reps')}`:''}</div>`:''}
         </div>
+        <span class="ex-order-badge"></span>
       </label>`;
     }
   }
 
   if(!required.length&&!optional.length){
-    // First time — show all presets pre-checked
+    // First time — show all presets
     for(const ex of getExercises(type)){
       h+=`<label class="ex-select-row">
-        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" checked>
+        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" onchange="onExSelect(this)">
         <div style="flex:1"><div style="font-size:14px">${tEx(ex.name)}</div></div>
+        <span class="ex-order-badge"></span>
       </label>`;
     }
   }
@@ -3529,11 +3536,12 @@ function buildExerciseSelection(type,color,last){
     for(const ex of optional){
       const lw=lastWeight(ex.name),lr=lastReps(ex.name);
       h+=`<label class="ex-select-row">
-        <input type="checkbox" class="ex-select-box" data-name="${ex.name}">
+        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" onchange="onExSelect(this)">
         <div style="flex:1">
           <div style="font-size:14px">${tEx(ex.name)}</div>
           ${lw?`<div style="font-size:12px;color:var(--muted)">${t('上次','Last')} ${lw}${ex.unit?' '+ex.unit:'lbs'}${lr?` × ${lr}${t('次','reps')}`:''}</div>`:''}
         </div>
+        <span class="ex-order-badge"></span>
       </label>`;
     }
   }
@@ -3570,10 +3578,12 @@ function addCustomExercise(){
   }
   const row=document.createElement('label');
   row.className='ex-select-row';
-  row.innerHTML=`<input type="checkbox" class="ex-select-box" data-name="${name}" checked>
+  row.innerHTML=`<input type="checkbox" class="ex-select-box" data-name="${name}" checked onchange="onExSelect(this)">
     <div style="flex:1"><div style="font-size:14px;font-weight:600">${name}</div>
-    <div style="font-size:12px;color:var(--muted)">${t('自定义动作','Custom exercise')}</div></div>`;
+    <div style="font-size:12px;color:var(--muted)">${t('自定义动作','Custom exercise')}</div></div>
+    <span class="ex-order-badge"></span>`;
   list.appendChild(row);
+  onExSelect(row.querySelector('.ex-select-box')); // just-added → register in selection order
 }
 
 function showExerciseSelection(type){
@@ -3581,9 +3591,27 @@ function showExerciseSelection(type){
   document.getElementById('workout-content').innerHTML=buildExerciseSelection(type,color,last);
 }
 
+// Selection order = workout order: stamp each box with a sequence number when checked
+function onExSelect(box){
+  if(!box)return;
+  if(box.checked)box.dataset.seq=String(++window._exSeq);
+  else box.removeAttribute('data-seq');
+  refreshExOrderBadges();
+}
+function checkedExBoxesInOrder(){
+  return [...document.querySelectorAll('.ex-select-box:checked')]
+    .sort((a,b)=>(+a.dataset.seq||0)-(+b.dataset.seq||0));
+}
+function refreshExOrderBadges(){
+  document.querySelectorAll('.ex-order-badge').forEach(b=>b.textContent='');
+  checkedExBoxesInOrder().forEach((box,i)=>{
+    const badge=box.closest('.ex-select-row')?.querySelector('.ex-order-badge');
+    if(badge)badge.textContent=String(i+1);
+  });
+}
+
 function confirmStartSession(type){
-  const boxes=document.querySelectorAll('.ex-select-box:checked');
-  const selected=[...boxes].map(b=>b.dataset.name);
+  const selected=checkedExBoxesInOrder().map(b=>b.dataset.name);
   if(!selected.length){toast(t('至少选一个动作！','Pick at least one exercise!'));return;}
   startSession(type,selected);
 }
