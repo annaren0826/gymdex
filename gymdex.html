@@ -196,6 +196,9 @@ body{background:var(--bg);color:var(--text)}
 .ex-select-row:has(input:checked){border-color:var(--pink)}
 .ex-select-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--pink);
   flex-shrink:0;cursor:pointer}
+.ex-order-badge{min-width:22px;height:22px;border-radius:50%;background:var(--pink);color:#fff;
+  font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ex-order-badge:empty{display:none}
 
 /* ACTIVE EXERCISE CARD */
 .active-ex-card{background:var(--card);border:2px solid var(--pink);border-radius:16px;
@@ -2232,12 +2235,14 @@ function rotation(){return S.profile?.parts?.length?S.profile.parts:DEFAULT_ROTA
 
 function nextType(){
   const rot=rotation();
-  if(!rot.length)return rot[0]||'臀A';
-  if(!S.workouts.length)return rot[0];
-  const last=S.workouts[S.workouts.length-1].type;
-  const idx=rot.indexOf(last);
-  if(idx===-1)return rot[0];
-  return rot[(idx+1)%rot.length];
+  if(!rot.length)return '臀A';
+  // Rotate from the most recent workout that belongs to the rotation,
+  // skipping rest/yard/off-rotation records so they don't reset the cycle.
+  for(let i=S.workouts.length-1;i>=0;i--){
+    const idx=rot.indexOf(S.workouts[i].type);
+    if(idx!==-1)return rot[(idx+1)%rot.length];
+  }
+  return rot[0];
 }
 
 function lastOfType(type){
@@ -2494,9 +2499,8 @@ function startSession(type,selectedNames){
   const all=[...required,...optional,...fresh];
   let exDefs;
   if(selectedNames&&selectedNames.length){
-    exDefs=all.filter(e=>selectedNames.includes(e.name));
-    for(const n of selectedNames)
-      if(!exDefs.find(e=>e.name===n))exDefs.push({name:n,sets:3,reps:'10',unit:'lbs'});
+    // Preserve the user's tap order, not the preset (required-first) order
+    exDefs=selectedNames.map(n=>all.find(e=>e.name===n)||{name:n,sets:3,reps:'10',unit:'lbs'});
   }else{
     exDefs=all.length?all:[{name:'自由训练',sets:3,reps:'10',unit:'lbs'}];
   }
@@ -2656,7 +2660,7 @@ function finish(){
   // One drop per day: only the first real workout grants rewards (rest/yard don't count as a workout)
   const alreadyTrainedToday=S.workouts.some(w=>w.date===_today&&w.type!=='休息'&&w.type!=='园艺');
   const newExercises=ses.exercises
-    .map(e=>({name:e.name,sets:e.sets.filter(s=>s.weight||s.reps)}))
+    .map(e=>({name:e.name,sets:e.sets.filter(s=>s.weight||s.reps),note:e.note||''}))
     .filter(e=>e.sets.length);
   // One entry per day+part: merge into today's existing record for the same part.
   // Same exercise name → combine sets; new exercise → add as another row.
@@ -2665,8 +2669,10 @@ function finish(){
     if(!existing.exercises)existing.exercises=[];
     for(const ne of newExercises){
       const same=existing.exercises.find(e=>e.name===ne.name);
-      if(same)same.sets=(same.sets||[]).concat(ne.sets);
-      else existing.exercises.push(ne);
+      if(same){
+        same.sets=(same.sets||[]).concat(ne.sets);
+        if(ne.note)same.note=same.note?`${same.note} / ${ne.note}`:ne.note;
+      }else existing.exercises.push(ne);
     }
   }else{
     S.workouts.push({date:ses.date,type:ses.type,exercises:newExercises});
@@ -3486,42 +3492,52 @@ function buildExerciseSelection(type,color,last){
   }
 
   // Exercise selection
-  h+=`<div style="font-size:14px;font-weight:700;margin-bottom:10px">${t('选择今天的动作',"Select today's exercises")}</div>`;
+  window._exSeq=0; // reset selection-order counter for this render
+  h+=`<div style="font-size:14px;font-weight:700;margin-bottom:2px">${t('选择今天的动作',"Select today's exercises")}</div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:10px">${t('按顺序点选，点选顺序就是训练顺序','Tap in order — selection order = workout order')}</div>`;
 
   if(required.length){
-    h+=`<div class="ex-category-label">✅ ${t('必做动作','Required')}</div>`;
+    h+=`<div class="ex-category-label">⭐ ${t('常用动作','Usual')}</div>`;
     for(const ex of required){
       const lw=lastWeight(ex.name),lr=lastReps(ex.name);
       h+=`<label class="ex-select-row">
-        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" checked>
+        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" onchange="onExSelect(this)">
         <div style="flex:1">
           <div style="font-size:14px;font-weight:600">${tEx(ex.name)}</div>
           ${lw?`<div style="font-size:12px;color:var(--muted)">${t('上次','Last')} ${lw}${ex.unit?' '+ex.unit:'lbs'}${lr?` × ${lr}${t('次','reps')}`:''}</div>`:''}
         </div>
-      </label>`;
-    }
-  }
-
-  if(optional.length){
-    h+=`<div class="ex-category-label" style="margin-top:12px">🔄 ${t('可选动作','Optional')}</div>`;
-    for(const ex of optional){
-      const lw=lastWeight(ex.name),lr=lastReps(ex.name);
-      h+=`<label class="ex-select-row">
-        <input type="checkbox" class="ex-select-box" data-name="${ex.name}">
-        <div style="flex:1">
-          <div style="font-size:14px">${tEx(ex.name)}</div>
-          ${lw?`<div style="font-size:12px;color:var(--muted)">${t('上次','Last')} ${lw}${ex.unit?' '+ex.unit:'lbs'}${lr?` × ${lr}${t('次','reps')}`:''}</div>`:''}
-        </div>
+        <span class="ex-order-badge"></span>
       </label>`;
     }
   }
 
   if(!required.length&&!optional.length){
-    // First time — show all presets pre-checked
+    // First time — show all presets
     for(const ex of getExercises(type)){
       h+=`<label class="ex-select-row">
-        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" checked>
+        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" onchange="onExSelect(this)">
         <div style="flex:1"><div style="font-size:14px">${tEx(ex.name)}</div></div>
+        <span class="ex-order-badge"></span>
+      </label>`;
+    }
+  }
+
+  // Start button — right under today's exercises, above the optional list
+  h+=`<button class="btn btn-primary" style="margin-top:14px" onclick="confirmStartSession('${type}')">
+    ${t('开始训练','Start Workout')} ${partEmoji(type)}
+  </button>`;
+
+  if(optional.length){
+    h+=`<div class="ex-category-label" style="margin-top:16px">🔄 ${t('可选动作','Optional')}</div>`;
+    for(const ex of optional){
+      const lw=lastWeight(ex.name),lr=lastReps(ex.name);
+      h+=`<label class="ex-select-row">
+        <input type="checkbox" class="ex-select-box" data-name="${ex.name}" onchange="onExSelect(this)">
+        <div style="flex:1">
+          <div style="font-size:14px">${tEx(ex.name)}</div>
+          ${lw?`<div style="font-size:12px;color:var(--muted)">${t('上次','Last')} ${lw}${ex.unit?' '+ex.unit:'lbs'}${lr?` × ${lr}${t('次','reps')}`:''}</div>`:''}
+        </div>
+        <span class="ex-order-badge"></span>
       </label>`;
     }
   }
@@ -3535,10 +3551,7 @@ function buildExerciseSelection(type,color,last){
     <button class="btn btn-secondary" onclick="addCustomExercise()" style="white-space:nowrap">+ ${t('添加','Add')}</button>
   </div>
   <div id="custom-ex-list"></div>
-  <button class="btn btn-primary" style="margin-top:18px" onclick="confirmStartSession('${type}')">
-    ${t('开始训练','Start Workout')} ${partEmoji(type)}
-  </button>
-  <div style="text-align:center;margin-top:10px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+  <div style="text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
     ${todayLog().tiers.yard
       ?`<span style="font-size:13px;color:var(--muted)">✅ ${t('今日已园艺','Yard work done')}</span>`
       :`<button class="btn btn-ghost" onclick="yardWork()" style="font-size:13px;color:var(--muted)">🌿 ${t('园艺打卡','Yard Work')}</button>`}
@@ -3561,10 +3574,12 @@ function addCustomExercise(){
   }
   const row=document.createElement('label');
   row.className='ex-select-row';
-  row.innerHTML=`<input type="checkbox" class="ex-select-box" data-name="${name}" checked>
+  row.innerHTML=`<input type="checkbox" class="ex-select-box" data-name="${name}" checked onchange="onExSelect(this)">
     <div style="flex:1"><div style="font-size:14px;font-weight:600">${name}</div>
-    <div style="font-size:12px;color:var(--muted)">${t('自定义动作','Custom exercise')}</div></div>`;
+    <div style="font-size:12px;color:var(--muted)">${t('自定义动作','Custom exercise')}</div></div>
+    <span class="ex-order-badge"></span>`;
   list.appendChild(row);
+  onExSelect(row.querySelector('.ex-select-box')); // just-added → register in selection order
 }
 
 function showExerciseSelection(type){
@@ -3572,9 +3587,27 @@ function showExerciseSelection(type){
   document.getElementById('workout-content').innerHTML=buildExerciseSelection(type,color,last);
 }
 
+// Selection order = workout order: stamp each box with a sequence number when checked
+function onExSelect(box){
+  if(!box)return;
+  if(box.checked)box.dataset.seq=String(++window._exSeq);
+  else box.removeAttribute('data-seq');
+  refreshExOrderBadges();
+}
+function checkedExBoxesInOrder(){
+  return [...document.querySelectorAll('.ex-select-box:checked')]
+    .sort((a,b)=>(+a.dataset.seq||0)-(+b.dataset.seq||0));
+}
+function refreshExOrderBadges(){
+  document.querySelectorAll('.ex-order-badge').forEach(b=>b.textContent='');
+  checkedExBoxesInOrder().forEach((box,i)=>{
+    const badge=box.closest('.ex-select-row')?.querySelector('.ex-order-badge');
+    if(badge)badge.textContent=String(i+1);
+  });
+}
+
 function confirmStartSession(type){
-  const boxes=document.querySelectorAll('.ex-select-box:checked');
-  const selected=[...boxes].map(b=>b.dataset.name);
+  const selected=checkedExBoxesInOrder().map(b=>b.dataset.name);
   if(!selected.length){toast(t('至少选一个动作！','Pick at least one exercise!'));return;}
   startSession(type,selected);
 }
@@ -4291,7 +4324,10 @@ function renderHistory(){
           <td style="padding:4px 6px;vertical-align:top" rowspan="${exs.length}">
             <span style="padding:1px 6px;border-radius:6px;font-weight:600;background:${col}22;color:${col}">${tPart(w.type)}</span>
           </td>`:''}
-        <td style="padding:4px 6px;color:var(--text)">${tEx(ex.name)}${ex.note?` <span style="color:#FFB347">📝</span>`:''}</td>
+        <td style="padding:4px 6px;color:var(--text)">${tEx(ex.name)}
+          ${ex.note
+            ?`<div onclick="editExerciseNote(${wIdx},${exIdx})" style="font-size:11px;color:#FFB347;margin-top:2px;cursor:pointer">📝 ${ex.note}</div>`
+            :`<div onclick="editExerciseNote(${wIdx},${exIdx})" style="font-size:11px;color:var(--muted);margin-top:2px;cursor:pointer;opacity:.55">📝 ${t('加备注','+ note')}</div>`}</td>
         <td style="padding:4px 6px;color:var(--muted)">${setsStr}
           <span onclick="editExerciseSets(${wIdx},${exIdx})" title="${t('修改','Edit')}" style="cursor:pointer;margin-left:5px;opacity:.55">✏️</span></td>
       </tr>`;
@@ -4308,6 +4344,9 @@ function renderHistory(){
               border-radius:7px;padding:5px 9px;color:var(--text);font-size:13px">
           <input id="add-ex-reps-${wIdx}" type="text" placeholder="${t('组x次','Sets×reps')}"
             style="flex:1;min-width:60px;background:var(--bg);border:1px solid var(--border);
+              border-radius:7px;padding:5px 9px;color:var(--text);font-size:13px">
+          <input id="add-ex-note-${wIdx}" type="text" placeholder="${t('备注（可选）','Note (optional)')}"
+            style="flex:2;min-width:90px;background:var(--bg);border:1px solid var(--border);
               border-radius:7px;padding:5px 9px;color:var(--text);font-size:13px">
           <button class="btn btn-primary btn-small" onclick="confirmAddExercise(${wIdx})">${t('保存','Save')}</button>
           <button class="btn btn-ghost btn-small" onclick="document.getElementById('add-ex-row-${wIdx}').style.display='none'">${t('取消','Cancel')}</button>
@@ -4393,9 +4432,10 @@ function confirmAddExercise(wIdx){
   const name=(document.getElementById(`add-ex-name-${wIdx}`)?.value||'').trim();
   const weight=(document.getElementById(`add-ex-weight-${wIdx}`)?.value||'').trim();
   const reps=(document.getElementById(`add-ex-reps-${wIdx}`)?.value||'').trim();
+  const note=(document.getElementById(`add-ex-note-${wIdx}`)?.value||'').trim();
   if(!name){toast(t('请填写动作名称','Please enter an exercise name'));return;}
   if(!w.exercises)w.exercises=[];
-  w.exercises.push({name,sets:[{weight:weight||'',reps:reps||'?',done:true}],note:''});
+  w.exercises.push({name,sets:[{weight:weight||'',reps:reps||'?',done:true}],note});
   save();
   toast(t(`✅ 已补录：${name}`,`✅ Added: ${name}`));
   renderHistory();
@@ -4418,6 +4458,18 @@ function editExerciseSets(wIdx,exIdx){
   save();
   renderHistory();
   toast(sets.length?t('✅ 已修改','✅ Updated'):t('🗑️ 已删除该动作','🗑️ Exercise removed'));
+}
+
+// Add or edit the note on an already-recorded exercise
+function editExerciseNote(wIdx,exIdx){
+  const w=S.workouts[wIdx];if(!w)return;
+  const ex=w.exercises?.[exIdx];if(!ex)return;
+  const input=prompt(t(`「${tEx(ex.name)}」的备注：`,`Note for "${tEx(ex.name)}":`),ex.note||'');
+  if(input===null)return;
+  ex.note=input.trim();
+  save();
+  renderHistory();
+  toast(ex.note?t('✅ 备注已保存','✅ Note saved'):t('🗑️ 备注已清空','🗑️ Note cleared'));
 }
 
 function csvEscape(v){
