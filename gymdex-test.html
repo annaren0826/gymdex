@@ -2240,12 +2240,14 @@ function rotation(){return S.profile?.parts?.length?S.profile.parts:DEFAULT_ROTA
 
 function nextType(){
   const rot=rotation();
-  if(!rot.length)return rot[0]||'臀A';
-  if(!S.workouts.length)return rot[0];
-  const last=S.workouts[S.workouts.length-1].type;
-  const idx=rot.indexOf(last);
-  if(idx===-1)return rot[0];
-  return rot[(idx+1)%rot.length];
+  if(!rot.length)return '臀A';
+  // Rotate from the most recent workout that belongs to the rotation,
+  // skipping rest/yard/off-rotation records so they don't reset the cycle.
+  for(let i=S.workouts.length-1;i>=0;i--){
+    const idx=rot.indexOf(S.workouts[i].type);
+    if(idx!==-1)return rot[(idx+1)%rot.length];
+  }
+  return rot[0];
 }
 
 function lastOfType(type){
