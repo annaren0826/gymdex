@@ -2761,6 +2761,16 @@ function buildYardDoneCard(){
   </div>`;
 }
 
+// Rest is not "training" — its own encouraging card
+function buildRestDoneCard(){
+  const name=S.profile?.name||t('你','you');
+  return `<div class="card" style="text-align:center;padding:28px 16px;margin-bottom:14px">
+    <div style="font-size:44px;margin-bottom:8px">🛌</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:6px">${t('今天好好休息～','Rest day~')}</div>
+    <div style="font-size:13px;color:var(--muted)">${t(`${name}，休息也是训练的一部分，明天满血复活！💪`,`${name}, rest is part of training — recharge for tomorrow! 💪`)}</div>
+  </div>`;
+}
+
 // Card showing everything earned today (rest + yard + workout combined)
 function buildTodayGains(){
   if(S.todayLog?.date!==todayISO())return '';
@@ -3349,7 +3359,9 @@ function renderWorkout(){
   // Only a rest check-in ends the day; yard work does not (you can still train for the difference)
   const restToday=todayWorkouts.filter(w=>w.type==='休息');
   if(restToday.length>0){
-    h+=buildTodayDoneView(restToday,type);
+    h+=buildRestDoneCard();
+    h+=buildTodayGains();
+    h+=`<div style="text-align:center;margin-top:4px"><button class="btn btn-ghost" onclick="showExerciseSelection('${type}')" style="font-size:13px;color:var(--muted)">${t('今天还是想练？💪','Train anyway? 💪')}</button></div>`;
     el.innerHTML=h;return;
   }
 
@@ -4257,7 +4269,7 @@ function renderHistory(){
 
   // Build filter options
   const months=[...new Set(S.workouts.map(w=>w.date?.slice(0,7)))].filter(Boolean).sort().reverse();
-  const types=[...new Set(S.workouts.map(w=>w.type))].filter(Boolean).sort();
+  const types=[...new Set(S.workouts.map(w=>w.type))].filter(t=>t&&t!=='休息'&&t!=='园艺').sort();
 
   let h=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
     <button class="btn btn-secondary btn-small" onclick="exportCSV()">${t('📤 导出 CSV','📤 Export CSV')}</button>
