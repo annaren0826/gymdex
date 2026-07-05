@@ -2902,7 +2902,13 @@ function randomNeeded(rarity){
 }
 
 function dropEgg(){
-  if(Math.random()>0.5)return null;
+  // Pity system: base 50%, +10% per consecutive miss (cap 100%), reset on drop
+  const chance=Math.min(1,0.5+(S.eggPity||0)*0.1);
+  if(Math.random()>=chance){
+    S.eggPity=(S.eggPity||0)+1; // missed → next time is more likely
+    return null;
+  }
+  S.eggPity=0; // got one → reset
   const r=Math.random();
   return r<0.60?'common':r<0.85?'silver':r<0.95?'gold':'rainbow';
 }
@@ -3905,8 +3911,9 @@ function renderNurturingTab(){
       </div>`;
     }
   } else {
+    const eggPc=Math.round(Math.min(1,0.5+(S.eggPity||0)*0.1)*100);
     h+=`<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">
-      ${t('没有蛋 · 完成训练有50%概率掉落 🥚','No eggs · 50% drop chance per workout 🥚')}</div>`;
+      ${t(`没有蛋 · 下次训练 ${eggPc}% 掉落 🥚`,`No eggs · ${eggPc}% drop chance next workout 🥚`)}</div>`;
   }
   return h;
 }
