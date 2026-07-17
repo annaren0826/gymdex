@@ -589,6 +589,12 @@ select.ob-input{appearance:none;-webkit-appearance:none;
      ═══════════════════════════════════════════════════════════ -->
 <div id="onboarding">
 
+  <!-- Language toggle -->
+  <div style="position:fixed;top:12px;right:12px;z-index:100;display:flex;gap:3px;background:rgba(0,0,0,.28);border-radius:20px;padding:3px">
+    <button onclick="setObLang('zh')" id="ob-lang-zh" style="border:none;border-radius:16px;padding:5px 13px;font-size:13px;font-weight:700;cursor:pointer;background:var(--pink);color:#fff">中</button>
+    <button onclick="setObLang('en')" id="ob-lang-en" style="border:none;border-radius:16px;padding:5px 13px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:#fff">EN</button>
+  </div>
+
   <!-- LOADING SCREEN -->
   <div id="loading">
     <div id="ld-inner">
@@ -603,7 +609,7 @@ select.ob-input{appearance:none;-webkit-appearance:none;
         <div id="ld-burst"></div>
       </div>
       <div id="ld-title">GymDex</div>
-      <div id="ld-sub">健身打卡 × 养神兽</div>
+      <div id="ld-sub" data-en="Check in × raise beasts">健身打卡 × 养神兽</div>
       <div id="ld-dots-wrap"><span class="ld-dot"></span><span class="ld-dot"></span><span class="ld-dot"></span></div>
     </div>
   </div>
@@ -614,12 +620,12 @@ select.ob-input{appearance:none;-webkit-appearance:none;
     <div class="ob-hero">
       <span class="ob-logo">🏋️</span>
       <div class="ob-title">GymDex</div>
-      <div class="ob-sub">健身打卡 × 养神兽<br>边练边玩，解锁传说生物</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px">已有账号？数据保存在本设备</div>
+      <div class="ob-sub" data-en="Check in × raise beasts<br>Play as you train, unlock legends">健身打卡 × 养神兽<br>边练边玩，解锁传说生物</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px" data-en="Have an account? Data is saved on this device">已有账号？数据保存在本设备</div>
     </div>
     <div class="ob-footer">
-      <button class="btn btn-primary" onclick="obNext()">开始设置 →</button>
-      <button class="btn btn-ghost" onclick="obSkipIfExisting()">我已经设置过了，直接进入</button>
+      <button class="btn btn-primary" onclick="obNext()" data-en="Get started →">开始设置 →</button>
+      <button class="btn btn-ghost" onclick="obSkipIfExisting()" data-en="I already set up — enter">我已经设置过了，直接进入</button>
     </div>
   </div>
 
@@ -627,101 +633,101 @@ select.ob-input{appearance:none;-webkit-appearance:none;
   <div class="ob-step" id="ob1">
     <div class="ob-progress" id="ob-dots1"></div>
     <div class="ob-form" style="padding-top:32px">
-      <div class="ob-form-title">👋 你叫什么名字？</div>
-      <div class="ob-form-sub">我会一直叫你这个名字 💪</div>
-      <label class="ob-label">昵称</label>
-      <input class="ob-input" id="ob-name" type="text" placeholder="例如：Anna" maxlength="20"
+      <div class="ob-form-title" data-en="👋 What should I call you?">👋 你叫什么名字？</div>
+      <div class="ob-form-sub" data-en="I'll call you this from now on 💪">我会一直叫你这个名字 💪</div>
+      <label class="ob-label" data-en="Nickname">昵称</label>
+      <input class="ob-input" id="ob-name" type="text" placeholder="例如：Anna" data-en-ph="e.g. Anna" maxlength="20"
         onkeydown="if(event.key==='Enter')obNext()">
 
-      <label class="ob-label">你的健身目标（可多选）</label>
+      <label class="ob-label" data-en="Your fitness goals (multi-select)">你的健身目标（可多选）</label>
       <div class="chips" id="goal-chips">
-        <div class="chip" onclick="toggleChip(this,'练出蜜桃臀')">🍑 练出蜜桃臀</div>
-        <div class="chip" onclick="toggleChip(this,'增肌')">💪 增肌</div>
-        <div class="chip" onclick="toggleChip(this,'减脂')">🔥 减脂</div>
-        <div class="chip" onclick="toggleChip(this,'塑形')">✨ 塑形</div>
-        <div class="chip" onclick="toggleChip(this,'提高力量')">⚡ 提高力量</div>
-        <div class="chip" onclick="toggleChip(this,'增强耐力')">🏃 增强耐力</div>
-        <div class="chip" onclick="toggleChip(this,'综合健身')">🌟 综合健身</div>
+        <div class="chip" onclick="toggleChip(this,'练出蜜桃臀')" data-val="练出蜜桃臀" data-en="🍑 Peach glutes">🍑 练出蜜桃臀</div>
+        <div class="chip" onclick="toggleChip(this,'增肌')" data-val="增肌" data-en="💪 Build muscle">💪 增肌</div>
+        <div class="chip" onclick="toggleChip(this,'减脂')" data-val="减脂" data-en="🔥 Lose fat">🔥 减脂</div>
+        <div class="chip" onclick="toggleChip(this,'塑形')" data-val="塑形" data-en="✨ Tone up">✨ 塑形</div>
+        <div class="chip" onclick="toggleChip(this,'提高力量')" data-val="提高力量" data-en="⚡ Get stronger">⚡ 提高力量</div>
+        <div class="chip" onclick="toggleChip(this,'增强耐力')" data-val="增强耐力" data-en="🏃 Endurance">🏃 增强耐力</div>
+        <div class="chip" onclick="toggleChip(this,'综合健身')" data-val="综合健身" data-en="🌟 General fitness">🌟 综合健身</div>
       </div>
     </div>
     <div class="ob-footer">
-      <button class="btn btn-primary" onclick="obNext()">继续 →</button>
-      <button class="btn btn-ghost btn-small" onclick="obBack()">← 返回</button>
+      <button class="btn btn-primary" onclick="obNext()" data-en="Continue →">继续 →</button>
+      <button class="btn btn-ghost btn-small" onclick="obBack()" data-en="← Back">← 返回</button>
     </div>
   </div>
 
   <!-- Step 2: Training days + parts -->
   <div class="ob-step" id="ob2">
     <div class="ob-form" style="padding-top:32px;flex:1">
-      <div class="ob-form-title">🗓 训练安排</div>
-      <div class="ob-form-sub">你一般哪几天去健身房？</div>
+      <div class="ob-form-title" data-en="🗓 Training schedule">🗓 训练安排</div>
+      <div class="ob-form-sub" data-en="Which days do you usually train?">你一般哪几天去健身房？</div>
 
-      <label class="ob-label">训练日</label>
+      <label class="ob-label" data-en="Training days">训练日</label>
       <div class="days-grid">
-        <div class="day-btn" onclick="toggleDay(this,'1')">周一</div>
-        <div class="day-btn" onclick="toggleDay(this,'2')">周二</div>
-        <div class="day-btn" onclick="toggleDay(this,'3')">周三</div>
-        <div class="day-btn" onclick="toggleDay(this,'4')">周四</div>
-        <div class="day-btn" onclick="toggleDay(this,'5')">周五</div>
-        <div class="day-btn" onclick="toggleDay(this,'6')">周六</div>
-        <div class="day-btn" onclick="toggleDay(this,'0')">周日</div>
+        <div class="day-btn" onclick="toggleDay(this,'1')" data-en="Mon">周一</div>
+        <div class="day-btn" onclick="toggleDay(this,'2')" data-en="Tue">周二</div>
+        <div class="day-btn" onclick="toggleDay(this,'3')" data-en="Wed">周三</div>
+        <div class="day-btn" onclick="toggleDay(this,'4')" data-en="Thu">周四</div>
+        <div class="day-btn" onclick="toggleDay(this,'5')" data-en="Fri">周五</div>
+        <div class="day-btn" onclick="toggleDay(this,'6')" data-en="Sat">周六</div>
+        <div class="day-btn" onclick="toggleDay(this,'0')" data-en="Sun">周日</div>
       </div>
 
-      <label class="ob-label">训练部位 / 日程（按训练顺序点选）</label>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">点击顺序 = 循环顺序。选完后下方会显示你的安排。</div>
+      <label class="ob-label" data-en="Muscle groups / schedule (tap in order)">训练部位 / 日程（按训练顺序点选）</label>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px" data-en="Tap order = rotation order. Your plan appears below.">点击顺序 = 循环顺序。选完后下方会显示你的安排。</div>
       <div class="chips" id="part-chips">
-        <div class="chip" onclick="togglePart(this,'臀A')">🍑 臀A</div>
-        <div class="chip" onclick="togglePart(this,'臀B')">🔥 臀B</div>
-        <div class="chip" onclick="togglePart(this,'背')">🐲 背</div>
-        <div class="chip" onclick="togglePart(this,'肩')">⚡ 肩</div>
-        <div class="chip" onclick="togglePart(this,'胸')">🦁 胸</div>
-        <div class="chip" onclick="togglePart(this,'腿')">🦵 腿</div>
-        <div class="chip" onclick="togglePart(this,'腹')">🔲 腹</div>
-        <div class="chip" onclick="togglePart(this,'手臂')">💪 手臂</div>
-        <div class="chip" onclick="togglePart(this,'全身')">⭐ 全身</div>
+        <div class="chip" onclick="togglePart(this,'臀A')" data-val="臀A" data-en="🍑 Glutes A">🍑 臀A</div>
+        <div class="chip" onclick="togglePart(this,'臀B')" data-val="臀B" data-en="🔥 Glutes B">🔥 臀B</div>
+        <div class="chip" onclick="togglePart(this,'背')" data-val="背" data-en="🐲 Back">🐲 背</div>
+        <div class="chip" onclick="togglePart(this,'肩')" data-val="肩" data-en="⚡ Shoulders">⚡ 肩</div>
+        <div class="chip" onclick="togglePart(this,'胸')" data-val="胸" data-en="🦁 Chest">🦁 胸</div>
+        <div class="chip" onclick="togglePart(this,'腿')" data-val="腿" data-en="🦵 Legs">🦵 腿</div>
+        <div class="chip" onclick="togglePart(this,'腹')" data-val="腹" data-en="🔲 Core">🔲 腹</div>
+        <div class="chip" onclick="togglePart(this,'手臂')" data-val="手臂" data-en="💪 Arms">💪 手臂</div>
+        <div class="chip" onclick="togglePart(this,'全身')" data-val="全身" data-en="⭐ Full Body">⭐ 全身</div>
       </div>
       <div class="chip-add-row" style="margin-bottom:16px">
-        <input class="chip-add-input" id="part-custom" placeholder="自定义部位…"
+        <input class="chip-add-input" id="part-custom" placeholder="自定义部位…" data-en-ph="Custom group…"
           onkeydown="if(event.key==='Enter')addCustomPart()">
-        <button class="chip-add-btn" onclick="addCustomPart()">+ 加</button>
+        <button class="chip-add-btn" onclick="addCustomPart()" data-en="+ Add">+ 加</button>
       </div>
 
-      <label class="ob-label">你的训练循环顺序</label>
+      <label class="ob-label" data-en="Your rotation order">你的训练循环顺序</label>
       <div class="parts-order" id="parts-order-display">
-        <span style="font-size:13px;color:var(--muted)">（从上方选择部位后在这里显示）</span>
+        <span style="font-size:13px;color:var(--muted)" data-en="(Pick groups above to see them here)">（从上方选择部位后在这里显示）</span>
       </div>
     </div>
     <div class="ob-footer">
-      <button class="btn btn-primary" onclick="obNext()">继续 →</button>
-      <button class="btn btn-ghost btn-small" onclick="obBack()">← 返回</button>
+      <button class="btn btn-primary" onclick="obNext()" data-en="Continue →">继续 →</button>
+      <button class="btn btn-ghost btn-small" onclick="obBack()" data-en="← Back">← 返回</button>
     </div>
   </div>
 
   <!-- Step 3: Import workout data -->
   <div class="ob-step" id="ob3">
     <div class="ob-form" style="padding-top:32px;flex:1">
-      <div class="ob-form-title">📊 导入训练数据</div>
-      <div class="ob-form-sub">有之前的训练记录吗？可以现在导入，也可以从零开始。</div>
+      <div class="ob-form-title" data-en="📊 Import workout data">📊 导入训练数据</div>
+      <div class="ob-form-sub" data-en="Have past workout records? Import now, or start fresh.">有之前的训练记录吗？可以现在导入，也可以从零开始。</div>
 
       <div class="import-opt selected" id="iopt-skip" onclick="selectImportOpt('skip')">
         <span class="import-opt-icon">🆕</span>
         <div>
-          <div class="import-opt-title">全新开始</div>
-          <div class="import-opt-sub">没有历史数据，从今天开始记录</div>
+          <div class="import-opt-title" data-en="Start fresh">全新开始</div>
+          <div class="import-opt-sub" data-en="No history — start logging today">没有历史数据，从今天开始记录</div>
         </div>
       </div>
 
       <div class="import-opt" id="iopt-csv" onclick="selectImportOpt('csv')">
         <span class="import-opt-icon">📂</span>
         <div>
-          <div class="import-opt-title">导入 CSV 训练记录</div>
-          <div class="import-opt-sub">支持标准格式：日期, 类型, 动作, 重量, 组数</div>
+          <div class="import-opt-title" data-en="Import CSV workouts">导入 CSV 训练记录</div>
+          <div class="import-opt-sub" data-en="Standard: date, type, exercise, weight, sets">支持标准格式：日期, 类型, 动作, 重量, 组数</div>
         </div>
       </div>
 
       <div id="csv-upload-area" style="display:none;padding:12px 0">
         <button class="btn btn-secondary" onclick="document.getElementById('csv-input').click()" style="width:auto">
-          📂 选择 CSV 文件
+          <span data-en="📂 Choose CSV file">📂 选择 CSV 文件</span>
         </button>
         <div id="csv-status" style="font-size:13px;color:var(--muted);margin-top:8px"></div>
       </div>
@@ -729,54 +735,54 @@ select.ob-input{appearance:none;-webkit-appearance:none;
       <div class="import-opt" id="iopt-manual" onclick="selectImportOpt('manual')">
         <span class="import-opt-icon">✍️</span>
         <div>
-          <div class="import-opt-title">之后手动录入</div>
-          <div class="import-opt-sub">进入App后从训练记录页面添加</div>
+          <div class="import-opt-title" data-en="Add manually later">之后手动录入</div>
+          <div class="import-opt-sub" data-en="Add from the log page after entering">进入App后从训练记录页面添加</div>
         </div>
       </div>
     </div>
     <div class="ob-footer">
-      <button class="btn btn-primary" onclick="obNext()">继续 →</button>
-      <button class="btn btn-ghost btn-small" onclick="obBack()">← 返回</button>
+      <button class="btn btn-primary" onclick="obNext()" data-en="Continue →">继续 →</button>
+      <button class="btn btn-ghost btn-small" onclick="obBack()" data-en="← Back">← 返回</button>
     </div>
   </div>
 
   <!-- Step 4: Import game data -->
   <div class="ob-step" id="ob4">
     <div class="ob-form" style="padding-top:32px;flex:1">
-      <div class="ob-form-title">🎮 游戏存档</div>
-      <div class="ob-form-sub">有之前的宠物和道具数据吗？可以单独导入，和训练记录互不影响。</div>
+      <div class="ob-form-title" data-en="🎮 Game save">🎮 游戏存档</div>
+      <div class="ob-form-sub" data-en="Have past creatures & items? Import separately from workouts.">有之前的宠物和道具数据吗？可以单独导入，和训练记录互不影响。</div>
 
       <div class="import-opt selected" id="gopt-new" onclick="selectGameOpt('new')">
         <span class="import-opt-icon">🥚</span>
         <div>
-          <div class="import-opt-title">全新开始</div>
-          <div class="import-opt-sub">从零收集神兽，解锁新旅程</div>
+          <div class="import-opt-title" data-en="Start fresh">全新开始</div>
+          <div class="import-opt-sub" data-en="Collect creatures from scratch">从零收集神兽，解锁新旅程</div>
         </div>
       </div>
 
       <div class="import-opt" id="gopt-import" onclick="selectGameOpt('import')">
         <span class="import-opt-icon">💾</span>
         <div>
-          <div class="import-opt-title">导入游戏存档 (JSON)</div>
-          <div class="import-opt-sub">恢复你的宠物、道具和进度</div>
+          <div class="import-opt-title" data-en="Import game save (JSON)">导入游戏存档 (JSON)</div>
+          <div class="import-opt-sub" data-en="Restore creatures, items & progress">恢复你的宠物、道具和进度</div>
         </div>
       </div>
 
       <div id="game-upload-area" style="display:none;padding:12px 0">
         <button class="btn btn-secondary" onclick="document.getElementById('game-import-input').click()" style="width:auto">
-          💾 选择存档文件
+          <span data-en="💾 Choose save file">💾 选择存档文件</span>
         </button>
         <div id="game-status" style="font-size:13px;color:var(--muted);margin-top:8px"></div>
       </div>
 
       <div style="margin-top:24px;padding:14px;background:rgba(255,200,0,.06);
         border:1px solid rgba(255,200,0,.2);border-radius:12px;font-size:13px;color:var(--muted)">
-        💡 训练记录 CSV 和游戏存档 JSON 是两个独立文件，可以分别导出/导入。
+        <span data-en="💡 Workout CSV and game JSON are separate files, exported/imported independently.">💡 训练记录 CSV 和游戏存档 JSON 是两个独立文件，可以分别导出/导入。</span>
       </div>
     </div>
     <div class="ob-footer">
-      <button class="btn btn-primary" onclick="obNext()">继续 →</button>
-      <button class="btn btn-ghost btn-small" onclick="obBack()">← 返回</button>
+      <button class="btn btn-primary" onclick="obNext()" data-en="Continue →">继续 →</button>
+      <button class="btn btn-ghost btn-small" onclick="obBack()" data-en="← Back">← 返回</button>
     </div>
   </div>
 
@@ -786,16 +792,16 @@ select.ob-input{appearance:none;-webkit-appearance:none;
       <div style="font-size:72px;animation:bob 2s ease-in-out infinite;
         filter:drop-shadow(0 0 20px rgba(255,107,157,.5))">🥚</div>
       <div class="ob-title" style="font-size:26px" id="ob-done-title">设置完成！</div>
-      <div style="font-size:14px;color:var(--muted)">你的第一只神兽在等你！💪</div>
+      <div style="font-size:14px;color:var(--muted)" data-en="Your first creature is waiting! 💪">你的第一只神兽在等你！💪</div>
 
       <div style="width:100%;display:flex;flex-direction:column;gap:8px;margin-top:8px" id="ob-summary"></div>
 
       <div style="font-size:13px;color:var(--muted);text-align:center;padding:0 20px">
-        开始打卡就能解锁更多神兽，连续签到还有超稀有掉落哦！
+        <span data-en="Check in to unlock more creatures — daily streaks drop super-rare eggs!">开始打卡就能解锁更多神兽，连续签到还有超稀有掉落哦！</span>
       </div>
     </div>
     <div class="ob-footer">
-      <button class="btn btn-primary" onclick="finishOnboarding()" style="font-size:17px;padding:16px">
+      <button class="btn btn-primary" onclick="finishOnboarding()" style="font-size:17px;padding:16px" data-en="Start training! 🚀">
         开始健身！🚀
       </button>
     </div>
@@ -2050,11 +2056,11 @@ function togglePartCustom(el,name){
 function updatePartsOrder(){
   const el=document.getElementById('parts-order-display');
   if(!OB.selectedParts.length){
-    el.innerHTML='<span style="font-size:13px;color:var(--muted)">（从上方选择部位后在这里显示）</span>';
+    el.innerHTML=`<span style="font-size:13px;color:var(--muted)">${t('（从上方选择部位后在这里显示）','(Pick groups above to see them here)')}</span>`;
     return;
   }
   el.innerHTML=OB.selectedParts.map((p,i)=>
-    `<div class="part-tag">${i+1}. ${partEmoji(p)} ${p}
+    `<div class="part-tag">${i+1}. ${partEmoji(p)} ${S.lang==='en'?tPart(p):p}
       <span class="rm" onclick="removePart('${p}')">×</span>
     </div>`
   ).join('');
@@ -2096,7 +2102,7 @@ function handleCsvImport(e){
     S.total=S.workouts.length;
     OB.csvImported=true;
     document.getElementById('csv-status').innerHTML=
-      `✅ 成功导入 <strong>${rows.length}</strong> 条记录`;
+      t(`✅ 成功导入 <strong>${rows.length}</strong> 条记录`,`✅ Imported <strong>${rows.length}</strong> records`);
     toast(t(`📥 已导入 ${rows.length} 条训练记录`,`📥 Imported ${rows.length} records`));
   };
   reader.readAsText(file,'UTF-8');
@@ -2122,11 +2128,12 @@ function handleGameImport(e){
       S.total=d.total||0;
       OB.gameImported=true;
       const total=(S.nurturing?.length||0)+(S.garden?.length||0);
+      const bag=Object.values(S.inv).reduce((a,b)=>a+b,0);
       document.getElementById('game-status').innerHTML=
-        `✅ 存档恢复成功！${total} 只神兽，背包 ${Object.values(S.inv).reduce((a,b)=>a+b,0)} 件道具`;
+        t(`✅ 存档恢复成功！${total} 只神兽，背包 ${bag} 件道具`,`✅ Save restored! ${total} creatures, ${bag} items`);
       toast(t('💾 游戏存档恢复成功！','💾 Save restored!'));
     }catch(err){
-      document.getElementById('game-status').textContent='❌ 文件格式错误，请选择正确的 JSON 存档';
+      document.getElementById('game-status').textContent=t('❌ 文件格式错误，请选择正确的 JSON 存档','❌ Invalid file — pick a valid JSON save');
     }
   };
   reader.readAsText(file,'UTF-8');
@@ -2134,30 +2141,33 @@ function handleGameImport(e){
 }
 
 function buildDoneScreen(){
-  const name=document.getElementById('ob-name').value.trim()||'训练者';
+  const name=document.getElementById('ob-name').value.trim()||t('训练者','trainer');
   OB.selectedGoals=[];
   document.querySelectorAll('#goal-chips .chip.on').forEach(c=>{
     OB.selectedGoals.push(c.dataset.val||c.textContent.trim().replace(/^./,'').trim());
   });
 
-  document.getElementById('ob-done-title').textContent=`${name}，准备好了！`;
+  document.getElementById('ob-done-title').textContent=t(`${name}，准备好了！`,`${name}, you're all set!`);
 
-  const dayNames=['周日','周一','周二','周三','周四','周五','周六'];
+  const en=S.lang==='en';
+  const dayNames=en?['Sun','Mon','Tue','Wed','Thu','Fri','Sat']:['周日','周一','周二','周三','周四','周五','周六'];
   const daysStr=OB.selectedDays.length
-    ? OB.selectedDays.map(d=>dayNames[parseInt(d)]).join('、')
-    : '每天都可以';
+    ? OB.selectedDays.map(d=>dayNames[parseInt(d)]).join(en?', ':'、')
+    : t('每天都可以','Any day');
   const parts=OB.selectedParts.length?OB.selectedParts:DEFAULT_ROTATION;
-  const goals=OB.selectedGoals.length?OB.selectedGoals.join(' · '):'综合健身';
+  const GOAL_EN={'练出蜜桃臀':'Peach glutes','增肌':'Build muscle','减脂':'Lose fat','塑形':'Tone up','提高力量':'Get stronger','增强耐力':'Endurance','综合健身':'General fitness'};
+  const goalVals=OB.selectedGoals.length?OB.selectedGoals:['综合健身'];
+  const goals=goalVals.map(g=>en?(GOAL_EN[g]||g):g).join(' · ');
 
   document.getElementById('ob-summary').innerHTML=`
-    <div class="summary-row"><span class="summary-icon">👤</span><span>昵称：<strong>${name}</strong></span></div>
-    <div class="summary-row"><span class="summary-icon">🗓</span><span>训练日：${daysStr}</span></div>
-    <div class="summary-row"><span class="summary-icon">🔄</span><span>循环：${parts.map(p=>partEmoji(p)+p).join(' → ')}</span></div>
-    <div class="summary-row"><span class="summary-icon">🎯</span><span>目标：${goals}</span></div>
+    <div class="summary-row"><span class="summary-icon">👤</span><span>${t('昵称','Name')}：<strong>${name}</strong></span></div>
+    <div class="summary-row"><span class="summary-icon">🗓</span><span>${t('训练日','Days')}：${daysStr}</span></div>
+    <div class="summary-row"><span class="summary-icon">🔄</span><span>${t('循环','Rotation')}：${parts.map(p=>partEmoji(p)+(en?tPart(p):p)).join(' → ')}</span></div>
+    <div class="summary-row"><span class="summary-icon">🎯</span><span>${t('目标','Goals')}：${goals}</span></div>
     <div class="summary-row"><span class="summary-icon">📊</span>
-      <span>训练记录：${OB.csvImported?`已导入 ${S.total} 条`:'从零开始'}</span></div>
+      <span>${t('训练记录','Workouts')}：${OB.csvImported?t(`已导入 ${S.total} 条`,`imported ${S.total}`):t('从零开始','fresh start')}</span></div>
     <div class="summary-row"><span class="summary-icon">🎮</span>
-      <span>游戏存档：${OB.gameImported?'已恢复':'全新开始'}</span></div>
+      <span>${t('游戏存档','Save')}：${OB.gameImported?t('已恢复','restored'):t('全新开始','fresh start')}</span></div>
   `;
 }
 
@@ -2179,8 +2189,8 @@ function finishOnboarding(){
   launchApp();
   sparkles();
   const welcomeMsg=OB.gameImported
-    ?`欢迎回来，${name}！存档已恢复 💾`
-    :`欢迎，${name}！你的第一只神兽在等你 🥚`;
+    ?t(`欢迎回来，${name}！存档已恢复 💾`,`Welcome back, ${name}! Save restored 💾`)
+    :t(`欢迎，${name}！你的第一只神兽在等你 🥚`,`Welcome, ${name}! Your first creature awaits 🥚`);
   setTimeout(()=>toast(welcomeMsg),500);
 }
 
@@ -4608,6 +4618,25 @@ if(S.onboarded){
 }else{
   obShowStep(0);
   prefillAnnaDefaults();
+  applyObLang();
+}
+
+// Onboarding language: swap data-en text / placeholders, remember Chinese originals
+function applyObLang(){
+  const en=S.lang==='en';
+  document.querySelectorAll('#onboarding [data-en]').forEach(el=>{
+    if(el.dataset.zhHtml===undefined)el.dataset.zhHtml=el.innerHTML;
+    el.innerHTML=en?el.dataset.en:el.dataset.zhHtml;
+  });
+  document.querySelectorAll('#onboarding [data-en-ph]').forEach(el=>{
+    if(el.dataset.zhPh===undefined)el.dataset.zhPh=el.placeholder||'';
+    el.placeholder=en?el.dataset.enPh:el.dataset.zhPh;
+  });
+  const zb=document.getElementById('ob-lang-zh'),eb=document.getElementById('ob-lang-en');
+  if(zb&&eb){zb.style.background=en?'transparent':'var(--pink)';eb.style.background=en?'var(--pink)':'transparent';}
+}
+function setObLang(l){
+  S.lang=l;save();applyObLang();updatePartsOrder&&updatePartsOrder();
 }
 
 function prefillAnnaDefaults(){
@@ -4615,9 +4644,9 @@ function prefillAnnaDefaults(){
   const nameEl=document.getElementById('ob-name');
   if(nameEl&&!nameEl.value)nameEl.value='Anna';
 
-  // 预选目标
+  // 预选目标（用 data-val，避免语言切换后 textContent 变英文匹配失败）
   document.querySelectorAll('#goal-chips .chip').forEach(c=>{
-    if(c.textContent.includes('蜜桃臀')||c.textContent.includes('塑形')){
+    if(c.dataset.val==='练出蜜桃臀'||c.dataset.val==='塑形'){
       c.classList.add('on');
     }
   });
@@ -4631,11 +4660,10 @@ function prefillAnnaDefaults(){
     }
   });
 
-  // 预选部位（按顺序：臀A→肩→臀B→背）
+  // 预选部位（按顺序：臀A→肩→臀B→背）— 用 data-val 匹配
   const defaultParts=['臀A','肩','臀B','背'];
   document.querySelectorAll('#part-chips .chip').forEach(c=>{
-    const label=c.textContent.trim().replace(/^./,'').trim(); // 去掉emoji
-    if(defaultParts.some(p=>c.textContent.includes(p))){
+    if(defaultParts.includes(c.dataset.val)){
       c.classList.add('on');
     }
   });
