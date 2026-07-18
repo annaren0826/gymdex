@@ -589,12 +589,6 @@ select.ob-input{appearance:none;-webkit-appearance:none;
      ═══════════════════════════════════════════════════════════ -->
 <div id="onboarding">
 
-  <!-- Language toggle -->
-  <div style="position:fixed;top:12px;right:12px;z-index:100;display:flex;gap:3px;background:rgba(0,0,0,.28);border-radius:20px;padding:3px">
-    <button onclick="setObLang('zh')" id="ob-lang-zh" style="border:none;border-radius:16px;padding:5px 13px;font-size:13px;font-weight:700;cursor:pointer;background:var(--pink);color:#fff">中</button>
-    <button onclick="setObLang('en')" id="ob-lang-en" style="border:none;border-radius:16px;padding:5px 13px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:#fff">EN</button>
-  </div>
-
   <!-- LOADING SCREEN -->
   <div id="loading">
     <div id="ld-inner">
@@ -614,18 +608,34 @@ select.ob-input{appearance:none;-webkit-appearance:none;
     </div>
   </div>
 
-  <!-- Step 0: Welcome -->
-  <div class="ob-step active" id="ob0">
-    <div class="ob-progress" id="ob-dots"></div>
-    <div class="ob-hero">
+  <!-- Screen: Language -->
+  <div class="ob-step active" id="ob-lang">
+    <div class="ob-hero" style="flex:1;justify-content:center">
       <span class="ob-logo">🏋️</span>
       <div class="ob-title">GymDex</div>
-      <div class="ob-sub" data-en="Check in × raise beasts<br>Play as you train, unlock legends">健身打卡 × 养神兽<br>边练边玩，解锁传说生物</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px" data-en="Have an account? Data is saved on this device">已有账号？数据保存在本设备</div>
+      <div class="ob-sub">健身打卡 × 养神兽<br>Check in × raise beasts</div>
     </div>
     <div class="ob-footer">
-      <button class="btn btn-primary" onclick="obNext()" data-en="Get started →">开始设置 →</button>
-      <button class="btn btn-ghost" onclick="obSkipIfExisting()" data-en="I already set up — enter">我已经设置过了，直接进入</button>
+      <button class="btn btn-primary" onclick="obPickLang('zh')" style="font-size:17px;padding:15px">开始</button>
+      <button class="btn btn-primary" onclick="obPickLang('en')" style="font-size:17px;padding:15px">Start · English</button>
+    </div>
+  </div>
+
+  <!-- Screen: Save question -->
+  <div class="ob-step" id="ob-save">
+    <div class="ob-form" style="padding-top:44px;flex:1">
+      <div class="ob-form-title" data-en="Do you have a save?">有游戏存档吗？</div>
+      <div class="ob-form-sub" data-en="Returning players can restore their save; new players set up fresh.">老玩家可以恢复存档；新玩家从头设置。</div>
+      <div class="import-opt" onclick="obGoTo('ob-game')">
+        <span class="import-opt-icon">💾</span>
+        <div><div class="import-opt-title" data-en="I have a save">我有存档</div>
+        <div class="import-opt-sub" data-en="Restore creatures, items & profile">恢复神兽、道具和个人资料</div></div>
+      </div>
+      <div class="import-opt" onclick="obGoTo('ob1')">
+        <span class="import-opt-icon">🆕</span>
+        <div><div class="import-opt-title" data-en="I'm new — set up">全新玩家，重新设置</div>
+        <div class="import-opt-sub" data-en="Start your journey from scratch">从零开始你的旅程</div></div>
+      </div>
     </div>
   </div>
 
@@ -636,7 +646,7 @@ select.ob-input{appearance:none;-webkit-appearance:none;
       <div class="ob-form-title" data-en="👋 What should I call you?">👋 你叫什么名字？</div>
       <div class="ob-form-sub" data-en="I'll call you this from now on 💪">我会一直叫你这个名字 💪</div>
       <label class="ob-label" data-en="Nickname">昵称</label>
-      <input class="ob-input" id="ob-name" type="text" placeholder="例如：Anna" data-en-ph="e.g. Anna" maxlength="20"
+      <input class="ob-input" id="ob-name" type="text" placeholder="你的名字" data-en-ph="Your name" maxlength="20"
         onkeydown="if(event.key==='Enter')obNext()">
 
       <label class="ob-label" data-en="Your fitness goals (multi-select)">你的健身目标（可多选）</label>
@@ -703,86 +713,42 @@ select.ob-input{appearance:none;-webkit-appearance:none;
     </div>
   </div>
 
-  <!-- Step 3: Import workout data -->
-  <div class="ob-step" id="ob3">
-    <div class="ob-form" style="padding-top:32px;flex:1">
-      <div class="ob-form-title" data-en="📊 Import workout data">📊 导入训练数据</div>
-      <div class="ob-form-sub" data-en="Have past workout records? Import now, or start fresh.">有之前的训练记录吗？可以现在导入，也可以从零开始。</div>
-
-      <div class="import-opt selected" id="iopt-skip" onclick="selectImportOpt('skip')">
-        <span class="import-opt-icon">🆕</span>
-        <div>
-          <div class="import-opt-title" data-en="Start fresh">全新开始</div>
-          <div class="import-opt-sub" data-en="No history — start logging today">没有历史数据，从今天开始记录</div>
-        </div>
-      </div>
-
-      <div class="import-opt" id="iopt-csv" onclick="selectImportOpt('csv')">
-        <span class="import-opt-icon">📂</span>
-        <div>
-          <div class="import-opt-title" data-en="Import CSV workouts">导入 CSV 训练记录</div>
-          <div class="import-opt-sub" data-en="Standard: date, type, exercise, weight, sets">支持标准格式：日期, 类型, 动作, 重量, 组数</div>
-        </div>
-      </div>
-
-      <div id="csv-upload-area" style="display:none;padding:12px 0">
-        <button class="btn btn-secondary" onclick="document.getElementById('csv-input').click()" style="width:auto">
-          <span data-en="📂 Choose CSV file">📂 选择 CSV 文件</span>
+  <!-- Screen: game save import (returning user) -->
+  <div class="ob-step" id="ob4">
+    <div class="ob-form" style="padding-top:36px;flex:1">
+      <div class="ob-form-title" data-en="💾 Import your save">💾 导入游戏存档</div>
+      <div class="ob-form-sub" data-en="Choose your JSON save file to restore everything.">选择你的 JSON 存档文件，恢复全部数据。</div>
+      <div style="padding:18px 0">
+        <button class="btn btn-secondary" onclick="document.getElementById('game-import-input').click()">
+          <span data-en="💾 Choose save file">💾 选择存档文件</span>
         </button>
-        <div id="csv-status" style="font-size:13px;color:var(--muted);margin-top:8px"></div>
+        <div id="game-status" style="font-size:13px;color:var(--muted);margin-top:12px"></div>
       </div>
-
-      <div class="import-opt" id="iopt-manual" onclick="selectImportOpt('manual')">
-        <span class="import-opt-icon">✍️</span>
-        <div>
-          <div class="import-opt-title" data-en="Add manually later">之后手动录入</div>
-          <div class="import-opt-sub" data-en="Add from the log page after entering">进入App后从训练记录页面添加</div>
-        </div>
-      </div>
+      <div style="font-size:12px;color:var(--muted)" data-en="You can only continue once a save is imported.">需要成功导入存档后才能继续。</div>
     </div>
     <div class="ob-footer">
-      <button class="btn btn-primary" onclick="obNext()" data-en="Continue →">继续 →</button>
-      <button class="btn btn-ghost btn-small" onclick="obBack()" data-en="← Back">← 返回</button>
+      <button class="btn btn-primary" id="ob-game-next" onclick="obGoTo('ob3')" disabled style="opacity:.4">
+        <span data-en="Continue →">继续 →</span></button>
+      <button class="btn btn-ghost btn-small" onclick="obGoTo('ob-save')" data-en="← Back">← 返回</button>
     </div>
   </div>
 
-  <!-- Step 4: Import game data -->
-  <div class="ob-step" id="ob4">
-    <div class="ob-form" style="padding-top:32px;flex:1">
-      <div class="ob-form-title" data-en="🎮 Game save">🎮 游戏存档</div>
-      <div class="ob-form-sub" data-en="Have past creatures & items? Import separately from workouts.">有之前的宠物和道具数据吗？可以单独导入，和训练记录互不影响。</div>
-
-      <div class="import-opt selected" id="gopt-new" onclick="selectGameOpt('new')">
-        <span class="import-opt-icon">🥚</span>
-        <div>
-          <div class="import-opt-title" data-en="Start fresh">全新开始</div>
-          <div class="import-opt-sub" data-en="Collect creatures from scratch">从零收集神兽，解锁新旅程</div>
-        </div>
-      </div>
-
-      <div class="import-opt" id="gopt-import" onclick="selectGameOpt('import')">
-        <span class="import-opt-icon">💾</span>
-        <div>
-          <div class="import-opt-title" data-en="Import game save (JSON)">导入游戏存档 (JSON)</div>
-          <div class="import-opt-sub" data-en="Restore creatures, items & progress">恢复你的宠物、道具和进度</div>
-        </div>
-      </div>
-
-      <div id="game-upload-area" style="display:none;padding:12px 0">
-        <button class="btn btn-secondary" onclick="document.getElementById('game-import-input').click()" style="width:auto">
-          <span data-en="💾 Choose save file">💾 选择存档文件</span>
+  <!-- Screen: CSV import (optional, returning user) -->
+  <div class="ob-step" id="ob3">
+    <div class="ob-form" style="padding-top:36px;flex:1">
+      <div class="ob-form-title" data-en="📂 Import workout history?">📂 导入训练记录？</div>
+      <div class="ob-form-sub" data-en="Optional — import a CSV of past workouts, or skip.">可选——导入之前的训练记录 CSV，或直接跳过。</div>
+      <div style="padding:18px 0">
+        <button class="btn btn-secondary" onclick="document.getElementById('csv-input').click()">
+          <span data-en="📂 Choose CSV file">📂 选择 CSV 文件</span>
         </button>
-        <div id="game-status" style="font-size:13px;color:var(--muted);margin-top:8px"></div>
-      </div>
-
-      <div style="margin-top:24px;padding:14px;background:rgba(255,200,0,.06);
-        border:1px solid rgba(255,200,0,.2);border-radius:12px;font-size:13px;color:var(--muted)">
-        <span data-en="💡 Workout CSV and game JSON are separate files, exported/imported independently.">💡 训练记录 CSV 和游戏存档 JSON 是两个独立文件，可以分别导出/导入。</span>
+        <div id="csv-status" style="font-size:13px;color:var(--muted);margin-top:12px"></div>
       </div>
     </div>
     <div class="ob-footer">
-      <button class="btn btn-primary" onclick="obNext()" data-en="Continue →">继续 →</button>
-      <button class="btn btn-ghost btn-small" onclick="obBack()" data-en="← Back">← 返回</button>
+      <button class="btn btn-primary" onclick="finishImportOnboarding()">
+        <span data-en="Enter GymDex 🚀">进入 GymDex 🚀</span></button>
+      <button class="btn btn-ghost btn-small" onclick="obGoTo('ob4')" data-en="← Back">← 返回</button>
     </div>
   </div>
 
@@ -1948,62 +1914,55 @@ function save(){localStorage.setItem('gd3_test',JSON.stringify(S))}
 // ONBOARDING
 // ══════════════════════════════════════════
 
-const TOTAL_OB_STEPS = 6; // 0..5
-
-function renderObDots(step){
-  // Update all dot containers (only one visible at a time but keep it simple)
-  document.querySelectorAll('[id^="ob-dots"]').forEach(c=>{
-    let h='';
-    for(let i=0;i<TOTAL_OB_STEPS;i++){
-      if(i===0)continue; // step 0 is welcome, no dots
-      const idx=i-1; // dots for steps 1-5
-      const cur=step-1;
-      h+=`<div class="ob-dot ${idx<cur?'done':idx===cur?'current':''}"></div>`;
-    }
-    c.innerHTML=h;
-  });
-}
-
-function obShowStep(n){
+// Show one onboarding screen by id (branching flow — no linear steps)
+function obGoTo(id){
   document.querySelectorAll('.ob-step').forEach(s=>s.classList.remove('active'));
-  const el=document.getElementById('ob'+n);
+  const el=document.getElementById(id);
   if(el)el.classList.add('active');
-  OB.step=n;
-  renderObDots(n);
-  // scroll to top
-  document.getElementById('onboarding').scrollTop=0;
+  const ob=document.getElementById('onboarding');
+  if(ob)ob.scrollTop=0;
 }
 
+// First screen: pick language, then ask about a save
+function obPickLang(l){
+  S.lang=l;save();
+  applyObLang();
+  obGoTo('ob-save');
+}
+
+// Continue button on the fresh-setup screens (validates by which screen is active)
 function obNext(){
-  // Validate current step
-  if(OB.step===1){
+  const active=document.querySelector('.ob-step.active')?.id;
+  if(active==='ob1'){
     const name=document.getElementById('ob-name').value.trim();
-    if(!name){toast(t('输入你的名字先！','Enter your name first!'));return}
+    if(!name){toast(t('输入你的名字先！','Enter your name first!'));return;}
     OB.selectedGoals=[];
     document.querySelectorAll('#goal-chips .chip.on').forEach(c=>{
       OB.selectedGoals.push(c.dataset.val||c.textContent.trim().replace(/^[^一-龥a-zA-Z]*/,''));
     });
-  }
-  if(OB.step===2&&OB.selectedParts.length===0){
-    toast(t('至少选一个训练部位！','Pick at least one muscle group!'));return;
-  }
-  if(OB.step===TOTAL_OB_STEPS-1){
+    obGoTo('ob2');
+  }else if(active==='ob2'){
+    if(OB.selectedParts.length===0){toast(t('至少选一个训练部位！','Pick at least one muscle group!'));return;}
     buildDoneScreen();
+    obGoTo('ob5');
   }
-  if(OB.step<TOTAL_OB_STEPS-1)obShowStep(OB.step+1);
 }
 
 function obBack(){
-  if(OB.step>0)obShowStep(OB.step-1);
+  const active=document.querySelector('.ob-step.active')?.id;
+  if(active==='ob2')obGoTo('ob1');
+  else if(active==='ob1')obGoTo('ob-save');
 }
 
-function obSkipIfExisting(){
-  // If there's existing onboarded data, go straight to app
-  if(S.onboarded){
-    launchApp();
-  }else{
-    toast(t('还没有设置过，请先完成设置 😊','Not set up yet — please finish setup first 😊'));
-  }
+// Returning user: finish after a save import (+ optional CSV)
+function finishImportOnboarding(){
+  S.onboarded=true;
+  if(!S.profile)S.profile={...DEFAULT_PROFILE};
+  save();
+  launchApp();
+  sparkles();
+  const nm=S.profile?.name||t('训练者','trainer');
+  setTimeout(()=>toast(t(`欢迎回来，${nm}！存档已恢复 💾`,`Welcome back, ${nm}! Save restored 💾`)),500);
 }
 
 function toggleChip(el,val){
@@ -2126,7 +2085,20 @@ function handleGameImport(e){
       S.itemLog=d.itemLog||[];
       S.inv=d.inv||{};
       S.total=d.total||0;
+      if(d.streak!=null)S.streak=d.streak;
+      // Restore profile (name/days/parts/goals) if the save carries it
+      if(d.name||d.days||d.parts||d.goals){
+        S.profile={
+          name:d.name||S.profile?.name||'',
+          days:d.days||S.profile?.days||[],
+          parts:d.parts||S.profile?.parts||[],
+          goals:d.goals||S.profile?.goals||[],
+        };
+      }
       OB.gameImported=true;
+      // In onboarding, a successful import unlocks the "continue" button
+      const nb=document.getElementById('ob-game-next');
+      if(nb){nb.disabled=false;nb.style.opacity='1';}
       const total=(S.nurturing?.length||0)+(S.garden?.length||0);
       const bag=Object.values(S.inv).reduce((a,b)=>a+b,0);
       document.getElementById('game-status').innerHTML=
@@ -4549,7 +4521,11 @@ function exportGame(){
     hatchQueue:S.hatchQueue,achievements:S.achievements,itemLog:S.itemLog,
     inv:S.inv,total:S.total,streak:S.streak,
     exportedAt:new Date().toISOString(),
+    // Profile so a save can fully restore who you are + your schedule
     name:S.profile?.name||'',
+    days:S.profile?.days||[],
+    parts:S.profile?.parts||[],
+    goals:S.profile?.goals||[],
   };
   downloadBlob(JSON.stringify(data,null,2),'application/json',`gymdex_save_${todayISO()}.json`);
   toast(t('💾 游戏存档导出成功！','💾 Game save exported!'));
@@ -4616,9 +4592,7 @@ document.getElementById('game-import-input').addEventListener('change',function(
 if(S.onboarded){
   launchApp();
 }else{
-  obShowStep(0);
-  prefillAnnaDefaults();
-  applyObLang();
+  obGoTo('ob-lang'); // start with the language picker; no prefilled defaults
 }
 
 // Onboarding language: swap data-en text / placeholders, remember Chinese originals
