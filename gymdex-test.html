@@ -2201,6 +2201,32 @@ const EX_EN={
   '硬拉':'Deadlift','哑铃推举':'Dumbbell Press','划船':'Row',
 };
 function tEx(name){return S.lang==='en'?(EX_EN[name]||name):name}
+// English names for items / eggs / creature stages (display-only; ids stay the keys)
+const NAME_EN={
+  // items
+  '蜜桃':'Peach','蛋白棒':'Protein Bar','蜂蜜罐':'Honey Jar','月光糕':'Moonlight Cake','泡泡糖':'Bubble Gum',
+  '彩虹糖':'Rainbow Candy','轻风草':'Breeze Grass','海螺壳':'Conch Shell','辣焰椒':'Chili Pepper','嫩芽叶':'Sprout Leaf',
+  '星尘':'Stardust','灵芝菇':'Lingzhi Mushroom','樱花蜜':'Cherry Blossom Honey','云朵糕':'Cloud Cake','风之羽':'Wind Feather',
+  '追风石':'Chase Stone','清泉露':'Dewdrop','雨水瓶':'Rain Bottle','火焰种':'Fire Seed','蜡烛心':'Candle Wick',
+  '大地晶':'Earth Crystal','神木果':'Sacred Nut','深海蓝晶':'Ocean Sapphire','四叶幸运草':'Lucky Clover','神秘水晶球':'Mystery Orb',
+  '盛放花冠':'Bloom Crown','彩晶':'Rainbow Gem','流星碎':'Meteor Shard','白鸽翎':'Dove Feather','冰心石':'Ice Heart',
+  '火山灰':'Volcano Ash','古树芯':'Ancient Wood','深海珠':'Ocean Pearl','熔岩果':'Lava Fruit','千年人参':'Ginseng',
+  '大力丸':'Power Pill','凤凰尾羽':'Phoenix Feather','远古龙鳞':'Ancient Scale','传说王冠':'Legend Crown','月华珠':'Moon Pearl',
+  '雷霆核心':'Thunder Core','荣耀勋章':'Honor Medal',
+  // eggs
+  '普通蛋':'Common Egg','银蛋':'Silver Egg','金蛋':'Gold Egg','彩虹蛋':'Rainbow Egg',
+  // creature stages
+  '绒球':'Fluffball','胖达':'Chonk','小仓神':'Hamster Deity','软耳':'Floppy Ears','月灵兔':'Moon Bunny',
+  '暖柴犬':'Sunny Shiba','斑仔':'Spotty','金鸡':'Golden Rooster','朱雏':'Ember Chick','澡泡鸭':'Bubble Duck',
+  '嘎嘎':'Quacky','云尾猫':'Cloudtail Cat','云爪':'Cloudpaw','云苗':'Cloud Sprout','蜜罐熊':'Honeypot Bear',
+  '蜜仔':'Honey Cub','玄墨龟':'Ink Turtle','鳞球':'Scale Ball','花彩蝶':'Rainbow Butterfly','蛹仔':'Cocoon',
+  '九尾狐':'Nine-Tail Fox','小火狐':'Little Fox','冰天鹅':'Ice Swan','羽仔':'Feathery','星尘鹿':'Stardust Deer',
+  '摇摇':'Wobble','烈鬃虎':'Blaze Tiger','虎崽':'Tiger Cub','虎仔':'Tiger Kit','不死鸟':'Undying Phoenix',
+  '朱鸟':'Vermilion Bird','苍海龙':'Ocean Dragon','龙仔':'Baby Dragon','鳞龙':'Scale Dragon','缩缩':'Curly',
+  '嫩嫩':'Sprout',
+};
+function locName(o){return o?(S.lang==='en'?(NAME_EN[o.name]||o.name):o.name):''}
+function locNameStr(n){return S.lang==='en'?(NAME_EN[n]||n):n}
 function updateNavLabels(){
   const isEn=S.lang==='en';
   const labels={workout:isEn?'Train':'训练',pet:isEn?'Creatures':'神兽',garden:isEn?'Garden':'庭院',history:isEn?'Log':'记录'};
@@ -2606,7 +2632,7 @@ function showCheckinReward(rewards,emoji,title,subtitle){
     h+=`<div class="reward-item">
       <span class="reward-item-emoji">${it.emoji}</span>
       <div class="reward-item-cnt">×${n}</div>
-      <div class="reward-item-name">${it.name}</div>
+      <div class="reward-item-name">${locName(it)}</div>
     </div>`;
   }
   h+=`</div>`;
@@ -2914,7 +2940,7 @@ function tickIncubatorNotify(){
   const before=S.incubator;
   if(tickIncubator()==='ready'){
     const ed=EGG_DATA[before?.eggRarity]||EGG_DATA.common;
-    toast(t(`🥚 ${ed.name}孵化好了！去孵蛋器孵化`,`🥚 ${ed.name} is ready! Hatch it in the incubator`));
+    toast(t(`🥚 ${locName(ed)}孵化好了！去孵蛋器孵化`,`🥚 ${locName(ed)} is ready! Hatch it in the incubator`));
   }
 }
 
@@ -2942,7 +2968,7 @@ function manualHatch(){
   }else if(S.hatchPending){
     // Nursery full — egg waits to be claimed manually once a slot frees up
     const cr=CREATURES.find(c=>c.id===S.hatchPending);
-    toast(t(`✨ ${cr?.stages[0].name||''} 孵化好了！培育槽已满，腾出空位后可领取`,`✨ ${cr?.stages[0].name||''} hatched! Nursery full — claim it after freeing a slot`));
+    toast(t(`✨ ${locName(cr?.stages[0])||''} 孵化好了！培育槽已满，腾出空位后可领取`,`✨ ${locName(cr?.stages[0])||''} hatched! Nursery full — claim it after freeing a slot`));
   }
 }
 
@@ -3020,7 +3046,7 @@ function openFeedModal(idx){
       itemsHtml+=`<div class="item-cell" onclick="feedNurturing(${idx},'${id}')" style="cursor:pointer;-webkit-tap-highlight-color:transparent">
         <span class="item-cnt">${n}</span>
         <span class="item-emoji">${it.emoji}</span>
-        <div class="item-name">${it.name}</div>
+        <div class="item-name">${locName(it)}</div>
         <div style="font-size:10px;color:${RARITY_COLOR[it.rarity]||'#aaa'}">${RARITY_NAME[it.rarity]}</div>
         <div style="font-size:10px;color:var(--muted)">${it.exp?`+${it.exp}EXP `:''}${attrLabel}</div>
       </div>`;
@@ -3031,7 +3057,7 @@ function openFeedModal(idx){
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
       <div style="display:flex;justify-content:center">${spriteHtml}</div>
       <div>
-        <div style="font-size:16px;font-weight:700">${stageDef?.name}</div>
+        <div style="font-size:16px;font-weight:700">${locName(stageDef)}</div>
         ${evolCond?`<div style="font-size:12px;color:var(--muted);margin-top:2px">EXP ${slot.exp} / ${evolCond.exp}</div>`:''}
       </div>
     </div>
@@ -3080,7 +3106,7 @@ function showEvolveReveal(idx){
   document.getElementById('evolve-card').innerHTML=`
     <div style="font-size:13px;color:var(--gold);font-weight:800;letter-spacing:2px;margin-bottom:10px">${t('✨ 进化成功 ✨','✨ EVOLVED ✨')}</div>
     <div style="display:flex;justify-content:center;margin:4px 0 12px">${sp}</div>
-    <div style="font-size:24px;font-weight:800">${stageDef.name}</div>
+    <div style="font-size:24px;font-weight:800">${locName(stageDef)}</div>
     <div style="font-size:13px;color:${RARITY_COLOR[cr.rarity]};font-weight:700;margin-top:3px">${RARITY_NAME[cr.rarity]}</div>
     <button class="btn btn-primary" style="margin-top:20px;width:100%" onclick="closeEvolveReveal(${idx},${isFinal})">
       ${isFinal?t('🏡 移到庭院','🏡 Move to garden'):t('确认','OK')}
@@ -3105,7 +3131,7 @@ function showHatchReveal(petId){
   document.getElementById('evolve-card').innerHTML=`
     <div style="font-size:13px;color:var(--gold);font-weight:800;letter-spacing:2px;margin-bottom:10px">${t('✨ 孵化成功 ✨','✨ HATCHED ✨')}</div>
     <div style="display:flex;justify-content:center;margin:4px 0 12px">${sp}</div>
-    <div style="font-size:24px;font-weight:800">${cr.stages[0].name}</div>
+    <div style="font-size:24px;font-weight:800">${locName(cr.stages[0])}</div>
     <div style="font-size:13px;color:${RARITY_COLOR[cr.rarity]};font-weight:700;margin-top:3px">${RARITY_NAME[cr.rarity]}</div>
     <div style="font-size:12px;color:var(--muted);margin-top:10px;font-style:italic">${cr.desc}</div>
     <button class="btn btn-primary" style="margin-top:18px;width:100%" onclick="closeHatchReveal()">${t('确认','OK')}</button>`;
@@ -3126,7 +3152,7 @@ function graduateToGarden(idx){
   S.garden.push({...slot,active:true,lastCollect:null});
   save();renderPet();
   const cr=CREATURES.find(c=>c.id===slot.petId);
-  toast(t(`🏡 ${cr?.stages[2].name} 搬进庭院了！`,`🏡 ${cr?.stages[2].name} moved into the garden!`));
+  toast(t(`🏡 ${locName(cr?.stages[2])} 搬进庭院了！`,`🏡 ${locName(cr?.stages[2])} moved into the garden!`));
   if(S.hatchPending&&S.nurturing.length<3)claimHatched();
 }
 
@@ -3136,7 +3162,7 @@ function freezeToGarden(idx){
   S.garden.push({...slot,active:false,lastCollect:null});
   save();renderPet();
   const cr=CREATURES.find(c=>c.id===slot.petId);
-  toast(t(`❄️ ${cr?.stages[slot.stage-1].name} 已冻结移至庭院`,`❄️ ${cr?.stages[slot.stage-1].name} frozen and moved to the garden`));
+  toast(t(`❄️ ${locName(cr?.stages[slot.stage-1])} 已冻结移至庭院`,`❄️ ${locName(cr?.stages[slot.stage-1])} frozen and moved to the garden`));
   if(S.hatchPending&&S.nurturing.length<3)claimHatched();
 }
 
@@ -3147,7 +3173,7 @@ function thawFromGarden(gIdx){
   S.nurturing.push(entry);
   save();renderPet();renderGarden();
   const cr=CREATURES.find(c=>c.id===entry.petId);
-  toast(t(`🌱 ${cr?.stages[entry.stage-1].name} 回到培育槽`,`🌱 ${cr?.stages[entry.stage-1].name} back in the nursery`));
+  toast(t(`🌱 ${locName(cr?.stages[entry.stage-1])} 回到培育槽`,`🌱 ${locName(cr?.stages[entry.stage-1])} back in the nursery`));
 }
 
 // A garden pet produces items only at final stage AND if rarer than common
@@ -3228,7 +3254,7 @@ function showReward(type,rewards,newAchievements){
     h+=`<div class="reward-item">
       <span class="reward-item-emoji">${it.emoji}</span>
       <div class="reward-item-cnt">×${n}</div>
-      <div class="reward-item-name">${it.name}</div>
+      <div class="reward-item-name">${locName(it)}</div>
     </div>`;
   }
   h+=`</div>`;
@@ -3237,7 +3263,7 @@ function showReward(type,rewards,newAchievements){
     h+=`<div style="margin:10px 0;padding:10px;background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.3);
       border-radius:12px;text-align:center">
       <div style="font-size:28px">${ed.emoji}</div>
-      <div style="font-weight:700;color:var(--gold)">${t(`获得了一颗${ed.name}！`,`Got a ${ed.name}!`)}</div>
+      <div style="font-weight:700;color:var(--gold)">${t(`获得了一颗${locName(ed)}！`,`Got a ${locName(ed)}!`)}</div>
       <div style="font-size:12px;color:var(--muted);margin-top:2px">${t('已放入蛋背包','Added to egg bag')}</div>
     </div>`;
   }
@@ -3246,7 +3272,7 @@ function showReward(type,rewards,newAchievements){
     h+=`<div style="margin:10px 0;padding:12px;background:rgba(180,77,255,.1);border:1px solid rgba(180,77,255,.4);
       border-radius:12px;text-align:center">
       <div style="font-size:36px">${he.emoji}</div>
-      <div style="font-weight:700;color:#B44DFF;margin-top:4px">${t(`${he.name}孵化好了！`,`${he.name} is ready to hatch!`)}</div>
+      <div style="font-weight:700;color:#B44DFF;margin-top:4px">${t(`${locName(he)}孵化好了！`,`${locName(he)} is ready to hatch!`)}</div>
       <div style="font-size:12px;color:var(--muted);margin-top:4px">${t('去孵蛋器点击孵化 ✨','Tap the incubator to hatch ✨')}</div>
     </div>`;
   }
@@ -3255,7 +3281,7 @@ function showReward(type,rewards,newAchievements){
       h+=`<div style="margin:8px 0;padding:10px;background:rgba(77,204,120,.1);border:1px solid rgba(77,204,120,.3);
         border-radius:12px;text-align:center">
         <div style="font-size:13px;color:#4DCC78;font-weight:700">${t(`🏆 成就达成：${a.name}`,`🏆 Achievement: ${a.name}`)}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">${ITEMS[a.reward].emoji} ${t(`${ITEMS[a.reward].name} 已加入背包`,`${ITEMS[a.reward].name} added to bag`)}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${ITEMS[a.reward].emoji} ${t(`${locName(ITEMS[a.reward])} 已加入背包`,`${locName(ITEMS[a.reward])} added to bag`)}</div>
       </div>`;
     }
   }
@@ -3400,7 +3426,7 @@ function buildTodayDoneView(todayWorkouts,nextT){
             border-radius:10px;padding:8px 12px">
             <span style="font-size:24px">${it.emoji}</span>
             <div>
-              <div style="font-size:13px;font-weight:600">${it.name}</div>
+              <div style="font-size:13px;font-weight:600">${locName(it)}</div>
               <div style="font-size:11px;color:var(--muted)">×${n}</div>
             </div>
           </div>`;
@@ -3412,7 +3438,7 @@ function buildTodayDoneView(todayWorkouts,nextT){
         h+=`<div style="padding:10px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.25);
           border-radius:10px;display:flex;align-items:center;gap:10px;margin-bottom:8px">
           <span style="font-size:28px">${ed.emoji}</span>
-          <div><div style="font-weight:700;color:var(--gold)">${ed.name}</div>
+          <div><div style="font-weight:700;color:var(--gold)">${locName(ed)}</div>
           <div style="font-size:12px;color:var(--muted)">${t('已放入蛋背包','Added to egg bag')}</div></div>
         </div>`;
       }
@@ -3421,7 +3447,7 @@ function buildTodayDoneView(todayWorkouts,nextT){
         h+=`<div style="padding:10px;background:rgba(180,77,255,.08);border:1px solid rgba(180,77,255,.3);
           border-radius:10px;display:flex;align-items:center;gap:10px">
           <span style="font-size:28px">${he.emoji}</span>
-          <div><div style="font-weight:700;color:#B44DFF">${t(`${he.name}孵化好了！`,`${he.name} is ready!`)}</div>
+          <div><div style="font-weight:700;color:#B44DFF">${t(`${locName(he)}孵化好了！`,`${locName(he)} is ready!`)}</div>
           <div style="font-size:12px;color:var(--muted)">${t('去孵蛋器孵化','Hatch it in the incubator')}</div></div>
         </div>`;
       }
@@ -3777,7 +3803,7 @@ function renderNurturingTab(){
         <div style="font-size:48px;line-height:1">${cr?.stages[0].emoji||'🐣'}</div>
       </div>
       <div style="font-size:14px;font-weight:700;color:#B44DFF;margin:4px 0">${t('新神兽等待入槽！','New creature waiting!')}</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">${t(`${cr?.stages[0].name} — 需要空出培育槽`,`${cr?.stages[0].name} — free up a nursery slot`)}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">${t(`${locName(cr?.stages[0])} — 需要空出培育槽`,`${locName(cr?.stages[0])} — free up a nursery slot`)}</div>
       <button class="btn btn-secondary btn-small" onclick="claimHatched()" ${S.nurturing.length<3?'':'disabled'}>
         ${S.nurturing.length<3?'领取神兽':'槽位已满，请先移至庭院'}
       </button>
@@ -3802,7 +3828,7 @@ function renderNurturingTab(){
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <div style="font-size:52px;line-height:1;flex-shrink:0">${stageDef?.emoji||'🐣'}</div>
         <div style="flex:1">
-          <div style="font-size:15px;font-weight:700">${stageDef?.name}</div>
+          <div style="font-size:15px;font-weight:700">${locName(stageDef)}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
             <span class="badge badge-${cr?.rarity}">${RARITY_NAME[cr?.rarity]}</span>
             ${cr?.attr?`<span style="font-size:11px;color:${ATTR_COLOR[cr.attr]}">${ATTR_EMOJI[cr.attr]}</span>`:''}
@@ -3834,14 +3860,14 @@ function renderNurturingTab(){
           h+=`<div style="font-size:12px;padding:3px 8px;border-radius:8px;
             background:${ok?'rgba(77,204,120,.15)':'rgba(255,255,255,.06)'};
             color:${ok?'#4DCC78':'var(--muted)'}">
-            ${ITEMS[id].emoji} ${ITEMS[id].name} ${have}/${n}
+            ${ITEMS[id].emoji} ${locName(ITEMS[id])} ${have}/${n}
           </div>`;
         }
         h+=`</div>`;
       }
     }
     // Two action buttons: feed + evolve (evolve grayed/disabled until conditions met)
-    const nextName=cr?.stages[slot.stage]?.name;
+    const nextName=locName(cr?.stages[slot.stage]);
     h+=`<div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn btn-small" style="flex:1;${full?'background:var(--card);color:var(--muted);border:1px solid var(--border)':'background:#FFA94D;color:#fff'}" ${full?'disabled':''} onclick="openFeedModal(${i})">
         ${full?'🍖 已吃饱':'🍖 喂食'}
@@ -3870,7 +3896,7 @@ function renderNurturingTab(){
       h+=`<div class="card" style="display:flex;align-items:center;gap:14px;padding:16px;margin-bottom:10px">
         <div style="font-size:48px;flex-shrink:0">${ed.emoji}</div>
         <div style="flex:1">
-          <div style="font-size:15px;font-weight:700;margin-bottom:4px">${ed.name}
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px">${locName(ed)}
             <span class="badge badge-${ed.rarity}" style="margin-left:6px;font-size:10px">${RARITY_NAME[ed.rarity]}</span>
           </div>
           <div style="font-size:12px;color:var(--muted)">${t('🔥 孵化中…每次打卡都有进展（训练/休息/园艺）','🔥 Incubating… every check-in helps (workout/rest/yard)')}</div>
@@ -3895,7 +3921,7 @@ function renderNurturingTab(){
         background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px">
         <span style="font-size:28px">${ed.emoji}</span>
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:600">${ed.name}</div>
+          <div style="font-size:14px;font-weight:600">${locName(ed)}</div>
           <span class="badge badge-${ed.rarity}">${RARITY_NAME[ed.rarity]}</span>
         </div>
         <button class="btn btn-secondary btn-small" onclick="placeEggInIncubator(${i})"
@@ -3919,7 +3945,7 @@ function renderIncubatorTab(){
     if(S.incubator.ready){
       h+=`<div class="card" style="text-align:center;padding:32px 16px;margin-bottom:14px">
         <div style="font-size:72px;margin-bottom:12px;animation:pet-bounce .6s ease-in-out infinite">${ed.emoji}</div>
-        <div style="font-size:18px;font-weight:800;margin-bottom:4px">${t(`${ed.name}孵化好了！`,`${ed.name} has hatched!`)}</div>
+        <div style="font-size:18px;font-weight:800;margin-bottom:4px">${t(`${locName(ed)}孵化好了！`,`${locName(ed)} has hatched!`)}</div>
         <span class="badge badge-${ed.rarity}" style="margin-bottom:20px">${RARITY_NAME[ed.rarity]}</span>
         <button class="btn btn-primary" style="margin-top:12px;font-size:17px;padding:14px"
           onclick="manualHatch()">${t('✨ 点击孵化','✨ Tap to hatch')}</button>
@@ -3928,7 +3954,7 @@ function renderIncubatorTab(){
       const pct=Math.min(100,S.incubator.trainCount/S.incubator.needed*100);
       h+=`<div class="card" style="text-align:center;padding:24px 16px;margin-bottom:14px">
         <div style="font-size:56px;margin-bottom:8px">${ed.emoji}</div>
-        <div style="font-size:18px;font-weight:800;margin-bottom:4px">${ed.name}</div>
+        <div style="font-size:18px;font-weight:800;margin-bottom:4px">${locName(ed)}</div>
         <span class="badge badge-${ed.rarity}" style="margin-bottom:14px">${RARITY_NAME[ed.rarity]}</span>
         <div style="font-size:13px;color:var(--muted);margin:10px 0 6px">${t('孵化进度','Hatch progress')}</div>
         <div class="exp-bar" style="margin-bottom:8px"><div class="exp-fill" style="width:${pct}%"></div></div>
@@ -3947,7 +3973,7 @@ function renderIncubatorTab(){
       h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
         background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px">
         <span style="font-size:24px">${ed.emoji}</span>
-        <div style="flex:1"><div style="font-size:14px">${ed.name}</div>
+        <div style="flex:1"><div style="font-size:14px">${locName(ed)}</div>
           <div style="font-size:12px;color:var(--muted)">${RARITY_NAME[ed.rarity]}</div>
         </div>
         <span class="badge badge-${ed.rarity}">${RARITY_NAME[ed.rarity]}</span>
@@ -3989,7 +4015,7 @@ function gardenPetClick(gIdx, e){
       <canvas class="px-sprite" width="16" height="16" style="width:32px;height:32px"
         data-pet="${g.petId}" data-stage="${g.stage}"></canvas>
       <div>
-        <div style="font-size:13px;font-weight:700">${stageDef?.name}</div>
+        <div style="font-size:13px;font-weight:700">${locName(stageDef)}</div>
         <span class="badge badge-${cr?.rarity}" style="font-size:10px">${RARITY_NAME[cr?.rarity]}</span>
       </div>
       <button onclick="closeGardenPopup()" style="margin-left:auto;background:none;border:none;
@@ -4046,7 +4072,7 @@ function renderCreatureDexTab(){
         const sp=spriteCanvas(cr.id,s,56);
         h+=`<div class="dex-thumb unlocked" onclick="showDexDetail('${cr.id}',${s})">
           ${sp}
-          <div class="dex-thumb-name" style="color:${RARITY_COLOR[cr.rarity]};font-weight:700">${stgDef.name}</div>
+          <div class="dex-thumb-name" style="color:${RARITY_COLOR[cr.rarity]};font-weight:700">${locName(stgDef)}</div>
         </div>`;
       }else{
         h+=`<div class="dex-thumb locked">
@@ -4076,7 +4102,7 @@ function renderItemDexTab(){
     }
     h+=`<div class="item-cell ${seen?'':'locked'}">
       <span class="item-emoji">${seen?it.emoji:'❓'}</span>
-      <div class="item-name">${seen?it.name:'???'}</div>
+      <div class="item-name">${seen?locName(it):'???'}</div>
       <div style="font-size:10px;color:${RARITY_COLOR[it.rarity]||'#aaa'};margin-top:2px">${seen?RARITY_NAME[it.rarity]:''}</div>
       ${seen?`<div style="font-size:10px;color:var(--muted);margin-top:1px">${stat}</div>`:''}
     </div>`;
@@ -4102,7 +4128,7 @@ function showDexDetail(crId, stage){
     mediaEl.textContent=stgDef.emoji||'✨';
   }
   // Title = stage name only (no species name like 仓鼠/兔子)
-  document.getElementById('dex-modal-title').textContent=stgDef.name;
+  document.getElementById('dex-modal-title').textContent=locName(stgDef);
   document.getElementById('dex-modal-stage-name').innerHTML=
     `<span style="font-weight:700;color:${RARITY_COLOR[cr.rarity]}">${RARITY_NAME[cr.rarity]}</span>`;
   document.getElementById('dex-modal-rarity').innerHTML='';
@@ -4154,7 +4180,7 @@ function renderBagTab(){
     h+=`<div class="item-cell">
       <span class="item-cnt">${n}</span>
       <span class="item-emoji">${it.emoji}</span>
-      <div class="item-name">${it.name}</div>
+      <div class="item-name">${locName(it)}</div>
     </div>`;
   }
   h+=`</div>`;
@@ -4206,7 +4232,7 @@ function renderGarden(){
           ${canCollect?'<div class="garden-collect-dot"></div>':''}
           ${sp}
         </div>
-        <div class="garden-pet-label" style="font-size:${Math.round(7+(size-32)/44*4)}px">${stageDef?.name||''}</div>
+        <div class="garden-pet-label" style="font-size:${Math.round(7+(size-32)/44*4)}px">${locName(stageDef)||''}</div>
       </div>`;
     } else {
       pets+=`<div class="garden-pet bobbing"
@@ -4227,7 +4253,7 @@ function renderGarden(){
     return `<span style="background:rgba(0,0,0,.5);color:#fff;border-radius:20px;
       padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap"
       onclick="event.stopPropagation();thawFromGarden(${idx})">
-      ❄️ ${stageDef?.name||g.petId}
+      ❄️ ${locName(stageDef)||g.petId}
     </span>`;
   }).join('');
 
